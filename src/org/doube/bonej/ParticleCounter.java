@@ -933,6 +933,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		}
 	}
 
+	@Deprecated
 	private double[] getSurfaceArea(ArrayList<List<Point3f>> surfacePoints) {
 		Iterator<List<Point3f>> iter = surfacePoints.iterator();
 		double[] surfaceAreas = new double[surfacePoints.size()];
@@ -948,6 +949,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		return surfaceAreas;
 	}
 
+	@Deprecated
 	private double[] getSurfaceVolume(ArrayList<List<Point3f>> surfacePoints) {
 		Iterator<List<Point3f>> iter = surfacePoints.iterator();
 		double[] surfaceVolumes = new double[surfacePoints.size()];
@@ -1010,6 +1012,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	 * @param particleSurfaces
 	 * @return
 	 */
+	@Deprecated
 	private double[] getFerets(ArrayList<List<Point3f>> particleSurfaces) {
 		int nParticles = particleSurfaces.size();
 		double[] ferets = new double[nParticles];
@@ -1171,6 +1174,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		return centroids;
 	}
 
+	@Deprecated
 	private double[] getVolumes(ImagePlus imp, long[] particleSizes) {
 		Calibration cal = imp.getCalibration();
 		final double voxelVolume = cal.pixelWidth * cal.pixelHeight
