@@ -1,4 +1,4 @@
-package org.doube.bonej;
+package org.doube.bonej.particleanalyser;
 
 /**
  * ParticleCounter Copyright 2009 2010 Michael Doube
@@ -32,6 +32,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 
+import org.doube.bonej.Connectivity;
+import org.doube.bonej.MeasureSurface;
+import org.doube.bonej.Thickness;
 import org.doube.geometry.FitEllipsoid;
 import org.doube.jama.EigenvalueDecomposition;
 import org.doube.jama.Matrix;
@@ -1062,7 +1065,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	 *            amount of empty space to pad around each particle
 	 * @return
 	 */
-	private static ImagePlus getBinaryParticle(int p, ImagePlus imp,
+	public static ImagePlus getBinaryParticle(int p, ImagePlus imp,
 			int[][] particleLabels, int[][] limits, int padding) {
 
 		final int w = imp.getWidth();
