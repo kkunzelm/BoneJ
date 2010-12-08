@@ -1065,7 +1065,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	 *            amount of empty space to pad around each particle
 	 * @return
 	 */
-	public static ImagePlus getBinaryParticle(int p, ImagePlus imp,
+	protected static ImagePlus getBinaryParticle(int p, ImagePlus imp,
 			int[][] particleLabels, int[][] limits, int padding) {
 
 		final int w = imp.getWidth();
