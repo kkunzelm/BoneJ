@@ -57,6 +57,7 @@ public class ParticleUtilities {
 	 *            String describing the phase we're in - foreground or
 	 *            background.
 	 */
+	@Deprecated
 	public static void filterParticles(ImagePlus imp, byte[][] workArray,
 			int[][] particleLabels, double minVol, double maxVol, int phase,
 			String sPhase) {
@@ -85,6 +86,7 @@ public class ParticleUtilities {
 		}
 	}
 
+	@Deprecated
 	private static double[] getVolumes(ImagePlus imp, long[] particleSizes) {
 		Calibration cal = imp.getCalibration();
 		final double voxelVolume = cal.pixelWidth * cal.pixelHeight
