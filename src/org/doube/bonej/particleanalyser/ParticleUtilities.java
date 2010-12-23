@@ -26,14 +26,12 @@ import javax.vecmath.Point3f;
 
 import org.doube.bonej.MeasureSurface;
 import org.doube.geometry.FitEllipsoid;
-import org.doube.jama.EigenvalueDecomposition;
 
 import customnode.CustomTriangleMesh;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
-import ij.process.ImageProcessor;
 
 /**
  * @author Keith Schulze Set of static utilities for the Particle Counter
