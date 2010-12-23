@@ -150,19 +150,19 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		labels[0] = "Exclude on sides";
 		defaultValues[0] = false;
 		labels[1] = "Surface_area";
-		defaultValues[1] = true;
+		defaultValues[1] = false;
 		labels[2] = "Feret diameter";
 		defaultValues[2] = false;
 		labels[3] = "Enclosed_volume";
-		defaultValues[3] = true;
+		defaultValues[3] = false;
 		labels[4] = "Moments of inertia";
-		defaultValues[4] = true;
+		defaultValues[4] = false;
 		labels[5] = "Euler characteristic";
-		defaultValues[5] = true;
+		defaultValues[5] = false;
 		labels[6] = "Thickness";
-		defaultValues[6] = true;
+		defaultValues[6] = false;
 		labels[7] = "Ellipsoids";
-		defaultValues[7] = true;
+		defaultValues[7] = false;
 		gd.addCheckboxGroup(4, 2, labels, defaultValues, headers);
 		gd.addNumericField("Min Volume", 0, 3, 7, units + "³");
 		gd.addNumericField("Max Volume", Double.POSITIVE_INFINITY, 3, 7, units
@@ -172,21 +172,21 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		String[] labels2 = new String[8];
 		boolean[] defaultValues2 = new boolean[8];
 		labels2[0] = "Show_particle stack";
-		defaultValues2[0] = true;
+		defaultValues2[0] = false;
 		labels2[1] = "Show_size stack";
-		defaultValues2[0] = false;
+		defaultValues2[1] = false;
 		labels2[2] = "Show_thickness stack";
-		defaultValues2[0] = false;
+		defaultValues2[2] = false;
 		labels2[3] = "Show_surfaces (3D)";
-		defaultValues2[0] = true;
+		defaultValues2[3] = false;
 		labels2[4] = "Show_centroids (3D)";
-		defaultValues2[0] = true;
+		defaultValues2[4] = false;
 		labels2[5] = "Show_axes (3D)";
-		defaultValues2[0] = true;
+		defaultValues2[5] = false;
 		labels2[6] = "Show_ellipsoids (3D)";
-		defaultValues2[0] = true;
+		defaultValues2[6] = false;
 		labels2[7] = "Show_stack (3D)";
-		defaultValues2[0] = true;
+		defaultValues2[7] = false;
 		gd.addCheckboxGroup(4, 2, labels2, defaultValues2, headers2);
 		String[] items = { "Gradient", "Split" };
 		gd.addChoice("Surface colours", items, items[0]);
@@ -235,14 +235,18 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		final int slicesPerChunk = (int) Math.floor(gd.getNextNumber());
 
 		// get the particles and do the analysis
-		Object[] result = getParticles(imp, slicesPerChunk, minVol, maxVol,
-				FORE, doExclude);
+		//Object[] result = getParticles(imp, slicesPerChunk, minVol, maxVol,
+		//		FORE, doExclude);
+		Object[] result = ParticleGetter.getParticles(imp, slicesPerChunk, FORE);
+		byte[][] workArray = (byte[][]) result[0];
 		int[][] particleLabels = (int[][]) result[1];
-		long[] particleSizes = getParticleSizes(particleLabels);
+		long[] particleSizes = (long[]) result[2];
 		final int nParticles = particleSizes.length;
 		double[] volumes = getVolumes(imp, particleSizes);
-		double[][] centroids = getCentroids(imp, particleLabels, particleSizes);
-		int[][] limits = getParticleLimits(imp, particleLabels, nParticles);
+		double[][] centroids = (double[][]) result[3];
+		int[][] limits = (int[][]) result[4];
+		List<List<Particle.Face>> edgesTouched = (List<List<Particle.Face>>) result[5];
+		List<Particle> particles = ParticleGetter.createParticleList(imp, edgesTouched, centroids, limits, particleSizes);
 
 		// set up resources for analysis
 		ArrayList<List<Point3f>> surfacePoints = new ArrayList<List<Point3f>>();
@@ -397,9 +401,11 @@ public class ParticleCounter implements PlugIn, DialogListener {
 				IJ.log("3D Viewer was closed before rendering completed.");
 			}
 		}
+		
+		ParticleManager pm = new ParticleManager(imp, particleLabels, workArray, particles, false, doSurfaceArea, false, false, false, false, false);
+		pm.createResultTable();
 		IJ.showProgress(1.0);
 		IJ.showStatus("Particle Analysis Complete");
-		return;
 	}
 
 	private void displayEllipsoids(Object[][] ellipsoids) {
