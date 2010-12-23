@@ -17,6 +17,7 @@
 package org.doube.bonej.particleanalyser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
@@ -1081,5 +1082,103 @@ public class ParticleGetter {
 		}
 
 		return newLabel;
+	}
+
+	/**
+	 * Get the maximum distances from the centroid in x, y, and z axes, and
+	 * transformed x, y and z axes
+	 * 
+	 * @param imp
+	 * @param particleLabels
+	 * @param centroids
+	 * @param E
+	 * @return array containing two nPoints * 3 arrays with max and max
+	 *         transformed distances respectively
+	 * 
+	 */
+	public static double[][] getMaxDistances(ImagePlus imp,
+			int[][] particleLabels, List<Particle> particles) {
+		Calibration cal = imp.getCalibration();
+		final double vW = cal.pixelWidth;
+		final double vH = cal.pixelHeight;
+		final double vD = cal.pixelDepth;
+		final int w = imp.getWidth();
+		final int h = imp.getHeight();
+		final int d = imp.getImageStackSize();
+		final int nParticles = particles.size();
+		double[][] maxD = new double[nParticles][3];
+		double[][] maxDt = new double[nParticles][3];
+		for (int z = 0; z < d; z++) {
+			for (int y = 0; y < h; y++) {
+				final int index = y * w;
+				for (int x = 0; x < w; x++) {
+					final int p = particleLabels[z][index + x];
+					if (p > 0) {
+						final double dX = x * vW
+								- particles.get(p).getCentroid()[0];
+						final double dY = y * vH
+								- particles.get(p).getCentroid()[1];
+						final double dZ = z * vD
+								- particles.get(p).getCentroid()[2];
+						maxD[p][0] = Math.max(maxD[p][0], Math.abs(dX));
+						maxD[p][1] = Math.max(maxD[p][1], Math.abs(dY));
+						maxD[p][2] = Math.max(maxD[p][2], Math.abs(dZ));
+						final double[][] eV = particles.get(p).getEigen()
+								.getV().getArray();
+						final double dXt = dX * eV[0][0] + dY * eV[0][1] + dZ
+								* eV[0][2];
+						final double dYt = dX * eV[1][0] + dY * eV[1][1] + dZ
+								* eV[1][2];
+						final double dZt = dX * eV[2][0] + dY * eV[2][1] + dZ
+								* eV[2][2];
+						maxDt[p][0] = Math.max(maxDt[p][0], Math.abs(dXt));
+						maxDt[p][1] = Math.max(maxDt[p][1], Math.abs(dYt));
+						maxDt[p][2] = Math.max(maxDt[p][2], Math.abs(dZt));
+					}
+				}
+			}
+		}
+		for (int p = 0; p < nParticles; p++) {
+			Arrays.sort(maxDt[p]);
+			double[] temp = new double[3];
+			for (int i = 0; i < 3; i++) {
+				temp[i] = maxDt[p][2 - i];
+			}
+			maxDt[p] = temp.clone();
+		}
+		final Object[] maxDistances = { maxD, maxDt };
+		return (double[][]) maxDistances[1];
+	}
+
+	/**
+	 * Display the particle labels as an ImagePlus
+	 * 
+	 * @param particleLabels
+	 * @param imp
+	 *            original image, used for image dimensions, calibration and
+	 *            titles
+	 */
+	public static ImagePlus displayParticleLabels(int[][] particleLabels,
+			ImagePlus imp) {
+		final int w = imp.getWidth();
+		final int h = imp.getHeight();
+		final int d = imp.getImageStackSize();
+		final int wh = w * h;
+		ImageStack stack = new ImageStack(w, h);
+		double max = 0;
+		for (int z = 0; z < d; z++) {
+			float[] slicePixels = new float[wh];
+			for (int i = 0; i < wh; i++) {
+				slicePixels[i] = (float) particleLabels[z][i];
+				max = Math.max(max, slicePixels[i]);
+			}
+			stack.addSlice(imp.getImageStack().getSliceLabel(z + 1),
+					slicePixels);
+		}
+		ImagePlus impParticles = new ImagePlus(imp.getShortTitle() + "_parts",
+				stack);
+		impParticles.setCalibration(imp.getCalibration());
+		impParticles.getProcessor().setMinAndMax(0, max);
+		return impParticles;
 	}
 }
