@@ -35,7 +35,6 @@ public class ParticleTableModel extends AbstractTableModel {
 	private static final long serialVersionUID = 1L;
 	private List<Particle> particles;
 	//private List<String> columnNames = Arrays.asList("ID", "Name", "Vol.", "x Cent", "y Cent", "z Cent");
-	@SuppressWarnings("serial")
 	private List<String> columnNames;
 	
 	private String units;
@@ -52,6 +51,7 @@ public class ParticleTableModel extends AbstractTableModel {
 	/**
 	 * @param particles
 	 */
+	@SuppressWarnings("serial")
 	public ParticleTableModel(List<Particle> particles, final String units) {
 		super();
 		this.particles = particles;
