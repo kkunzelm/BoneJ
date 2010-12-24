@@ -19,7 +19,6 @@ package org.doube.bonej.particleanalyser;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
@@ -435,8 +434,6 @@ public class Particle implements Cloneable {
 
 	// ////////////////////////////////////////////////////////////////////////////////////
 	/**
-	 * TODO: IMPORTANT - the following methods still need to be implemented
-	 * 
 	 * @return the eigen
 	 */
 	protected EigenvalueDecomposition getEigen() {
