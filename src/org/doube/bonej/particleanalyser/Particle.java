@@ -732,28 +732,6 @@ public class Particle implements Cloneable {
 		return resultMap;
 	}
 
-	/**
-	 * Static method that determines whether or not a particle touches an edge
-	 * based on the faces that it's deemed to touch. Will return false if it is
-	 * in contact with Particle.Face.NONE.
-	 * 
-	 * @param face
-	 * @return
-	 */
-	private static boolean determineIfTouchingEdge(List<Particle.Face> face) {
-		boolean touchingEdge = false;
-
-		switch (face.get(0)) {
-		case NONE:
-			touchingEdge = false;
-			break;
-		default:
-			touchingEdge = true;
-		}
-
-		return touchingEdge;
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
