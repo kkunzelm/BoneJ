@@ -41,14 +41,9 @@ import javax.swing.UIManager;
 
 import org.doube.bonej.particleanalyser.Particle;
 import org.doube.bonej.particleanalyser.ParticleManager;
-import org.doube.bonej.particleanalyser.Particle.Face;
-import org.doube.bonej.particleanalyser.Particle.HideType;
-import org.doube.bonej.particleanalyser.ParticleManager.ColorMode;
 
 import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
