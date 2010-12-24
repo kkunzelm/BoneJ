@@ -638,11 +638,12 @@ public class ParticleManager {
 	/**
 	 * Display the result summary table.
 	 */
-	private void displayResulTable() {
+	public void displayResulTable() {
 		resultWindow.show();
 	}
 
 	/**
+	 * TODO: Need to handle particle hiding as this is still hardwired to the particleLabels raw data.
 	 * Display the visible particle stack.
 	 */
 	private void displayParticleImage() {
@@ -651,6 +652,7 @@ public class ParticleManager {
 	}
 
 	/**
+	 * TODO: What is this and is it hardwired to raw data.
 	 * Display the particle sizes stack
 	 */
 	private void displayParticleSizeImage() {
