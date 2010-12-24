@@ -22,8 +22,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
