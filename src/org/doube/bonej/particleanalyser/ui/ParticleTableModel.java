@@ -60,13 +60,12 @@ public class ParticleTableModel extends AbstractTableModel {
 			add("");
 			add("ID");
 			add("Name");
-			add("Vol. (" + units + "³)");
+			add("<html>Vol. (" + units + "<sup>3</sup>)</html>");
 			add("x Cent (" + units + ")");
 			add("y Cent (" + units + ")");
 			add("z Cent (" + units + ")");
 		}};
 	}
-	
 	
 	/* (non-Javadoc)
 	 * @see javax.swing.table.AbstractTableModel#getColumnName(int)
