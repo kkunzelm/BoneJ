@@ -196,16 +196,20 @@ public class ParticleManager {
 			particles.remove(i);
 		
 		this.particles = null;
-		this.univ.close();
+		if (Image3DUniverse.universes.contains(univ)) {
+			this.univ.close();
+		}
+		
 		this.univ = null;
 		this.imp.close();
+		this.imp = null;
 		this.particleLabels = null;
 		this.particleWorkArray = null;
 		this.resultWindow = null;
 		particleManagers.remove(this);
 		
-		//Runtime runtime = Runtime.getRuntime();
-		//runtime.gc();
+		Runtime runtime = Runtime.getRuntime();
+		runtime.gc();
 	}
 
 	/**
