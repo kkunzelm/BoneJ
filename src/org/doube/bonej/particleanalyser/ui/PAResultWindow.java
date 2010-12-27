@@ -49,8 +49,8 @@ import java.awt.event.WindowEvent;
 
 public class PAResultWindow implements Runnable {
 
-	private final ParticleManager pm;
-	private final ExecutorService pool;
+	private ParticleManager pm;
+	private ExecutorService pool;
 
 	private JFrame frame;
 	private JPanel contentPane;
@@ -103,6 +103,8 @@ public class PAResultWindow implements Runnable {
 			public void windowClosed(WindowEvent e) {
 				pool.shutdownNow();
 				pm.close();
+				pool = null;
+				pm = null;
 			}
 		});
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -509,7 +511,6 @@ public class PAResultWindow implements Runnable {
 			 */
 			@Override
 			protected void done() {
-				// TODO Auto-generated method stub
 				super.done();
 			}
 		};
@@ -529,7 +530,6 @@ public class PAResultWindow implements Runnable {
 			 */
 			@Override
 			protected void done() {
-				// TODO Auto-generated method stub
 				super.done();
 			}
 		};
@@ -549,7 +549,6 @@ public class PAResultWindow implements Runnable {
 			 */
 			@Override
 			protected void done() {
-				// TODO Auto-generated method stub
 				super.done();
 			}
 		};
@@ -570,7 +569,6 @@ public class PAResultWindow implements Runnable {
 			 */
 			@Override
 			protected void done() {
-				// TODO Auto-generated method stub
 				super.done();
 			}
 
@@ -703,7 +701,6 @@ public class PAResultWindow implements Runnable {
 			 */
 			@Override
 			protected void done() {
-				// TODO Auto-generated method stub
 				super.done();
 			}
 			
@@ -738,7 +735,6 @@ public class PAResultWindow implements Runnable {
 			 */
 			@Override
 			protected void done() {
-				// TODO Auto-generated method stub
 				super.done();
 			}
 		};
@@ -759,7 +755,6 @@ public class PAResultWindow implements Runnable {
 			 */
 			@Override
 			protected void done() {
-				// TODO Auto-generated method stub
 				super.done();
 			}
 		};
