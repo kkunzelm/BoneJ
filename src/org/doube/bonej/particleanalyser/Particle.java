@@ -697,7 +697,7 @@ public class Particle implements Cloneable {
 		
 		resultMap.put("ID", this.ID);
 		resultMap.put("Name", this.name);
-		resultMap.put("Vol. (" + calibration.getUnits() + "³)", this.getVolume());
+		resultMap.put("<html>Vol. (" + calibration.getUnits() + "<sup>3</sup>)</html>", this.getVolume());
 		resultMap.put("x Cent (" + calibration.getUnits() + ")", this.centroid[0]);
 		resultMap.put("y Cent (" + calibration.getUnits() + ")", this.centroid[1]);
 		resultMap.put("z Cent (" + calibration.getUnits() + ")", this.centroid[2]);
