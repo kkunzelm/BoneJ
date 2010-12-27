@@ -150,7 +150,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		labels[0] = "Exclude on sides";
 		defaultValues[0] = false;
 		labels[1] = "Surface_area";
-		defaultValues[1] = false;
+		defaultValues[1] = true;
 		labels[2] = "Feret diameter";
 		defaultValues[2] = false;
 		labels[3] = "Enclosed_volume";
@@ -300,7 +300,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		}
 
 		// Show numerical results
-		ResultsTable rt = new ResultsTable();
+		/*ResultsTable rt = new ResultsTable();
 		for (int i = 1; i < volumes.length; i++) {
 			if (volumes[i] > 0) {
 				rt.incrementCounter();
@@ -357,7 +357,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 				rt.updateResults();
 			}
 		}
-		rt.show("Results");
+		rt.show("Results");*/
 
 		// Show resulting image stacks
 		if (doParticleImage) {
@@ -402,7 +402,8 @@ public class ParticleCounter implements PlugIn, DialogListener {
 			}
 		}
 		
-		ParticleManager pm = new ParticleManager(imp, particleLabels, workArray, particles, false, doSurfaceArea, false, false, false, false, false);
+		ParticleManager pm = new ParticleManager(imp, particleLabels, workArray, particles, doMoments, doSurfaceArea, 
+				doSurfaceVolume, doFeret, doEulerCharacters, doThickness, doEllipsoids);
 		pm.createResultTable();
 		IJ.showProgress(1.0);
 		IJ.showStatus("Particle Analysis Complete");
