@@ -196,10 +196,9 @@ public class ParticleManager {
 			particles.remove(i);
 		
 		this.particles = null;
-		if (univ.getWindow() != null)
-			this.univ.close();
+		this.univ.close();
 		this.univ = null;
-		this.imp = null;
+		this.imp.close();
 		this.particleLabels = null;
 		this.particleWorkArray = null;
 		this.resultWindow = null;
