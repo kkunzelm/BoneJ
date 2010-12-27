@@ -58,13 +58,13 @@ public class ParticleManager {
 		GRADIENT, SPLIT;
 	}
 
+	private static ArrayList<ParticleManager> particleManagers = new ArrayList<ParticleManager>();
 	private Image3DUniverse univ = new Image3DUniverse();
 
 	private ImagePlus imp;
 	private int[][] particleLabels;
 	private byte[][] particleWorkArray;
 	private List<Particle> particles;
-	private List<Particle> backupParticles;
 
 	private boolean surfacePointsCalculated = false;
 	private boolean eigensCalculated = false;
@@ -96,7 +96,6 @@ public class ParticleManager {
 		this.particleLabels = particleLabels;
 		this.particleWorkArray = particleWorkArray;
 		this.particles = particles;
-		this.backupParticles = particles;
 
 		hideZero(this.particles);
 	}
@@ -134,7 +133,6 @@ public class ParticleManager {
 		this.particleLabels = particleLabels;
 		this.particleWorkArray = particleWorkArray;
 		this.particles = particles;
-		this.backupParticles = createParticleBackup(particles);
 
 		// TODO: Need to implement volume re-sampling selection.
 		if (calculateSurfaceArea || calculateEnclosedVolume
@@ -190,17 +188,14 @@ public class ParticleManager {
 		}
 
 		hideZero(this.particles);
+		particleManagers.add(this);
 	}
 	
 	public void close() {
 		for (int i = 0; i < getAllParticles().size(); i++)
 			particles.remove(i);
 		
-		for (int i = 0; i < this.backupParticles.size(); i++)
-			backupParticles.remove(i);
-		
 		this.particles = null;
-		this.backupParticles = null;
 		if (univ.getWindow() != null)
 			this.univ.close();
 		this.univ = null;
@@ -208,6 +203,7 @@ public class ParticleManager {
 		this.particleLabels = null;
 		this.particleWorkArray = null;
 		this.resultWindow = null;
+		particleManagers.remove(this);
 		
 		//Runtime runtime = Runtime.getRuntime();
 		//runtime.gc();
