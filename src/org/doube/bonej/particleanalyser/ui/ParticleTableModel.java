@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.table.AbstractTableModel;
 
 import org.doube.bonej.particleanalyser.Particle;
+import org.doube.bonej.particleanalyser.ParticleManager;
 
 /**
  * @author Keith Schulze
@@ -33,7 +34,7 @@ public class ParticleTableModel extends AbstractTableModel {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private List<Particle> particles;
+	private ParticleManager particleManager;
 	//private List<String> columnNames = Arrays.asList("ID", "Name", "Vol.", "x Cent", "y Cent", "z Cent");
 	private List<String> columnNames;
 	
@@ -52,15 +53,17 @@ public class ParticleTableModel extends AbstractTableModel {
 	 * @param particles
 	 */
 	@SuppressWarnings("serial")
-	public ParticleTableModel(List<Particle> particles, final String units) {
+	public ParticleTableModel(ParticleManager pm) {
 		super();
-		this.particles = particles;
-		this.units = units;
+		this.particleManager = pm;
+		
+		this.units = this.particleManager.getCalibration().getUnits();
 		this.columnNames = new ArrayList<String>() {{
 			add("");
 			add("ID");
 			add("Name");
 			add("<html>Vol. (" + units + "<sup>3</sup>)</html>");
+			add("<html>Area (" + units + "<sup>2</sup>)</html>");
 			add("x Cent (" + units + ")");
 			add("y Cent (" + units + ")");
 			add("z Cent (" + units + ")");
@@ -80,11 +83,7 @@ public class ParticleTableModel extends AbstractTableModel {
 	 */
 	@Override
 	public int getRowCount() {
-		int rowCount = 0;
-		for (Particle p : particles)
-			if (p.isVisible())
-				rowCount++;
-		return rowCount;
+		return this.particleManager.getVisibleParticles().size();
 	}
 
 	/* (non-Javadoc)
@@ -103,17 +102,14 @@ public class ParticleTableModel extends AbstractTableModel {
 		if (columnIndex == 0) {
 			return rowIndex+1;
 		} else {
-			List<Particle> visibleParticles = new ArrayList<Particle>();
-			for (Particle p : this.particles)
-				if(p.isVisible())
-					visibleParticles.add(p);
+			List<Particle> visibleParticles = this.particleManager.getVisibleParticles();
 			
 			return visibleParticles.get(rowIndex).tableLookup(this.columnNames.get(columnIndex));
 		}
 	}
 	
-	public void setParticles(List<Particle> particles) {
-		this.particles = particles;
+	public void setParticleManager(ParticleManager pm) {
+		this.particleManager = pm;
 	}
 
 	/**

@@ -14,11 +14,11 @@ import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 import javax.swing.JTable;
 import javax.swing.SwingWorker;
-import javax.swing.TransferHandler;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JScrollPane;
 
 import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
@@ -74,6 +74,10 @@ public class PAResultWindow implements Runnable {
 	private JCheckBox chckbxWest;
 	private List<Particle.Face> excludedEdges = new ArrayList<Particle.Face>();
 	
+	private static final String LINE_BREAK = "\n"; 
+    private static final String CELL_BREAK = "\t"; 
+    private static final Clipboard CLIPBOARD = Toolkit.getDefaultToolkit().getSystemClipboard();
+	
 	/**
 	 * Create the frame.
 	 */
@@ -104,13 +108,14 @@ public class PAResultWindow implements Runnable {
 				pool.shutdownNow();
 				pm.close();
 				pool = null;
-				pm = null;
+				
+				System.gc();
 			}
 		});
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		frame.setBounds(0, 0, 700, 540);
 
-		ptm = new ParticleTableModel(pm.getAllParticles(), pm.getParticle(1).getCalibration().getUnits());
+		ptm = new ParticleTableModel(this.pm);
 
 		JMenuBar menuBar = new JMenuBar();
 		frame.setJMenuBar(menuBar);
@@ -241,6 +246,31 @@ public class PAResultWindow implements Runnable {
 						|| e.getKeyCode() == KeyEvent.VK_UP) {
 					e.consume();
 					setSelectedParticles();
+				}
+			}
+		});
+		
+		
+		resultTable.addKeyListener(new KeyAdapter() {
+
+			String vers = System.getProperty("os.name").toLowerCase();
+			@Override
+			public void keyPressed(KeyEvent e) {
+				if (vers.indexOf("windows") != -1) {
+					if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_C) {
+						e.consume();
+						copySelectedRowsToClipboard();
+					}
+				} else if (vers.indexOf("mac") != -1) {
+					if (e.isMetaDown() && e.getKeyCode() == KeyEvent.VK_C) {
+						e.consume();
+						copySelectedRowsToClipboard();
+					}
+				} else if (vers.indexOf("linux") != -1) {
+					if (e.isControlDown() && e.getKeyCode() == KeyEvent.VK_C) {
+						e.consume();
+						copySelectedRowsToClipboard();
+					}
 				}
 			}
 		});
@@ -577,12 +607,41 @@ public class PAResultWindow implements Runnable {
 	}
 
 	private void copySelectedRowsToClipboard() {
-		TransferHandler th = resultTable.getTransferHandler();
+		/*TransferHandler th = resultTable.getTransferHandler();
 		if (th != null) {
 			Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
 			th.exportToClipboard(resultTable, cb, TransferHandler.COPY);
-		}
+		}*/
+		
+		int numCols=resultTable.getSelectedColumnCount(); 
+        int numRows=resultTable.getSelectedRowCount(); 
+        int[] rowsSelected=resultTable.getSelectedRows(); 
+        int[] colsSelected=resultTable.getSelectedColumns(); 
+        if (numRows!=rowsSelected[rowsSelected.length-1]-rowsSelected[0]+1 || numRows!=rowsSelected.length || 
+                        numCols!=colsSelected[colsSelected.length-1]-colsSelected[0]+1 || numCols!=colsSelected.length) {
+
+                IJ.showMessageWithCancel("Invalid Copy Selection", "Invalid Copy Selection");
+                return; 
+        } 
+        
+        StringBuffer excelStr=new StringBuffer(); 
+        for (int i=0; i<numRows; i++) { 
+                for (int j=0; j<numCols; j++) { 
+                        excelStr.append(escape(resultTable.getValueAt(rowsSelected[i], colsSelected[j]))); 
+                        if (j<numCols-1) { 
+                                excelStr.append(CELL_BREAK); 
+                        } 
+                } 
+                excelStr.append(LINE_BREAK); 
+        } 
+        
+        StringSelection sel  = new StringSelection(excelStr.toString()); 
+        CLIPBOARD.setContents(sel, sel); 
 	}
+	
+	 private String escape(Object cell) { 
+         return cell.toString().replace(LINE_BREAK, " ").replace(CELL_BREAK, " "); 
+	 } 
 
 	private void selectAllRowsInTable() {
 		this.resultTable.selectAll();

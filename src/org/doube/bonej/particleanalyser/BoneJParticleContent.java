@@ -55,7 +55,7 @@ public class BoneJParticleContent extends Content {
 	@Override
 	public void contentRemoved(Content c) {
 		super.contentRemoved(c);
-		if (c.getName() == particle.getName() && particle.isVisible())
+		if (!pm.isClosed() && c.getName() == particle.getName() && particle.isVisible())
 			pm.hideParticle(particle, Particle.HideType.DELETE);
 	}
 	
@@ -65,7 +65,7 @@ public class BoneJParticleContent extends Content {
 	@Override
 	public void contentSelected(Content c) {
 		super.contentSelected(c);
-		if ( c != null && c.getName() == particle.getName()) {
+		if (!pm.isClosed() && c != null && c.getName() == particle.getName()) {
 			pm.deselectAllParticles();
 			pm.selectParticle(particle);
 		}

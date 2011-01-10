@@ -108,7 +108,7 @@ import ij3d.Image3DUniverse;
 public class ParticleCounter implements PlugIn, DialogListener {
 
 	/** 3D viewer for rendering graphical output */
-	private Image3DUniverse univ = new Image3DUniverse();
+	//private Image3DUniverse univ = new Image3DUniverse();
 
 	/** Foreground value */
 	public final static int FORE = -1;
@@ -131,11 +131,14 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	public void run(String arg) {
 		if (!ImageCheck.checkEnvironment())
 			return;
-		ImagePlus imp = IJ.getImage();
-		if (null == imp) {
+		
+		if (null == IJ.getImage()) {
 			IJ.noImage();
 			return;
 		}
+		ImagePlus imp = new ImagePlus(IJ.getImage().getTitle(), IJ.getImage().getStack());
+		imp.setCalibration(IJ.getImage().getCalibration());
+		
 		ImageCheck ic = new ImageCheck();
 		if (!ic.isBinary(imp)) {
 			IJ.error("Binary image required");
@@ -300,7 +303,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		}
 
 		// Show numerical results
-		/*ResultsTable rt = new ResultsTable();
+		ResultsTable rt = new ResultsTable();
 		for (int i = 1; i < volumes.length; i++) {
 			if (volumes[i] > 0) {
 				rt.incrementCounter();
@@ -357,7 +360,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 				rt.updateResults();
 			}
 		}
-		rt.show("Results");*/
+		rt.show("Results");
 
 		// Show resulting image stacks
 		if (doParticleImage) {
@@ -370,7 +373,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 			IJ.run("Fire");
 		}
 
-		// show 3D renderings
+		/*// show 3D renderings
 		if (doSurfaceImage || doCentroidImage || doAxesImage || do3DOriginal
 				|| doEllipsoidImage) {
 			univ.show();
@@ -400,16 +403,17 @@ public class ParticleCounter implements PlugIn, DialogListener {
 			} catch (NullPointerException npe) {
 				IJ.log("3D Viewer was closed before rendering completed.");
 			}
-		}
+		}*/
 		
 		ParticleManager pm = new ParticleManager(imp, particleLabels, workArray, particles, doMoments, doSurfaceArea, 
 				doSurfaceVolume, doFeret, doEulerCharacters, doThickness, doEllipsoids);
 		pm.createResultTable();
 		IJ.showProgress(1.0);
 		IJ.showStatus("Particle Analysis Complete");
+		return;
 	}
 
-	private void displayEllipsoids(Object[][] ellipsoids) {
+	/*private void displayEllipsoids(Object[][] ellipsoids) {
 		final int nEllipsoids = ellipsoids.length;
 		ellipsoidLoop: for (int el = 1; el < nEllipsoids; el++) {
 			IJ.showStatus("Rendering ellipsoids...");
@@ -469,7 +473,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 			displayAxes(centre, eV, radii, 1.0f, 1.0f, 0.0f, "Ellipsoid Axes "
 					+ el);
 		}
-	}
+	}*/
 
 	private Object[][] getEllipsoids(ArrayList<List<Point3f>> surfacePoints) {
 		Object[][] ellipsoids = new Object[surfacePoints.size()][];
@@ -757,7 +761,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		return maxDistances;
 	}
 
-	private void display3DOriginal(ImagePlus imp, int resampling) {
+	/*private void display3DOriginal(ImagePlus imp, int resampling) {
 		Color3f colour = new Color3f(1.0f, 1.0f, 1.0f);
 		boolean[] channels = { true, true, true };
 		try {
@@ -783,7 +787,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		return;
 	}
 
-	/**
+	*//**
 	 * Draws 3 orthogonal axes defined by the centroid, unitvector and axis
 	 * length.
 	 * 
@@ -794,7 +798,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	 * @param green
 	 * @param blue
 	 * @param title
-	 */
+	 *//*
 	private void displayAxes(double[] centroid, double[][] unitVector,
 			double[] lengths, float red, float green, float blue, String title) {
 		final double cX = centroid[0];
@@ -859,11 +863,11 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		}
 	}
 
-	/**
+	*//**
 	 * Draw the particle centroids in a 3D viewer
 	 * 
 	 * @param centroids
-	 */
+	 *//*
 	private void displayCentroids(double[][] centroids) {
 		int nCentroids = centroids.length;
 		for (int p = 1; p < nCentroids; p++) {
@@ -892,11 +896,11 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		return;
 	}
 
-	/**
+	*//**
 	 * Draw the particle surfaces in a 3D viewer
 	 * 
 	 * @param surfacePoints
-	 */
+	 *//*
 	private void displayParticleSurfaces(
 			ArrayList<List<Point3f>> surfacePoints, int colourMode,
 			double[] volumes, double splitValue) {
@@ -941,7 +945,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 			}
 			p++;
 		}
-	}
+	}*/
 
 	@Deprecated
 	private double[] getSurfaceArea(ArrayList<List<Point3f>> surfacePoints) {

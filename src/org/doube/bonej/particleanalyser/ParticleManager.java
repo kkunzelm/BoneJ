@@ -65,6 +65,8 @@ public class ParticleManager {
 	private int[][] particleLabels;
 	private byte[][] particleWorkArray;
 	private List<Particle> particles;
+	
+	private boolean closed = false;
 
 	private boolean surfacePointsCalculated = false;
 	private boolean eigensCalculated = false;
@@ -196,20 +198,13 @@ public class ParticleManager {
 			particles.remove(i);
 		
 		this.particles = null;
-		if (Image3DUniverse.universes.contains(univ)) {
-			this.univ.close();
-		}
-		
-		this.univ = null;
 		this.imp.close();
 		this.imp = null;
 		this.particleLabels = null;
 		this.particleWorkArray = null;
 		this.resultWindow = null;
 		particleManagers.remove(this);
-		
-		Runtime runtime = Runtime.getRuntime();
-		runtime.gc();
+		this.closed = true;
 	}
 
 	/**
@@ -225,6 +220,18 @@ public class ParticleManager {
 	 */
 	public void setImp(ImagePlus imp) {
 		this.imp = imp;
+	}
+	
+	public Calibration getCalibration() {
+		return this.imp.getCalibration();
+	}
+
+	public boolean isClosed() {
+		return closed;
+	}
+
+	public void setClosed(boolean closed) {
+		this.closed = closed;
 	}
 
 	/**

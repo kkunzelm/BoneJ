@@ -406,6 +406,12 @@ public class Particle implements Cloneable {
 
 		return voxelVolume * particleSize;
 	}
+	
+	private double getArea() {
+		final double pixelArea = this.calibration.pixelWidth
+		* this.calibration.pixelHeight;
+		return pixelArea * particleSize;
+	}
 
 	/**
 	 * @return the surfacePoints
@@ -698,6 +704,7 @@ public class Particle implements Cloneable {
 		resultMap.put("ID", this.ID);
 		resultMap.put("Name", this.name);
 		resultMap.put("<html>Vol. (" + calibration.getUnits() + "<sup>3</sup>)</html>", this.getVolume());
+		resultMap.put("<html>Area (" + calibration.getUnits() + "<sup>2</sup>)</html>", this.getArea());
 		resultMap.put("x Cent (" + calibration.getUnits() + ")", this.centroid[0]);
 		resultMap.put("y Cent (" + calibration.getUnits() + ")", this.centroid[1]);
 		resultMap.put("z Cent (" + calibration.getUnits() + ")", this.centroid[2]);
@@ -731,6 +738,7 @@ public class Particle implements Cloneable {
 		
 		return resultMap;
 	}
+
 
 	/*
 	 * (non-Javadoc)
