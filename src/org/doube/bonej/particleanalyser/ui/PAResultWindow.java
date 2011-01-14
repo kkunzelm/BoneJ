@@ -108,8 +108,6 @@ public class PAResultWindow implements Runnable {
 				pool.shutdownNow();
 				pm.close();
 				pool = null;
-				
-				System.gc();
 			}
 		});
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
