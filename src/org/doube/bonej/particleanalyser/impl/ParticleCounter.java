@@ -1,4 +1,4 @@
-package org.doube.bonej.particleanalyser;
+package org.doube.bonej.particleanalyser.impl;
 
 /**
  * ParticleCounter Copyright 2009 2010 Michael Doube

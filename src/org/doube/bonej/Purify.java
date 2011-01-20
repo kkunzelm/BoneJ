@@ -25,7 +25,7 @@ import java.awt.TextField;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.doube.bonej.particleanalyser.ParticleCounter;
+import org.doube.bonej.particleanalyser.impl.ParticleCounter;
 import org.doube.util.DialogModifier;
 import org.doube.util.ImageCheck;
 import org.doube.util.Multithreader;

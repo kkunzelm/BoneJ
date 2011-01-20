@@ -39,9 +39,9 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 
-import org.doube.bonej.particleanalyser.Face;
-import org.doube.bonej.particleanalyser.ParticleImpl;
-import org.doube.bonej.particleanalyser.ParticleManager;
+import org.doube.bonej.particleanalyser.impl.Face;
+import org.doube.bonej.particleanalyser.impl.ParticleImpl;
+import org.doube.bonej.particleanalyser.impl.ParticleManager;
 
 import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;

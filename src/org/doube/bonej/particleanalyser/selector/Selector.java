@@ -20,7 +20,7 @@ import java.util.List;
 
 import javax.swing.JPanel;
 
-import org.doube.bonej.particleanalyser.ParticleImpl;
+import org.doube.bonej.particleanalyser.impl.ParticleImpl;
 
 /**
  * @author Keith Schulze

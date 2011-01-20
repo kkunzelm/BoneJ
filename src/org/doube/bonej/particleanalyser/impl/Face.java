@@ -1,4 +1,4 @@
-package org.doube.bonej.particleanalyser;
+package org.doube.bonej.particleanalyser.impl;
 
 /**
  * @author Keith Schulze 

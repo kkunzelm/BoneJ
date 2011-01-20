@@ -21,8 +21,8 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
-import org.doube.bonej.particleanalyser.ParticleImpl;
-import org.doube.bonej.particleanalyser.ParticleManager;
+import org.doube.bonej.particleanalyser.impl.ParticleImpl;
+import org.doube.bonej.particleanalyser.impl.ParticleManager;
 
 /**
  * @author Keith Schulze
