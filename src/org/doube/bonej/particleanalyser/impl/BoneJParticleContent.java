@@ -18,6 +18,8 @@ package org.doube.bonej.particleanalyser.impl;
 
 import java.util.TreeMap;
 
+import org.doube.bonej.particleanalyser.Particle;
+
 import ij3d.Content;
 import ij3d.ContentInstant;
 
@@ -27,23 +29,23 @@ import ij3d.ContentInstant;
  */
 public class BoneJParticleContent extends Content {
 
-	private ParticleImpl particle;
+	private Particle particle;
 	private ParticleManager pm;
 	
-	public BoneJParticleContent(String name, int tp, ParticleImpl particle, ParticleManager pm) {
+	public BoneJParticleContent(String name, int tp, Particle particle, ParticleManager pm) {
 		super(name, tp);
 		this.particle = particle;
 		this.pm = pm;
 	}
 
-	public BoneJParticleContent(String name, ParticleImpl particle, ParticleManager pm) {
+	public BoneJParticleContent(String name, Particle particle, ParticleManager pm) {
 		super(name);
 		this.particle = particle;
 		this.pm = pm;
 	}
 
 	public BoneJParticleContent(String name, TreeMap<Integer, ContentInstant> contents, 
-			ParticleImpl particle, ParticleManager pm) {
+			Particle particle, ParticleManager pm) {
 		super(name, contents);
 		this.particle = particle;
 		this.pm = pm;
@@ -56,7 +58,7 @@ public class BoneJParticleContent extends Content {
 	public void contentRemoved(Content c) {
 		super.contentRemoved(c);
 		if (!pm.isClosed() && c.getName() == particle.getName() && particle.isVisible())
-			pm.hideParticle(particle, ParticleImpl.HideType.DELETE);
+			pm.hideParticle(particle, Particle.HideType.DELETE);
 	}
 	
 	/* (non-Javadoc)

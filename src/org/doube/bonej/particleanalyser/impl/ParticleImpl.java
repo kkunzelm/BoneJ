@@ -23,6 +23,7 @@ import java.util.List;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 
+import org.doube.bonej.particleanalyser.Particle;
 import org.doube.geometry.FitEllipsoid;
 import org.doube.jama.EigenvalueDecomposition;
 import org.doube.jama.Matrix;
@@ -40,16 +41,7 @@ import ij.measure.Calibration;
  *         This class attempts to modularize the particle counter somewhat by
  *         creating a particle object that holds
  */
-public class ParticleImpl implements Cloneable {
-
-	/**
-	 * @author Keith Schulze 
-	 * Enum that describes the methods by which this particle was hidden if it is
-	 * not shown.
-	 */
-	public static enum HideType {
-		DELETE, SIZE, FACE_TOUCHED;
-	}
+public class ParticleImpl implements Cloneable, Particle {
 
 	/**
 	 * Particle ID - refers to the parent particleLabel for this Particle.
@@ -66,7 +58,7 @@ public class ParticleImpl implements Cloneable {
 	 */
 	private boolean visible = true;
 
-	private List<HideType> hiddenBy = new ArrayList<ParticleImpl.HideType>();
+	private List<Particle.HideType> hiddenBy = new ArrayList<Particle.HideType>();
 
 	/**
 	 * Particle selected
@@ -197,65 +189,69 @@ public class ParticleImpl implements Cloneable {
 		this.particleSize = particleSize;
 	}
 
-	/**
-	 * @return the iD
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getID()
 	 */
+	@Override
 	public int getID() {
 		return ID;
 	}
 
-	/**
-	 * @param iD
-	 *            the iD to set
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#setID(int)
 	 */
+	@Override
 	public void setID(int iD) {
 		ID = iD;
 	}
 
-	/**
-	 * @return the name
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getName()
 	 */
+	@Override
 	public String getName() {
 		return name;
 	}
 
-	/**
-	 * @param name
-	 *            the name to set
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#setName(java.lang.String)
 	 */
+	@Override
 	public void setName(String name) {
 		this.name = name;
 	}
 
-	/**
-	 * @return the visible
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#isVisible()
 	 */
+	@Override
 	public boolean isVisible() {
 		return visible;
 	}
 
-	/**
-	 * @param visible
-	 *            the visible to set
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#setVisible(boolean)
 	 */
+	@Override
 	public void setVisible(boolean visible) {
 		this.visible = visible;
 		if (visible)
 			removeAllHiddenByValues();
 	}
 
-	/**
-	 * @return the hiddenBy
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getHiddenBy()
 	 */
-	public List<HideType> getHiddenBy() {
+	@Override
+	public List<Particle.HideType> getHiddenBy() {
 		return hiddenBy;
 	}
 
-	/**
-	 * @param hidetype
-	 * @return
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#wasHiddenBy(org.doube.bonej.particleanalyser.impl.ParticleImpl.HideType)
 	 */
-	public boolean wasHiddenBy(HideType hidetype) {
+	@Override
+	public boolean wasHiddenBy(Particle.HideType hidetype) {
 		if (this.hiddenBy.contains(hidetype)) {
 			return true;
 		} else {
@@ -263,48 +259,52 @@ public class ParticleImpl implements Cloneable {
 		}
 	}
 
-	/**
-	 * @param hideType
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#setHiddenBy(org.doube.bonej.particleanalyser.impl.ParticleImpl.HideType)
 	 */
-	public void setHiddenBy(HideType hideType) {
+	@Override
+	public void setHiddenBy(Particle.HideType hideType) {
 		if (!this.hiddenBy.contains(hideType))
 			this.hiddenBy.add(hideType);
 	}
 
-	/**
-	 * @param hiddenBy
-	 *            the hiddenBy to set
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#setHiddenBy(java.util.List)
 	 */
-	public void setHiddenBy(List<HideType> hiddenBy) {
+	@Override
+	public void setHiddenBy(List<Particle.HideType> hiddenBy) {
 		this.hiddenBy = hiddenBy;
 	}
 
-	/**
-	 * 
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#removeAllHiddenByValues()
 	 */
+	@Override
 	public void removeAllHiddenByValues() {
 		for (int i = 0; i < hiddenBy.size(); i++)
 			this.hiddenBy.remove(i);
 	}
 
-	/**
-	 * @return the selected
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#isSelected()
 	 */
+	@Override
 	public boolean isSelected() {
 		return selected;
 	}
 
-	/**
-	 * @param selected
-	 *            the selected to set
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#setSelected(boolean)
 	 */
+	@Override
 	public void setSelected(boolean selected) {
 		this.selected = selected;
 	}
 
-	/**
-	 * @return the touchingEdge
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#isTouchingEdge(org.doube.bonej.particleanalyser.impl.Face)
 	 */
+	@Override
 	public boolean isTouchingEdge(Face face) {
 		if (this.edgesTouched.contains(face)) {
 			return true;
@@ -313,84 +313,90 @@ public class ParticleImpl implements Cloneable {
 		}
 	}
 
-	/**
-	 * @return the edgesTouched
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getEdgesTouched()
 	 */
+	@Override
 	public List<Face> getEdgesTouched() {
 		return edgesTouched;
 	}
 
-	/**
-	 * @param edgesTouched
-	 *            the edgesTouched to set
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#setEdgesTouched(java.util.List)
 	 */
+	@Override
 	public void setEdgesTouched(List<Face> edgeTouched) {
 		this.edgesTouched = edgeTouched;
 	}
 
-	/**
-	 * @return the centroid
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getCentroid()
 	 */
+	@Override
 	public double[] getCentroid() {
 		return centroid;
 	}
 
-	/**
-	 * @param centroid
-	 *            the centroid to set
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#setCentroid(double[])
 	 */
+	@Override
 	public void setCentroid(double[] centroid) {
 		this.centroid = centroid;
 	}
 
-	/**
-	 * @return the limits
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getLimits()
 	 */
+	@Override
 	public int[] getLimits() {
 		return limits;
 	}
 
-	/**
-	 * @param limits
-	 *            the limits to set
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#setLimits(int[])
 	 */
+	@Override
 	public void setLimits(int[] limits) {
 		this.limits = limits;
 	}
 
-	/**
-	 * @return the calibration
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getCalibration()
 	 */
+	@Override
 	public Calibration getCalibration() {
 		return calibration;
 	}
 
-	/**
-	 * @param calibration
-	 *            the calibration to set
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#setCalibration(ij.measure.Calibration)
 	 */
+	@Override
 	public void setCalibration(Calibration calibration) {
 		this.calibration = calibration;
 	}
 
-	/**
-	 * @return the particleSize
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getParticleSize()
 	 */
+	@Override
 	public long getParticleSize() {
 		return particleSize;
 	}
 
-	/**
-	 * @param particleSize
-	 *            the particleSize to set
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#setParticleSize(long)
 	 */
+	@Override
 	public void setParticleSize(long particleSize) {
 		this.particleSize = particleSize;
 	}
 
-	/**
-	 * @return
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getVolume()
 	 */
+	@Override
 	public double getVolume() {
 		final double voxelVolume = this.calibration.pixelWidth
 				* this.calibration.pixelHeight * this.calibration.pixelDepth;
@@ -404,21 +410,26 @@ public class ParticleImpl implements Cloneable {
 		return pixelArea * particleSize;
 	}
 
-	/**
-	 * @return the surfacePoints
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getSurfacePoints()
 	 */
+	@Override
 	public List<Point3f> getSurfacePoints() {
 		return surfacePoints;
 	}
 
-	/**
-	 * @param surfacePoints
-	 *            the surfacePoints to set
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#setSurfacePoints(java.util.List)
 	 */
+	@Override
 	public void setSurfacePoints(List<Point3f> surfacePoints) {
 		this.surfacePoints = surfacePoints;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getSurfaceMesh(javax.vecmath.Color3f)
+	 */
+	@Override
 	public CustomTriangleMesh getSurfaceMesh(Color3f color) {
 		if (surfacePoints != null) {
 			CustomTriangleMesh tmesh = new CustomTriangleMesh(
@@ -445,6 +456,10 @@ public class ParticleImpl implements Cloneable {
 		this.eigen = eigen;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getCentroidMesh(javax.vecmath.Color3f, float)
+	 */
+	@Override
 	public CustomPointMesh getCentroidMesh(Color3f color, float transparency) {
 		Point3f cent = new Point3f();
 		cent.x = (float) this.centroid[0];
@@ -460,18 +475,10 @@ public class ParticleImpl implements Cloneable {
 		return mesh;
 	}
 
-	/**
-	 * Draws 3 orthogonal axes defined by the centroid, unit vector and axis
-	 * length.
-	 * 
-	 * @param centroid
-	 * @param unitVector
-	 * @param lengths
-	 * @param red
-	 * @param green
-	 * @param blue
-	 * @param title
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getAxesMesh(double[], float, float, float, java.lang.String)
 	 */
+	@Override
 	public CustomMesh getAxesMesh(double[] lengths, float red, float green,
 			float blue, String title) {
 		if (eigen != null) {
@@ -629,11 +636,10 @@ public class ParticleImpl implements Cloneable {
 		this.ellipsoid = ellipsoid;
 	}
 
-	/**
-	 * @param color
-	 * @param transparency
-	 * @return
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getEllipsoidMesh(javax.vecmath.Color3f, float)
 	 */
+	@Override
 	public CustomPointMesh getEllipsoidMesh(Color3f color, float transparency) {
 		double[] centre = (double[]) this.ellipsoid[0];
 		double[] radii = (double[]) this.ellipsoid[1];
@@ -679,10 +685,10 @@ public class ParticleImpl implements Cloneable {
 		return mesh;
 	}
 
-	/**
-	 * @param key
-	 * @return
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getParamterByKey(java.lang.String)
 	 */
+	@Override
 	public Object getParamterByKey(String key) {
 		HashMap<String, Object> resultMap = this.generateResultMap();
 

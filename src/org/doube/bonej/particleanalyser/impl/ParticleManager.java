@@ -31,6 +31,7 @@ import marchingcubes.MCTriangulator;
 
 import org.doube.bonej.Connectivity;
 import org.doube.bonej.Thickness;
+import org.doube.bonej.particleanalyser.Particle;
 import org.doube.bonej.particleanalyser.ui.PAResultWindow;
 import org.doube.jama.EigenvalueDecomposition;
 import org.doube.jama.Matrix;
@@ -264,11 +265,11 @@ public class ParticleManager {
 		this.particleWorkArray = particleWorkArray;
 	}
 
-	public ParticleImpl getParticle(int index) {
+	public Particle getParticle(int index) {
 		return particles.get(index);
 	}
 
-	public ParticleImpl getVisibleParticle(int index) {
+	public Particle getVisibleParticle(int index) {
 		return getVisibleParticles().get(index);
 	}
 
@@ -300,11 +301,11 @@ public class ParticleManager {
 		return visibleParticles;
 	}
 
-	public void hideParticle(int index, ParticleImpl.HideType hiddenBy) {
+	public void hideParticle(int index, Particle.HideType hiddenBy) {
 		hideParticle(getParticle(index), hiddenBy);
 	}
 
-	public void hideParticle(ParticleImpl particle, ParticleImpl.HideType hiddenBy) {
+	public void hideParticle(Particle particle, Particle.HideType hiddenBy) {
 		particle.setVisible(false);
 		particle.setHiddenBy(hiddenBy);
 
@@ -317,7 +318,7 @@ public class ParticleManager {
 	}
 
 	public void hideParticles(int startIndex, int endIndex,
-			ParticleImpl.HideType hiddenBy) {
+			Particle.HideType hiddenBy) {
 		for (int i = startIndex; i <= endIndex; i++)
 			hideParticle(i, hiddenBy);
 	}
@@ -326,7 +327,7 @@ public class ParticleManager {
 		showParticle(getParticle(index));
 	}
 
-	public void showParticle(ParticleImpl particle) {
+	public void showParticle(Particle particle) {
 		particle.setVisible(true);
 
 		if (univ.getWindow() != null && !univ.contains(particle.getName())) {
@@ -343,7 +344,7 @@ public class ParticleManager {
 	}
 
 	public void showAllParticles() {
-		for (ParticleImpl p : particles) {
+		for (Particle p : particles) {
 			if (!p.isVisible() && p.getID() > 0) {
 				p.setVisible(true);
 
@@ -371,7 +372,7 @@ public class ParticleManager {
 
 	public static List<ParticleImpl> createParticleBackup(List<ParticleImpl> particles) {
 		List<ParticleImpl> temp = new ArrayList<ParticleImpl>(particles.size());
-		for (ParticleImpl p : particles) {
+		for (Particle p : particles) {
 			ParticleImpl pClone = null;
 			try {
 				pClone = (ParticleImpl) p.clone();
@@ -388,7 +389,7 @@ public class ParticleManager {
 		EventQueue.invokeLater(resultWindow);
 	}
 
-	public void selectParticle(ParticleImpl particle) {
+	public void selectParticle(Particle particle) {
 		if (univ.getWindow() != null && univ.getWindow().isShowing())
 			if (univ.getSelected() != univ.getContent(particle.getName())) {
 				univ.select(univ.getContent(particle.getName()));
@@ -402,7 +403,7 @@ public class ParticleManager {
 	}
 
 	public void deselectAllParticles() {
-		for (ParticleImpl p : particles)
+		for (Particle p : particles)
 			p.setSelected(false);
 	}
 
@@ -535,17 +536,17 @@ public class ParticleManager {
 	 * @param edge
 	 */
 	public synchronized void excludeOnEdge(boolean show, Face edge) {
-		for (ParticleImpl p : this.getAllParticles()) {
+		for (Particle p : this.getAllParticles()) {
 			if (p.getEdgesTouched().size() == 1 && p.isTouchingEdge(edge)) {
 				if (show) {
-					if (p.wasHiddenBy(ParticleImpl.HideType.DELETE)
-							|| p.wasHiddenBy(ParticleImpl.HideType.SIZE)) {
+					if (p.wasHiddenBy(Particle.HideType.DELETE)
+							|| p.wasHiddenBy(Particle.HideType.SIZE)) {
 						continue;
 					} else {
 						showParticle(p);
 					}
 				} else if (!show){
-					hideParticle(p, ParticleImpl.HideType.FACE_TOUCHED);
+					hideParticle(p, Particle.HideType.FACE_TOUCHED);
 				}
 			} else if (p.getEdgesTouched().size() > 1 && p.isTouchingEdge(edge)) {
 				boolean touchesAnotherExcludedFace = false;
@@ -556,14 +557,14 @@ public class ParticleManager {
 				}
 
 				if (!touchesAnotherExcludedFace && show) {
-					if (p.wasHiddenBy(ParticleImpl.HideType.DELETE)
-							|| p.wasHiddenBy(ParticleImpl.HideType.SIZE)) {
+					if (p.wasHiddenBy(Particle.HideType.DELETE)
+							|| p.wasHiddenBy(Particle.HideType.SIZE)) {
 						continue;
 					} else {
 						showParticle(p);
 					}
 				} else if (!show) {
-					hideParticle(p, ParticleImpl.HideType.FACE_TOUCHED);
+					hideParticle(p, Particle.HideType.FACE_TOUCHED);
 				}
 			}
 		}
@@ -582,17 +583,17 @@ public class ParticleManager {
 	 */
 	public void setMaxVolume(double newMaxVolume) {
 		if (newMaxVolume < this.maxVolume) {
-			for (ParticleImpl particle : this.getAllParticles()) {
+			for (Particle particle : this.getAllParticles()) {
 				if (particle.getID() > 0 && particle.getVolume() > newMaxVolume) {
-					this.hideParticle(particle, ParticleImpl.HideType.SIZE);
+					this.hideParticle(particle, Particle.HideType.SIZE);
 				}
 			}
 		} else {
-			for (ParticleImpl particle : this.getAllParticles()) {
+			for (Particle particle : this.getAllParticles()) {
 				if (particle.getID() > 0 && particle.getVolume() < newMaxVolume
 						&& particle.getVolume() >= this.maxVolume)
-					if (particle.wasHiddenBy(ParticleImpl.HideType.DELETE)
-							|| particle.wasHiddenBy(ParticleImpl.HideType.FACE_TOUCHED)) {
+					if (particle.wasHiddenBy(Particle.HideType.DELETE)
+							|| particle.wasHiddenBy(Particle.HideType.FACE_TOUCHED)) {
 						continue;
 					} else {
 						showParticle(particle);
@@ -616,17 +617,17 @@ public class ParticleManager {
 	 */
 	public void setMinVolume(double minVolume) {
 		if (minVolume > this.minVolume) {
-			for (ParticleImpl particle : this.getAllParticles()) {
+			for (Particle particle : this.getAllParticles()) {
 				if (particle.getID() > 0 && particle.getVolume() < minVolume) {
-					this.hideParticle(particle, ParticleImpl.HideType.SIZE);
+					this.hideParticle(particle, Particle.HideType.SIZE);
 				}
 			}
 		} else {
-			for (ParticleImpl particle : this.getAllParticles()) {
+			for (Particle particle : this.getAllParticles()) {
 				if (particle.getID() > 0 && particle.getVolume() > minVolume
 						&& particle.getVolume() <= this.minVolume)
-					if (particle.wasHiddenBy(ParticleImpl.HideType.DELETE)
-							|| particle.wasHiddenBy(ParticleImpl.HideType.FACE_TOUCHED)) {
+					if (particle.wasHiddenBy(Particle.HideType.DELETE)
+							|| particle.wasHiddenBy(Particle.HideType.FACE_TOUCHED)) {
 						continue;
 					} else {
 						showParticle(particle);
@@ -713,7 +714,7 @@ public class ParticleManager {
 		List<ParticleImpl> visibleParticles = getVisibleParticles();
 		Iterator<ParticleImpl> iter = visibleParticles.iterator();
 		while (iter.hasNext()) {
-			ParticleImpl particle = iter.next();
+			Particle particle = iter.next();
 
 			IJ.showStatus("Rendering surfaces...");
 			IJ.showProgress(p, visibleParticles.size());
@@ -757,7 +758,7 @@ public class ParticleManager {
 		List<ParticleImpl> visibleParticles = getVisibleParticles();
 		Iterator<ParticleImpl> iter = visibleParticles.iterator();
 		while (iter.hasNext()) {
-			ParticleImpl particle = iter.next();
+			Particle particle = iter.next();
 			IJ.showStatus("Rendering centroids...");
 			IJ.showProgress(p, visibleParticles.size());
 			if (particle.getID() > 0) {
@@ -809,7 +810,7 @@ public class ParticleManager {
 		List<ParticleImpl> visibleParticles = getVisibleParticles();
 		Iterator<ParticleImpl> iter = visibleParticles.iterator();
 		while (iter.hasNext()) {
-			ParticleImpl particle = iter.next();
+			Particle particle = iter.next();
 			IJ.showStatus("Rendering axes...");
 			IJ.showProgress(p, visibleParticles.size());
 
@@ -923,7 +924,7 @@ public class ParticleManager {
 			int[][] particleLabels, List<ParticleImpl> particles, int resampling) {
 		Calibration cal = imp.getCalibration();
 		final boolean[] channels = { true, false, false };
-		for (ParticleImpl p : particles) {
+		for (Particle p : particles) {
 			IJ.showStatus("Getting surface meshes...");
 			IJ.showProgress(p.getID(), particles.size());
 
@@ -1044,7 +1045,7 @@ public class ParticleManager {
 	}
 
 	public static void hideZero(List<ParticleImpl> particles) {
-		for (ParticleImpl p : particles)
+		for (Particle p : particles)
 			if (p.getID() == 0)
 				p.setVisible(false);
 	}

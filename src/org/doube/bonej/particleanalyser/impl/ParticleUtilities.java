@@ -24,6 +24,7 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 
 import org.doube.bonej.MeasureSurface;
+import org.doube.bonej.particleanalyser.Particle;
 import org.doube.geometry.FitEllipsoid;
 
 import customnode.CustomTriangleMesh;
@@ -249,7 +250,7 @@ public class ParticleUtilities {
 		}
 	}
 
-	protected static ImagePlus getBinaryParticle(ParticleImpl p, ImagePlus imp,
+	protected static ImagePlus getBinaryParticle(Particle p, ImagePlus imp,
 			int[][] particleLabels, int padding) {
 
 		final int w = imp.getWidth();
