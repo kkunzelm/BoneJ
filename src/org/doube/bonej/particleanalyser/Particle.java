@@ -44,15 +44,6 @@ public class Particle implements Cloneable {
 
 	/**
 	 * @author Keith Schulze 
-	 * This enum describes the faces of a volume. It is generally used to describe
-	 * which face a Particle object is touching.
-	 */
-	public static enum Face {
-		NONE, TOP, BOTTOM, NORTH, EAST, SOUTH, WEST;
-	}
-
-	/**
-	 * @author Keith Schulze 
 	 * Enum that describes the methods by which this particle was hidden if it is
 	 * not shown.
 	 */
@@ -86,9 +77,9 @@ public class Particle implements Cloneable {
 	 * Indicates which face(s) of the volume this particle is in contact with
 	 */
 	@SuppressWarnings("serial")
-	private List<Particle.Face> edgesTouched = new ArrayList<Particle.Face>() {
+	private List<Face> edgesTouched = new ArrayList<Face>() {
 		{
-			add(Particle.Face.NONE);
+			add(Face.NONE);
 		}
 	};
 
@@ -167,7 +158,7 @@ public class Particle implements Cloneable {
 	 * @param surfacePoints
 	 */
 	public Particle(int iD, String name, boolean visible,
-			List<Particle.Face> edgeTouched, double[] centroid, int[] limits,
+			List<Face> edgeTouched, double[] centroid, int[] limits,
 			Calibration calibration, long particleSize,
 			List<Point3f> surfacePoints) {
 		super();
@@ -194,7 +185,7 @@ public class Particle implements Cloneable {
 	 * @param surfacePoints
 	 */
 	public Particle(int iD, String name, Calibration calibration,
-			List<Particle.Face> edgeTouched, double[] centroid, int[] limits,
+			List<Face> edgeTouched, double[] centroid, int[] limits,
 			long particleSize) {
 		super();
 		this.ID = iD;
@@ -314,7 +305,7 @@ public class Particle implements Cloneable {
 	/**
 	 * @return the touchingEdge
 	 */
-	public boolean isTouchingEdge(Particle.Face face) {
+	public boolean isTouchingEdge(Face face) {
 		if (this.edgesTouched.contains(face)) {
 			return true;
 		} else {
@@ -325,7 +316,7 @@ public class Particle implements Cloneable {
 	/**
 	 * @return the edgesTouched
 	 */
-	public List<Particle.Face> getEdgesTouched() {
+	public List<Face> getEdgesTouched() {
 		return edgesTouched;
 	}
 
@@ -333,7 +324,7 @@ public class Particle implements Cloneable {
 	 * @param edgesTouched
 	 *            the edgesTouched to set
 	 */
-	public void setEdgesTouched(List<Particle.Face> edgeTouched) {
+	public void setEdgesTouched(List<Face> edgeTouched) {
 		this.edgesTouched = edgeTouched;
 	}
 

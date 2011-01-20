@@ -161,13 +161,13 @@ public class ParticleGetter {
 		long[] particleSizes = getParticleSizes(particleLabels, sPhase);
 		double[][] centroids = getCentroids(imp, particleLabels, particleSizes);
 		int[][] limits = getParticleLimits(imp, particleLabels, particleSizes.length);
-		List<List<Particle.Face>> edgesTouched = detectEdgesTouched(imp, particleLabels, workArray, particleSizes.length);
+		List<List<Face>> edgesTouched = detectEdgesTouched(imp, particleLabels, workArray, particleSizes.length);
 		
 		Object[] result = { workArray, particleLabels, particleSizes, centroids, limits, edgesTouched };
 		return result;
 	}
 	
-	public static List<Particle> createParticleList(ImagePlus img, List<List<Particle.Face>> edgesTouched, double[][] centroids, 
+	public static List<Particle> createParticleList(ImagePlus img, List<List<Face>> edgesTouched, double[][] centroids, 
 			int[][] limits, long[] particleSizes){
 		if (edgesTouched.size() == centroids.length && centroids.length == limits.length && limits.length == particleSizes.length) {
 			List<Particle> particleList = new ArrayList<Particle>();
@@ -996,16 +996,16 @@ public class ParticleGetter {
 	 * @param h
 	 * @param d
 	 */
-	private static List<List<Particle.Face>> detectEdgesTouched(ImagePlus imp, int[][] particleLabels,
+	private static List<List<Face>> detectEdgesTouched(ImagePlus imp, int[][] particleLabels,
 			byte[][] workArray, int nLabels) {
 		final int w = imp.getWidth();
 		final int h = imp.getHeight();
 		final int d = imp.getImageStackSize();
-		List<List<Particle.Face>> newLabel = new LinkedList<List<Particle.Face>>();
+		List<List<Face>> newLabel = new LinkedList<List<Face>>();
 		
 		for (int i = 0; i < nLabels; i++) {
-			List<Particle.Face> temp = new ArrayList<Particle.Face>();
-			temp.add(Particle.Face.NONE);
+			List<Face> temp = new ArrayList<Face>();
+			temp.add(Face.NONE);
 			newLabel.add(temp);
 		}
 
@@ -1016,20 +1016,20 @@ public class ParticleGetter {
 			for (int x = 0; x < w; x++) {
 				final int pt = particleLabels[0][index + x];
 				if (pt > 0) {
-					if (newLabel.get(pt).get(0) == Particle.Face.NONE) {
+					if (newLabel.get(pt).get(0) == Face.NONE) {
 						newLabel.get(pt).remove(0);
-						newLabel.get(pt).add(Particle.Face.TOP);
-					} else if (!newLabel.get(pt).contains(Particle.Face.TOP)) {
-						newLabel.get(pt).add(Particle.Face.TOP);
+						newLabel.get(pt).add(Face.TOP);
+					} else if (!newLabel.get(pt).contains(Face.TOP)) {
+						newLabel.get(pt).add(Face.TOP);
 					}
 				}
 				final int pb = particleLabels[d - 1][index + x];
 				if (pb > 0)
-					if (newLabel.get(pb).get(0) == Particle.Face.NONE) {
+					if (newLabel.get(pb).get(0) == Face.NONE) {
 						newLabel.get(pb).remove(0);
-						newLabel.get(pb).add(Particle.Face.BOTTOM);
-					} else if (!newLabel.get(pb).contains(Particle.Face.BOTTOM)) {
-						newLabel.get(pb).add(Particle.Face.BOTTOM);
+						newLabel.get(pb).add(Face.BOTTOM);
+					} else if (!newLabel.get(pb).contains(Face.BOTTOM)) {
+						newLabel.get(pb).add(Face.BOTTOM);
 					}
 			}
 		}
@@ -1040,18 +1040,18 @@ public class ParticleGetter {
 				final int pw = particleLabels[z][y * w];
 				final int pe = particleLabels[z][y * w + w - 1];
 				if (pw > 0)
-					if (newLabel.get(pw).get(0) == Particle.Face.NONE) {
+					if (newLabel.get(pw).get(0) == Face.NONE) {
 						newLabel.get(pw).remove(0);
-						newLabel.get(pw).add(Particle.Face.WEST);
-					} else if (!newLabel.get(pw).contains(Particle.Face.WEST)) {
-						newLabel.get(pw).add(Particle.Face.WEST);
+						newLabel.get(pw).add(Face.WEST);
+					} else if (!newLabel.get(pw).contains(Face.WEST)) {
+						newLabel.get(pw).add(Face.WEST);
 					}
 				if (pe > 0)
-					if (newLabel.get(pe).get(0) == Particle.Face.NONE) {
+					if (newLabel.get(pe).get(0) == Face.NONE) {
 						newLabel.get(pe).remove(0);
-						newLabel.get(pe).add(Particle.Face.EAST);
-					} else if (!newLabel.get(pe).contains(Particle.Face.EAST)) {
-						newLabel.get(pe).add(Particle.Face.EAST);
+						newLabel.get(pe).add(Face.EAST);
+					} else if (!newLabel.get(pe).contains(Face.EAST)) {
+						newLabel.get(pe).add(Face.EAST);
 					}
 			}
 		}
@@ -1063,18 +1063,18 @@ public class ParticleGetter {
 				final int pn = particleLabels[z][x];
 				final int ps = particleLabels[z][lastRow + x];
 				if (pn > 0)
-					if (newLabel.get(pn).get(0) == Particle.Face.NONE) {
+					if (newLabel.get(pn).get(0) == Face.NONE) {
 						newLabel.get(pn).remove(0);
-						newLabel.get(pn).add(Particle.Face.NORTH);
-					} else if (!newLabel.get(pn).contains(Particle.Face.NORTH)) {
-						newLabel.get(pn).add(Particle.Face.NORTH);
+						newLabel.get(pn).add(Face.NORTH);
+					} else if (!newLabel.get(pn).contains(Face.NORTH)) {
+						newLabel.get(pn).add(Face.NORTH);
 					}
 				if (ps > 0)
-					if (newLabel.get(ps).get(0) == Particle.Face.NONE) {
+					if (newLabel.get(ps).get(0) == Face.NONE) {
 						newLabel.get(ps).remove(0);
-						newLabel.get(ps).add(Particle.Face.SOUTH);
-					} else if (!newLabel.get(ps).contains(Particle.Face.SOUTH)) {
-						newLabel.get(ps).add(Particle.Face.SOUTH);
+						newLabel.get(ps).add(Face.SOUTH);
+					} else if (!newLabel.get(ps).contains(Face.SOUTH)) {
+						newLabel.get(ps).add(Face.SOUTH);
 					}
 			}
 		}

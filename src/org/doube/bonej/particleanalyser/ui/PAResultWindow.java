@@ -39,6 +39,7 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 
+import org.doube.bonej.particleanalyser.Face;
 import org.doube.bonej.particleanalyser.Particle;
 import org.doube.bonej.particleanalyser.ParticleManager;
 
@@ -72,7 +73,7 @@ public class PAResultWindow implements Runnable {
 	private JCheckBox chckbxSouth;
 	private JCheckBox chckbxEast;
 	private JCheckBox chckbxWest;
-	private List<Particle.Face> excludedEdges = new ArrayList<Particle.Face>();
+	private List<Face> excludedEdges = new ArrayList<Face>();
 	
 	private static final String LINE_BREAK = "\n"; 
     private static final String CELL_BREAK = "\t"; 
@@ -370,7 +371,7 @@ public class PAResultWindow implements Runnable {
 		chckbxTop.setSelected(true);
 		chckbxTop.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
-				excludeEdge(chckbxTop.isSelected(), Particle.Face.TOP);
+				excludeEdge(chckbxTop.isSelected(), Face.TOP);
 			}
 		});
 		panel_5.add(chckbxTop);
@@ -380,7 +381,7 @@ public class PAResultWindow implements Runnable {
 		chckbxBottom.setSelected(true);
 		chckbxBottom.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
-				excludeEdge(chckbxBottom.isSelected(), Particle.Face.BOTTOM);
+				excludeEdge(chckbxBottom.isSelected(), Face.BOTTOM);
 			}
 		});
 		panel_5.add(chckbxBottom);
@@ -390,7 +391,7 @@ public class PAResultWindow implements Runnable {
 		chckbxNorth.setSelected(true);
 		chckbxNorth.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
-				excludeEdge(chckbxNorth.isSelected(), Particle.Face.NORTH);
+				excludeEdge(chckbxNorth.isSelected(), Face.NORTH);
 			}
 		});
 		panel_5.add(chckbxNorth);
@@ -400,7 +401,7 @@ public class PAResultWindow implements Runnable {
 		chckbxSouth.setSelected(true);
 		chckbxSouth.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
-				excludeEdge(chckbxSouth.isSelected(), Particle.Face.SOUTH);
+				excludeEdge(chckbxSouth.isSelected(), Face.SOUTH);
 			}
 		});
 		panel_5.add(chckbxSouth);
@@ -410,7 +411,7 @@ public class PAResultWindow implements Runnable {
 		chckbxEast.setSelected(true);
 		chckbxEast.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
-				excludeEdge(chckbxEast.isSelected(), Particle.Face.EAST);
+				excludeEdge(chckbxEast.isSelected(), Face.EAST);
 			}
 		});
 		panel_5.add(chckbxEast);
@@ -420,7 +421,7 @@ public class PAResultWindow implements Runnable {
 		chckbxWest.setSelected(true);
 		chckbxWest.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
-				excludeEdge(chckbxWest.isSelected(), Particle.Face.WEST);
+				excludeEdge(chckbxWest.isSelected(), Face.WEST);
 			}
 		});
 		panel_5.add(chckbxWest);
@@ -738,7 +739,7 @@ public class PAResultWindow implements Runnable {
 		ptm.fireTableStructureChanged();
 	}
 
-	private void excludeEdge(final boolean show, final Particle.Face edge) {
+	private void excludeEdge(final boolean show, final Face edge) {
 		if (show) {
 			excludedEdges.remove(edge);
 		} else {
@@ -765,7 +766,7 @@ public class PAResultWindow implements Runnable {
 		pool.execute(sw);
 	}
 	
-	public List<Particle.Face> getExcludedEdges() {
+	public List<Face> getExcludedEdges() {
 		return this.excludedEdges;
 	}
 	

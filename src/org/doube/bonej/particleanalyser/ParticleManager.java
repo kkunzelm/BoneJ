@@ -534,7 +534,7 @@ public class ParticleManager {
 	 * @param show
 	 * @param edge
 	 */
-	public synchronized void excludeOnEdge(boolean show, Particle.Face edge) {
+	public synchronized void excludeOnEdge(boolean show, Face edge) {
 		for (Particle p : this.getAllParticles()) {
 			if (p.getEdgesTouched().size() == 1 && p.isTouchingEdge(edge)) {
 				if (show) {
@@ -549,7 +549,7 @@ public class ParticleManager {
 				}
 			} else if (p.getEdgesTouched().size() > 1 && p.isTouchingEdge(edge)) {
 				boolean touchesAnotherExcludedFace = false;
-				for (Particle.Face excludedFace : resultWindow
+				for (Face excludedFace : resultWindow
 						.getExcludedEdges()) {
 					if (p.isTouchingEdge(excludedFace))
 						touchesAnotherExcludedFace = true;
