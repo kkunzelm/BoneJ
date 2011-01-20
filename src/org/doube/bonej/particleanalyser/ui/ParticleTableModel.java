@@ -104,7 +104,7 @@ public class ParticleTableModel extends AbstractTableModel {
 		} else {
 			List<ParticleImpl> visibleParticles = this.particleManager.getVisibleParticles();
 			
-			return visibleParticles.get(rowIndex).tableLookup(this.columnNames.get(columnIndex));
+			return visibleParticles.get(rowIndex).getParamterByKey(this.columnNames.get(columnIndex));
 		}
 	}
 	

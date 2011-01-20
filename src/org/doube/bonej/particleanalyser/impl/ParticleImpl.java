@@ -683,7 +683,7 @@ public class ParticleImpl implements Cloneable {
 	 * @param key
 	 * @return
 	 */
-	public Object tableLookup(String key) {
+	public Object getParamterByKey(String key) {
 		HashMap<String, Object> resultMap = this.generateResultMap();
 
 		return resultMap.get(key);
