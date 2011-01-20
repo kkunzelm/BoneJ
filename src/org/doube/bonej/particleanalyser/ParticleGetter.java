@@ -167,15 +167,15 @@ public class ParticleGetter {
 		return result;
 	}
 	
-	public static List<Particle> createParticleList(ImagePlus img, List<List<Face>> edgesTouched, double[][] centroids, 
+	public static List<ParticleImpl> createParticleList(ImagePlus img, List<List<Face>> edgesTouched, double[][] centroids, 
 			int[][] limits, long[] particleSizes){
 		if (edgesTouched.size() == centroids.length && centroids.length == limits.length && limits.length == particleSizes.length) {
-			List<Particle> particleList = new ArrayList<Particle>();
+			List<ParticleImpl> particleList = new ArrayList<ParticleImpl>();
 			Calibration cal = img.getCalibration();
 			
 			for (int i = 0; i < particleSizes.length; i++) {
 				String name = "Particle " + i;
-				Particle p = new Particle(i, name, cal, edgesTouched.get(i), centroids[i], limits[i], particleSizes[i]);
+				ParticleImpl p = new ParticleImpl(i, name, cal, edgesTouched.get(i), centroids[i], limits[i], particleSizes[i]);
 				particleList.add(p);
 			}
 			
@@ -1095,7 +1095,7 @@ public class ParticleGetter {
 	 * 
 	 */
 	public static double[][] getMaxDistances(ImagePlus imp,
-			int[][] particleLabels, List<Particle> particles) {
+			int[][] particleLabels, List<ParticleImpl> particles) {
 		Calibration cal = imp.getCalibration();
 		final double vW = cal.pixelWidth;
 		final double vH = cal.pixelHeight;

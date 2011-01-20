@@ -40,7 +40,7 @@ import javax.swing.JTextField;
 import javax.swing.UIManager;
 
 import org.doube.bonej.particleanalyser.Face;
-import org.doube.bonej.particleanalyser.Particle;
+import org.doube.bonej.particleanalyser.ParticleImpl;
 import org.doube.bonej.particleanalyser.ParticleManager;
 
 import java.awt.event.ItemListener;
@@ -658,14 +658,14 @@ public class PAResultWindow implements Runnable {
 		}
 	}
 
-	public void selectParticle(Particle particle) {
+	public void selectParticle(ParticleImpl particle) {
 		resultTable
 				.changeSelection(
 						pm.getVisibleParticles().lastIndexOf(particle), 0,
 						false, false);
 	}
 
-	public Particle getSelectedParticle() {
+	public ParticleImpl getSelectedParticle() {
 		int[] selectedRows = resultTable.getSelectedRows();
 		if (selectedRows.length > 1) {
 			return null;
@@ -694,10 +694,10 @@ public class PAResultWindow implements Runnable {
 
 	public void removeSelectedRows() {
 		int[] selectedRows = resultTable.getSelectedRows();
-		List<Particle> visibleParticles = pm.getVisibleParticles();
+		List<ParticleImpl> visibleParticles = pm.getVisibleParticles();
 
 		for (int i = 0; i < selectedRows.length; i++) {
-			pm.hideParticle(visibleParticles.get(selectedRows[i]), Particle.HideType.DELETE);
+			pm.hideParticle(visibleParticles.get(selectedRows[i]), ParticleImpl.HideType.DELETE);
 		}
 	}
 

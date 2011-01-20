@@ -114,7 +114,7 @@ public class ParticleUtilities {
 	 *         particle
 	 */
 	public static double[][] getMeanStdDev(ImagePlus imp,
-			int[][] particleLabels, List<Particle> particles,
+			int[][] particleLabels, List<ParticleImpl> particles,
 			final int threshold) {
 		final int nParticles = particles.size();
 		final int d = imp.getImageStackSize();
@@ -164,7 +164,7 @@ public class ParticleUtilities {
 	 * @param surfacePoints
 	 * @return
 	 */
-	public static void calculateSurfaceArea(Particle particle) {
+	public static void calculateSurfaceArea(ParticleImpl particle) {
 		List<Point3f> surfacePoints = particle.getSurfacePoints();
 		if (surfacePoints != null) {
 			particle.setSurfaceArea(MeasureSurface
@@ -181,7 +181,7 @@ public class ParticleUtilities {
 	 * @param surfacePoints
 	 * @return
 	 */
-	public static void calculateEnclosedVolume(Particle particle) {
+	public static void calculateEnclosedVolume(ParticleImpl particle) {
 		List<Point3f> surfacePoints = particle.getSurfacePoints();
 		final Color3f colour = new Color3f(0.0f, 0.0f, 0.0f);
 		double surfaceVolume = 0;
@@ -202,7 +202,7 @@ public class ParticleUtilities {
 	 * @param surfacePoints
 	 * @return
 	 */
-	public static void calculateFeretDiameter(Particle particle) {
+	public static void calculateFeretDiameter(ParticleImpl particle) {
 		List<Point3f> surfacePoints = particle.getSurfacePoints();
 		double feret = Double.NaN;
 		if (surfacePoints != null) {
@@ -225,7 +225,7 @@ public class ParticleUtilities {
 		}
 	}
 
-	public static void generateEllipsoid(Particle particle) {
+	public static void generateEllipsoid(ParticleImpl particle) {
 		List<Point3f> surfacePoints = particle.getSurfacePoints();
 		if (surfacePoints == null) {
 			return;
@@ -249,7 +249,7 @@ public class ParticleUtilities {
 		}
 	}
 
-	protected static ImagePlus getBinaryParticle(Particle p, ImagePlus imp,
+	protected static ImagePlus getBinaryParticle(ParticleImpl p, ImagePlus imp,
 			int[][] particleLabels, int padding) {
 
 		final int w = imp.getWidth();

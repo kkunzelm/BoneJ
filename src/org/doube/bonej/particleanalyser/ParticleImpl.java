@@ -40,7 +40,7 @@ import ij.measure.Calibration;
  *         This class attempts to modularize the particle counter somewhat by
  *         creating a particle object that holds
  */
-public class Particle implements Cloneable {
+public class ParticleImpl implements Cloneable {
 
 	/**
 	 * @author Keith Schulze 
@@ -66,7 +66,7 @@ public class Particle implements Cloneable {
 	 */
 	private boolean visible = true;
 
-	private List<HideType> hiddenBy = new ArrayList<Particle.HideType>();
+	private List<HideType> hiddenBy = new ArrayList<ParticleImpl.HideType>();
 
 	/**
 	 * Particle selected
@@ -157,7 +157,7 @@ public class Particle implements Cloneable {
 	 * @param particleSize
 	 * @param surfacePoints
 	 */
-	public Particle(int iD, String name, boolean visible,
+	public ParticleImpl(int iD, String name, boolean visible,
 			List<Face> edgeTouched, double[] centroid, int[] limits,
 			Calibration calibration, long particleSize,
 			List<Point3f> surfacePoints) {
@@ -184,7 +184,7 @@ public class Particle implements Cloneable {
 	 * @param particleSize
 	 * @param surfacePoints
 	 */
-	public Particle(int iD, String name, Calibration calibration,
+	public ParticleImpl(int iD, String name, Calibration calibration,
 			List<Face> edgeTouched, double[] centroid, int[] limits,
 			long particleSize) {
 		super();

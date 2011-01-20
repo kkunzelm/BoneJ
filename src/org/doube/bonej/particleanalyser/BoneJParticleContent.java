@@ -27,23 +27,23 @@ import ij3d.ContentInstant;
  */
 public class BoneJParticleContent extends Content {
 
-	private Particle particle;
+	private ParticleImpl particle;
 	private ParticleManager pm;
 	
-	public BoneJParticleContent(String name, int tp, Particle particle, ParticleManager pm) {
+	public BoneJParticleContent(String name, int tp, ParticleImpl particle, ParticleManager pm) {
 		super(name, tp);
 		this.particle = particle;
 		this.pm = pm;
 	}
 
-	public BoneJParticleContent(String name, Particle particle, ParticleManager pm) {
+	public BoneJParticleContent(String name, ParticleImpl particle, ParticleManager pm) {
 		super(name);
 		this.particle = particle;
 		this.pm = pm;
 	}
 
 	public BoneJParticleContent(String name, TreeMap<Integer, ContentInstant> contents, 
-			Particle particle, ParticleManager pm) {
+			ParticleImpl particle, ParticleManager pm) {
 		super(name, contents);
 		this.particle = particle;
 		this.pm = pm;
@@ -56,7 +56,7 @@ public class BoneJParticleContent extends Content {
 	public void contentRemoved(Content c) {
 		super.contentRemoved(c);
 		if (!pm.isClosed() && c.getName() == particle.getName() && particle.isVisible())
-			pm.hideParticle(particle, Particle.HideType.DELETE);
+			pm.hideParticle(particle, ParticleImpl.HideType.DELETE);
 	}
 	
 	/* (non-Javadoc)

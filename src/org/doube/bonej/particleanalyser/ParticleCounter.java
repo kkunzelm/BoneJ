@@ -249,7 +249,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		double[][] centroids = (double[][]) result[3];
 		int[][] limits = (int[][]) result[4];
 		List<List<Face>> edgesTouched = (List<List<Face>>) result[5];
-		List<Particle> particles = ParticleGetter.createParticleList(imp, edgesTouched, centroids, limits, particleSizes);
+		List<ParticleImpl> particles = ParticleGetter.createParticleList(imp, edgesTouched, centroids, limits, particleSizes);
 
 		// set up resources for analysis
 		ArrayList<List<Point3f>> surfacePoints = new ArrayList<List<Point3f>>();

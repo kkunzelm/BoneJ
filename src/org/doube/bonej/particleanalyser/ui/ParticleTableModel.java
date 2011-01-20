@@ -21,7 +21,7 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
-import org.doube.bonej.particleanalyser.Particle;
+import org.doube.bonej.particleanalyser.ParticleImpl;
 import org.doube.bonej.particleanalyser.ParticleManager;
 
 /**
@@ -102,7 +102,7 @@ public class ParticleTableModel extends AbstractTableModel {
 		if (columnIndex == 0) {
 			return rowIndex+1;
 		} else {
-			List<Particle> visibleParticles = this.particleManager.getVisibleParticles();
+			List<ParticleImpl> visibleParticles = this.particleManager.getVisibleParticles();
 			
 			return visibleParticles.get(rowIndex).tableLookup(this.columnNames.get(columnIndex));
 		}
