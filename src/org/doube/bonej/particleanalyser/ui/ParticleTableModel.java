@@ -16,11 +16,14 @@
  */
 package org.doube.bonej.particleanalyser.ui;
 
+import ij.measure.Calibration;
+
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
+import org.doube.bonej.particleanalyser.Particle;
 import org.doube.bonej.particleanalyser.impl.ParticleImpl;
 import org.doube.bonej.particleanalyser.impl.ParticleManager;
 
@@ -36,9 +39,8 @@ public class ParticleTableModel extends AbstractTableModel {
 	private static final long serialVersionUID = 1L;
 	private ParticleManager particleManager;
 	//private List<String> columnNames = Arrays.asList("ID", "Name", "Vol.", "x Cent", "y Cent", "z Cent");
-	private List<String> columnNames;
-	
-	private String units;
+	private List<Particle.ParameterKey> columns;
+	private Calibration calibration;
 	
 	private boolean showSurfaceArea = false;
 	private boolean showFeretDiameter = false;
@@ -57,16 +59,15 @@ public class ParticleTableModel extends AbstractTableModel {
 		super();
 		this.particleManager = pm;
 		
-		this.units = this.particleManager.getCalibration().getUnits();
-		this.columnNames = new ArrayList<String>() {{
-			add("");
-			add("ID");
-			add("Name");
-			add("<html>Vol. (" + units + "<sup>3</sup>)</html>");
-			add("<html>Area (" + units + "<sup>2</sup>)</html>");
-			add("x Cent (" + units + ")");
-			add("y Cent (" + units + ")");
-			add("z Cent (" + units + ")");
+		this.calibration = this.particleManager.getCalibration();
+		this.columns = new ArrayList<Particle.ParameterKey>() {{
+			add(Particle.ParameterKey.NUMBER);
+			add(Particle.ParameterKey.ID);
+			add(Particle.ParameterKey.NAME);
+			add(Particle.ParameterKey.VOLUME);
+			add(Particle.ParameterKey.X_CENTROID);
+			add(Particle.ParameterKey.Y_CENTROID);
+			add(Particle.ParameterKey.Z_CENTROID);
 		}};
 	}
 	
@@ -75,7 +76,7 @@ public class ParticleTableModel extends AbstractTableModel {
 	 */
 	@Override
 	public String getColumnName(int column) {
-		return this.columnNames.get(column);
+		return this.columns.get(column).getStringValue(this.calibration);
 	}
 
 	/* (non-Javadoc)
@@ -91,7 +92,7 @@ public class ParticleTableModel extends AbstractTableModel {
 	 */
 	@Override
 	public int getColumnCount() {
-		return this.columnNames.size();
+		return this.columns.size();
 	}
 
 	/* (non-Javadoc)
@@ -104,7 +105,7 @@ public class ParticleTableModel extends AbstractTableModel {
 		} else {
 			List<ParticleImpl> visibleParticles = this.particleManager.getVisibleParticles();
 			
-			return visibleParticles.get(rowIndex).getParamterByKey(this.columnNames.get(columnIndex));
+			return visibleParticles.get(rowIndex).getParamterByKey(this.columns.get(columnIndex));
 		}
 	}
 	
@@ -124,11 +125,10 @@ public class ParticleTableModel extends AbstractTableModel {
 	 */
 	public void setShowSurfaceArea(boolean showSurfaceArea) {
 		this.showSurfaceArea = showSurfaceArea;
-		String surfaceArea = "SA (" + units + "²)";
 		if (showSurfaceArea) {
-			this.columnNames.add(columnNames.size(), surfaceArea);
+			this.columns.add(columns.size(), Particle.ParameterKey.SURFACE_AREA);
 		} else {
-			this.columnNames.remove(surfaceArea);
+			this.columns.remove(Particle.ParameterKey.SURFACE_AREA);
 		}
 	}
 
@@ -144,11 +144,10 @@ public class ParticleTableModel extends AbstractTableModel {
 	 */
 	public void setShowFeretDiameter(boolean showFeretDiameter) {
 		this.showFeretDiameter = showFeretDiameter;
-		String feret = "Feret (" + units + ")";
 		if (showFeretDiameter) {
-			this.columnNames.add(columnNames.size(), feret);
+			this.columns.add(columns.size(), Particle.ParameterKey.FERET_DIAMETER);
 		} else {
-			this.columnNames.remove(feret);
+			this.columns.remove(Particle.ParameterKey.FERET_DIAMETER);
 		}
 	}
 
@@ -164,11 +163,10 @@ public class ParticleTableModel extends AbstractTableModel {
 	 */
 	public void setShowEnclosedVolume(boolean showEnclosedVolume) {
 		this.showEnclosedVolume = showEnclosedVolume;
-		String ev = "Encl. Vol. (" + units + "³)";
 		if (showEnclosedVolume) {
-			this.columnNames.add(columnNames.size(), ev);
+			this.columns.add(Particle.ParameterKey.ENCLOSED_VOLUME);
 		} else {
-			this.columnNames.remove(ev);
+			this.columns.remove(Particle.ParameterKey.ENCLOSED_VOLUME);
 		}
 	}
 
@@ -184,15 +182,20 @@ public class ParticleTableModel extends AbstractTableModel {
 	 */
 	public void setShowEigens(boolean showEigens) {
 		this.showEigens = showEigens;
-		String[] eigenValues = {"I1","I2","I3","vX","vY","vZ"};
 		if (showEigens) {
-			for(String ev : eigenValues){
-				this.columnNames.add(columnNames.size(), ev);
-			}
+			this.columns.add(Particle.ParameterKey.EIGEN_I1);
+			this.columns.add(Particle.ParameterKey.EIGEN_I2);
+			this.columns.add(Particle.ParameterKey.EIGEN_I3);
+			this.columns.add(Particle.ParameterKey.EIGEN_VX);
+			this.columns.add(Particle.ParameterKey.EIGEN_VY);
+			this.columns.add(Particle.ParameterKey.EIGEN_VZ);
 		} else {
-			for (String ev : eigenValues) {
-				this.columnNames.remove(ev);
-			}
+			this.columns.remove(Particle.ParameterKey.EIGEN_I1);
+			this.columns.remove(Particle.ParameterKey.EIGEN_I2);
+			this.columns.remove(Particle.ParameterKey.EIGEN_I3);
+			this.columns.remove(Particle.ParameterKey.EIGEN_VX);
+			this.columns.remove(Particle.ParameterKey.EIGEN_VY);
+			this.columns.remove(Particle.ParameterKey.EIGEN_VZ);
 		}
 	}
 
@@ -208,15 +211,14 @@ public class ParticleTableModel extends AbstractTableModel {
 	 */
 	public void setShowEulerCharacters(boolean showEulerCharacters) {
 		this.showEulerCharacters = showEulerCharacters;
-		String[] eulerCharacterValues = {"Euler (Ï‡)", "Holes (Î²1)", "Cavities (Î²2)"};
 		if (showEulerCharacters){
-			for(String ecv : eulerCharacterValues) {
-				this.columnNames.add(columnNames.size(), ecv);
-			}
+			this.columns.add(Particle.ParameterKey.EULER_CHARACTER);
+			this.columns.add(Particle.ParameterKey.EULER_HOLES);
+			this.columns.add(Particle.ParameterKey.EULER_CAVATIES);
 		} else {
-			for(String ecv : eulerCharacterValues) {
-				this.columnNames.remove(ecv);
-			}
+			this.columns.remove(Particle.ParameterKey.EULER_CHARACTER);
+			this.columns.remove(Particle.ParameterKey.EULER_HOLES);
+			this.columns.remove(Particle.ParameterKey.EULER_CAVATIES);
 		}
 	}
 
@@ -232,16 +234,14 @@ public class ParticleTableModel extends AbstractTableModel {
 	 */
 	public void setShowThickness(boolean showThickness) {
 		this.showThickness = showThickness;
-		String[] thicknessValues = {"Thickness (" + units + ")", 
-				"SD Thickness (" + units + ")","Max Thickness (" + units + ")"};
 		if(showThickness){
-			for(String tv : thicknessValues) {
-				this.columnNames.add(columnNames.size(), tv);
-			}
+			this.columns.add(Particle.ParameterKey.THICKNESS);
+			this.columns.add(Particle.ParameterKey.THICKNESS_SD);
+			this.columns.add(Particle.ParameterKey.THICKNESS_MAX);
 		} else {
-			for (String tv : thicknessValues) {
-				this.columnNames.remove(tv);
-			}
+			this.columns.remove(Particle.ParameterKey.THICKNESS);
+			this.columns.remove(Particle.ParameterKey.THICKNESS_SD);
+			this.columns.remove(Particle.ParameterKey.THICKNESS_MAX);
 		}
 	}
 
@@ -257,16 +257,14 @@ public class ParticleTableModel extends AbstractTableModel {
 	 */
 	public void setShowEllipsoids(boolean showEllipsoids) {
 		this.showEllipsoids = showEllipsoids;
-		String[] ellipsoidValues = {"Major radius (" + units + ")",
-				"Int. radius (" + units + ")","Minor radius (" + units + ")"};
 		if(showEllipsoids){
-			for(String ev : ellipsoidValues){
-				this.columnNames.add(columnNames.size(), ev);
-			}
+			this.columns.add(Particle.ParameterKey.ELLIPSOID_MAJOR_RADIUS);
+			this.columns.add(Particle.ParameterKey.ELLIPSOID_INT_RADIUS);
+			this.columns.add(Particle.ParameterKey.ELLIPSOID_MINOR_RADIUS);
 		} else {
-			for(String ev : ellipsoidValues) {
-				this.columnNames.remove(ev);
-			}
+			this.columns.remove(Particle.ParameterKey.ELLIPSOID_MAJOR_RADIUS);
+			this.columns.remove(Particle.ParameterKey.ELLIPSOID_INT_RADIUS);
+			this.columns.remove(Particle.ParameterKey.ELLIPSOID_MINOR_RADIUS);
 		}
 	}
 }

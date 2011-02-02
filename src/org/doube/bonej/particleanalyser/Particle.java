@@ -24,6 +24,149 @@ public interface Particle {
 		DELETE, SIZE, FACE_TOUCHED;
 	}
 	
+	/**
+	 * @author Keith Schulze
+	 *
+	 * This enum provides a type-safe way to fetch/return Particle parameters or variables by way of Key through
+	 * the getParameterByKey method.
+	 */
+	public enum ParameterKey {
+		NUMBER() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "No.";
+			}
+		},
+		ID() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "ID";
+			}
+		},
+		NAME() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "Name";
+			}
+		},
+		VOLUME() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "<html>Vol. (" + calibration.getUnits() + "<sup>3</sup>)</html>";
+			}
+		},
+		X_CENTROID() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "<html>x (" + calibration.getUnits() + ")</html>";
+			}
+		},
+		Y_CENTROID() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "<html>y (" + calibration.getUnits() + ")</html>";
+			}
+		},
+		Z_CENTROID() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "<html>z (" + calibration.getUnits() + ")</html>";
+			}
+		},
+		SURFACE_AREA() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "<html>SA (" + calibration.getUnits() + "<sup>2</sup>)</html>";
+			}
+		},
+		FERET_DIAMETER() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "<html>Feret (" + calibration.getUnits() + ")</html>";
+			}
+		},
+		ENCLOSED_VOLUME() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "<html>Encl. Vol. (" + calibration.getUnits() + "<sup>3</sup>)</html>";
+			}
+		},
+		EIGEN_I1() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "I1";
+			}
+		},
+		EIGEN_I2() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "I2";
+			}
+		},
+		EIGEN_I3() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "I3";
+			}
+		},
+		EIGEN_VX() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "vX";
+			}
+		},
+		EIGEN_VY() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "vY";
+			}
+		},
+		EIGEN_VZ() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "vZ";
+			}
+		},
+		EULER_CHARACTER() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "Euler ()";
+			}
+		},
+		EULER_HOLES() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "Holes ()";
+			}
+		},
+		EULER_CAVATIES() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "Cavaties ()";
+			}
+		},
+		THICKNESS() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "<html>Thickness (" + calibration.getUnits() + ")</html>";
+			}
+		},
+		THICKNESS_SD() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "<html>SD Thickness (" + calibration.getUnits() + ")</html>";
+			}
+		},
+		THICKNESS_MAX() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "<html>Max Thickness (" + calibration.getUnits() + ")</html>";
+			}
+		},
+		ELLIPSOID_MAJOR_RADIUS() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "Major radius (" + calibration.getUnits() + ")";
+			}
+		},
+		ELLIPSOID_INT_RADIUS() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "Int. radius (" + calibration.getUnits() + ")";
+			}
+		},
+		ELLIPSOID_MINOR_RADIUS() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "Minor radius (" + calibration.getUnits() + ")";
+			}
+		};
+		
+		
+		/**
+		 * Abstract methods that returns string describing the parameter and the units associated
+		 * with it.
+		 * @param calibration
+		 * @return
+		 */
+		public abstract String getStringValue(Calibration calibration);
+	}
+	
 	public Object clone() throws CloneNotSupportedException;
 
 	/**
@@ -203,6 +346,6 @@ public interface Particle {
 	 * @param key
 	 * @return
 	 */
-	public Object getParamterByKey(String key);
+	public Object getParamterByKey(Particle.ParameterKey key);
 
 }

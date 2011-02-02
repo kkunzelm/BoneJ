@@ -689,48 +689,48 @@ public class ParticleImpl implements Cloneable, Particle {
 	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getParamterByKey(java.lang.String)
 	 */
 	@Override
-	public Object getParamterByKey(String key) {
-		HashMap<String, Object> resultMap = this.generateResultMap();
+	public Object getParamterByKey(Particle.ParameterKey key) {
+		HashMap<ParameterKey, Object> resultMap = this.generateResultMap();
 
 		return resultMap.get(key);
 	}
 	
-	private HashMap<String, Object> generateResultMap() {
-		HashMap<String, Object> resultMap = new HashMap<String, Object>();
+	private HashMap<Particle.ParameterKey, Object> generateResultMap() {
+		HashMap<Particle.ParameterKey, Object> resultMap = new HashMap<Particle.ParameterKey, Object>();
 		
-		resultMap.put("ID", this.ID);
-		resultMap.put("Name", this.name);
-		resultMap.put("<html>Vol. (" + calibration.getUnits() + "<sup>3</sup>)</html>", this.getVolume());
-		resultMap.put("<html>Area (" + calibration.getUnits() + "<sup>2</sup>)</html>", this.getArea());
-		resultMap.put("x Cent (" + calibration.getUnits() + ")", this.centroid[0]);
-		resultMap.put("y Cent (" + calibration.getUnits() + ")", this.centroid[1]);
-		resultMap.put("z Cent (" + calibration.getUnits() + ")", this.centroid[2]);
-		resultMap.put("SA (" + calibration.getUnits() + "²)", this.surfaceArea);
-		resultMap.put("Feret (" + calibration.getUnits() + ")", this.feretDiameter);
-		resultMap.put("Encl. Vol. (" + calibration.getUnits() + "³)", this.enclosedVolume);
+		resultMap.put(ParameterKey.ID, this.ID);
+		resultMap.put(ParameterKey.NAME, this.name);
+		resultMap.put(ParameterKey.VOLUME, this.getVolume());
+		resultMap.put(ParameterKey.VOLUME, this.getArea());
+		resultMap.put(ParameterKey.X_CENTROID, this.centroid[0]);
+		resultMap.put(ParameterKey.Y_CENTROID, this.centroid[1]);
+		resultMap.put(ParameterKey.Z_CENTROID, this.centroid[2]);
+		resultMap.put(ParameterKey.SURFACE_AREA, this.surfaceArea);
+		resultMap.put(ParameterKey.FERET_DIAMETER, this.feretDiameter);
+		resultMap.put(ParameterKey.ENCLOSED_VOLUME, this.enclosedVolume);
 
 		if (this.eigen != null) {
-			resultMap.put("I1", this.eigen.getD().get(2, 2));
-			resultMap.put("I2", this.eigen.getD().get(1, 1));
-			resultMap.put("I3", this.eigen.getD().get(0, 0));
-			resultMap.put("vX", this.eigen.getD().get(0, 2));
-			resultMap.put("vY", this.eigen.getD().get(1, 2));
-			resultMap.put("vZ", this.eigen.getD().get(2, 2));
+			resultMap.put(ParameterKey.EIGEN_I1, this.eigen.getD().get(2, 2));
+			resultMap.put(ParameterKey.EIGEN_I2, this.eigen.getD().get(1, 1));
+			resultMap.put(ParameterKey.EIGEN_I3, this.eigen.getD().get(0, 0));
+			resultMap.put(ParameterKey.EIGEN_VX, this.eigen.getD().get(0, 2));
+			resultMap.put(ParameterKey.EIGEN_VY, this.eigen.getD().get(1, 2));
+			resultMap.put(ParameterKey.EIGEN_VZ, this.eigen.getD().get(2, 2));
 		}
 		if (this.eulerCharacter != null) {
-			resultMap.put("Euler (Ï‡)", this.eulerCharacter[0]);
-			resultMap.put("Holes (Î²1)", this.eulerCharacter[1]);
-			resultMap.put("Cavities (Î²2)", this.eulerCharacter[2]);
+			resultMap.put(ParameterKey.EULER_CHARACTER, this.eulerCharacter[0]);
+			resultMap.put(ParameterKey.EULER_HOLES, this.eulerCharacter[1]);
+			resultMap.put(ParameterKey.EULER_CAVATIES, this.eulerCharacter[2]);
 		}
 		if (this.thickness != null) {
-			resultMap.put("Thickness (" + calibration.getUnits() + ")", this.thickness[0]);
-			resultMap.put("SD Thickness (" + calibration.getUnits() + ")", this.thickness[1]);
-			resultMap.put("Max Thickness (" + calibration.getUnits() + ")", this.thickness[2]);
+			resultMap.put(ParameterKey.THICKNESS, this.thickness[0]);
+			resultMap.put(ParameterKey.THICKNESS_SD, this.thickness[1]);
+			resultMap.put(ParameterKey.THICKNESS_MAX, this.thickness[2]);
 		}
 		if (this.ellipsoid != null) {
-			resultMap.put("Major radius (" + calibration.getUnits() + ")", this.ellipsoid[2]);
-			resultMap.put("Int. radius (" + calibration.getUnits() + ")", this.ellipsoid[1]);
-			resultMap.put("Minor radius (" + calibration.getUnits() + ")", this.ellipsoid[0]);
+			resultMap.put(ParameterKey.ELLIPSOID_MAJOR_RADIUS, this.ellipsoid[2]);
+			resultMap.put(ParameterKey.ELLIPSOID_INT_RADIUS, this.ellipsoid[1]);
+			resultMap.put(ParameterKey.ELLIPSOID_MINOR_RADIUS, this.ellipsoid[0]);
 		}
 		
 		return resultMap;
