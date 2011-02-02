@@ -27,24 +27,24 @@ import ij3d.ContentInstant;
  * @author Keith Schulze
  *
  */
-public class BoneJParticleContent extends Content {
+public class ParticleContent extends Content {
 
 	private Particle particle;
 	private ParticleManager pm;
 	
-	public BoneJParticleContent(String name, int tp, Particle particle, ParticleManager pm) {
+	public ParticleContent(String name, int tp, Particle particle, ParticleManager pm) {
 		super(name, tp);
 		this.particle = particle;
 		this.pm = pm;
 	}
 
-	public BoneJParticleContent(String name, Particle particle, ParticleManager pm) {
+	public ParticleContent(String name, Particle particle, ParticleManager pm) {
 		super(name);
 		this.particle = particle;
 		this.pm = pm;
 	}
 
-	public BoneJParticleContent(String name, TreeMap<Integer, ContentInstant> contents, 
+	public ParticleContent(String name, TreeMap<Integer, ContentInstant> contents, 
 			Particle particle, ParticleManager pm) {
 		super(name, contents);
 		this.particle = particle;

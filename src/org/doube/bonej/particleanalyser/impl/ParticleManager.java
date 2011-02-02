@@ -333,7 +333,7 @@ public class ParticleManager {
 		if (univ.getWindow() != null && !univ.contains(particle.getName())) {
 			Color3f pColor = ParticleUtilities.getGradientColor(
 					particle.getID(), particles.size());
-			Content pContent = BoneJParticleContentCreator.createContent(
+			Content pContent = ParticleContentCreator.createContent(
 					particle.getSurfaceMesh(pColor), particle, this);
 
 			univ.addContent(pContent).setLocked(true);
@@ -351,7 +351,7 @@ public class ParticleManager {
 				if (univ.getWindow() != null && !univ.contains(p.getName())) {
 					Color3f pColor = ParticleUtilities.getGradientColor(
 							p.getID(), particles.size());
-					Content pContent = BoneJParticleContentCreator
+					Content pContent = ParticleContentCreator
 							.createContent(p.getSurfaceMesh(pColor), p, this);
 
 					univ.addContent(pContent).setLocked(true);
@@ -738,7 +738,7 @@ public class ParticleManager {
 					break;
 				}
 
-				Content pContent = BoneJParticleContentCreator.createContent(
+				Content pContent = ParticleContentCreator.createContent(
 						particle.getSurfaceMesh(pColor), particle, this);
 
 				univ.addContent(pContent).setLocked(true);

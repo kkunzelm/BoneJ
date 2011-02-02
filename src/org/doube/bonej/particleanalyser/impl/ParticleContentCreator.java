@@ -29,14 +29,14 @@ import ij3d.UniverseSettings;
  * @author Keith
  *
  */
-public class BoneJParticleContentCreator {
+public class ParticleContentCreator {
 
 	public static Content createContent(CustomMesh mesh, Particle particle, ParticleManager pm) {
 		return createContent(mesh, particle, pm, -1);
 	}
 
 	public static Content createContent(CustomMesh mesh, Particle particle, ParticleManager pm, int tp) {
-		BoneJParticleContent c = new BoneJParticleContent(particle.getName(), tp, particle, pm);
+		ParticleContent c = new ParticleContent(particle.getName(), tp, particle, pm);
 		ContentInstant content = c.getInstant(tp);
 		content.setColor(mesh.getColor());
 		content.setTransparency(mesh.getTransparency());
@@ -52,7 +52,7 @@ public class BoneJParticleContentCreator {
 	}
 
 	public static Content createContent(CustomMultiMesh node, String name, Particle particle, ParticleManager pm, int tp) {
-		BoneJParticleContent c = new BoneJParticleContent(name, tp, particle, pm);
+		ParticleContent c = new ParticleContent(name, tp, particle, pm);
 		ContentInstant content = c.getInstant(tp);
 		content.setColor(null);
 		content.setTransparency(0f);
