@@ -22,6 +22,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 
+import org.doube.bonej.particleanalyser.Particle;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -167,10 +169,10 @@ public class ParticleGetter {
 		return result;
 	}
 	
-	public static List<ParticleImpl> createParticleList(ImagePlus img, List<List<Face>> edgesTouched, double[][] centroids, 
+	public static List<Particle> createParticleList(ImagePlus img, List<List<Face>> edgesTouched, double[][] centroids, 
 			int[][] limits, long[] particleSizes){
 		if (edgesTouched.size() == centroids.length && centroids.length == limits.length && limits.length == particleSizes.length) {
-			List<ParticleImpl> particleList = new ArrayList<ParticleImpl>();
+			List<Particle> particleList = new ArrayList<Particle>();
 			Calibration cal = img.getCalibration();
 			
 			for (int i = 0; i < particleSizes.length; i++) {
@@ -1095,7 +1097,7 @@ public class ParticleGetter {
 	 * 
 	 */
 	public static double[][] getMaxDistances(ImagePlus imp,
-			int[][] particleLabels, List<ParticleImpl> particles) {
+			int[][] particleLabels, List<Particle> particles) {
 		Calibration cal = imp.getCalibration();
 		final double vW = cal.pixelWidth;
 		final double vH = cal.pixelHeight;

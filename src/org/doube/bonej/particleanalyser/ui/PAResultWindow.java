@@ -695,7 +695,7 @@ public class PAResultWindow implements Runnable {
 
 	public void removeSelectedRows() {
 		int[] selectedRows = resultTable.getSelectedRows();
-		List<ParticleImpl> visibleParticles = pm.getVisibleParticles();
+		List<Particle> visibleParticles = pm.getVisibleParticles();
 
 		for (int i = 0; i < selectedRows.length; i++) {
 			pm.hideParticle(visibleParticles.get(selectedRows[i]), Particle.HideType.DELETE);

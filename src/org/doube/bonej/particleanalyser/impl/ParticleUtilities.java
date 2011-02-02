@@ -115,7 +115,7 @@ public class ParticleUtilities {
 	 *         particle
 	 */
 	public static double[][] getMeanStdDev(ImagePlus imp,
-			int[][] particleLabels, List<ParticleImpl> particles,
+			int[][] particleLabels, List<Particle> particles,
 			final int threshold) {
 		final int nParticles = particles.size();
 		final int d = imp.getImageStackSize();
@@ -165,7 +165,7 @@ public class ParticleUtilities {
 	 * @param surfacePoints
 	 * @return
 	 */
-	public static void calculateSurfaceArea(ParticleImpl particle) {
+	public static void calculateSurfaceArea(Particle particle) {
 		List<Point3f> surfacePoints = particle.getSurfacePoints();
 		if (surfacePoints != null) {
 			particle.setSurfaceArea(MeasureSurface
@@ -182,7 +182,7 @@ public class ParticleUtilities {
 	 * @param surfacePoints
 	 * @return
 	 */
-	public static void calculateEnclosedVolume(ParticleImpl particle) {
+	public static void calculateEnclosedVolume(Particle particle) {
 		List<Point3f> surfacePoints = particle.getSurfacePoints();
 		final Color3f colour = new Color3f(0.0f, 0.0f, 0.0f);
 		double surfaceVolume = 0;
@@ -203,7 +203,7 @@ public class ParticleUtilities {
 	 * @param surfacePoints
 	 * @return
 	 */
-	public static void calculateFeretDiameter(ParticleImpl particle) {
+	public static void calculateFeretDiameter(Particle particle) {
 		List<Point3f> surfacePoints = particle.getSurfacePoints();
 		double feret = Double.NaN;
 		if (surfacePoints != null) {
@@ -226,7 +226,7 @@ public class ParticleUtilities {
 		}
 	}
 
-	public static void generateEllipsoid(ParticleImpl particle) {
+	public static void generateEllipsoid(Particle particle) {
 		List<Point3f> surfacePoints = particle.getSurfacePoints();
 		if (surfacePoints == null) {
 			return;

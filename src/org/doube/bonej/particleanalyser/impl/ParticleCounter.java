@@ -35,6 +35,7 @@ import javax.vecmath.Point3f;
 import org.doube.bonej.Connectivity;
 import org.doube.bonej.MeasureSurface;
 import org.doube.bonej.Thickness;
+import org.doube.bonej.particleanalyser.Particle;
 import org.doube.geometry.FitEllipsoid;
 import org.doube.jama.EigenvalueDecomposition;
 import org.doube.jama.Matrix;
@@ -249,7 +250,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		double[][] centroids = (double[][]) result[3];
 		int[][] limits = (int[][]) result[4];
 		List<List<Face>> edgesTouched = (List<List<Face>>) result[5];
-		List<ParticleImpl> particles = ParticleGetter.createParticleList(imp, edgesTouched, centroids, limits, particleSizes);
+		List<Particle> particles = ParticleGetter.createParticleList(imp, edgesTouched, centroids, limits, particleSizes);
 
 		// set up resources for analysis
 		ArrayList<List<Point3f>> surfacePoints = new ArrayList<List<Point3f>>();

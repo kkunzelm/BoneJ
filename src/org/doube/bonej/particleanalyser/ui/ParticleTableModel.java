@@ -103,7 +103,7 @@ public class ParticleTableModel extends AbstractTableModel {
 		if (columnIndex == 0) {
 			return rowIndex+1;
 		} else {
-			List<ParticleImpl> visibleParticles = this.particleManager.getVisibleParticles();
+			List<Particle> visibleParticles = this.particleManager.getVisibleParticles();
 			
 			return visibleParticles.get(rowIndex).getParamterByKey(this.columns.get(columnIndex));
 		}

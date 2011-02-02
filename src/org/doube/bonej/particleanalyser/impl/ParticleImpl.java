@@ -444,7 +444,7 @@ public class ParticleImpl implements Cloneable, Particle {
 	/**
 	 * @return the eigen
 	 */
-	protected EigenvalueDecomposition getEigen() {
+	public EigenvalueDecomposition getEigen() {
 		return this.eigen;
 	}
 
@@ -452,7 +452,7 @@ public class ParticleImpl implements Cloneable, Particle {
 	 * @param eigen
 	 *            the eigen to set
 	 */
-	protected void setEigen(EigenvalueDecomposition eigen) {
+	public void setEigen(EigenvalueDecomposition eigen) {
 		this.eigen = eigen;
 	}
 
@@ -549,7 +549,7 @@ public class ParticleImpl implements Cloneable, Particle {
 	/**
 	 * @return the surfaceArea
 	 */
-	protected double getSurfaceArea() {
+	public double getSurfaceArea() {
 		return this.surfaceArea;
 	}
 
@@ -557,14 +557,14 @@ public class ParticleImpl implements Cloneable, Particle {
 	 * @param surfaceArea
 	 *            the surfaceArea to set
 	 */
-	protected void setSurfaceArea(double surfaceArea) {
+	public void setSurfaceArea(double surfaceArea) {
 		this.surfaceArea = surfaceArea;
 	}
 
 	/**
 	 * @return the ferets
 	 */
-	protected double getFeretDiameter() {
+	public double getFeretDiameter() {
 		return this.feretDiameter;
 	}
 
@@ -572,14 +572,14 @@ public class ParticleImpl implements Cloneable, Particle {
 	 * @param ferets
 	 *            the ferets to set
 	 */
-	protected void setFeretDiameter(double feretDiameter) {
+	public void setFeretDiameter(double feretDiameter) {
 		this.feretDiameter = feretDiameter;
 	}
 
 	/**
 	 * @return the enclosedVolume
 	 */
-	protected double getEnclosedVolume() {
+	public double getEnclosedVolume() {
 		return this.enclosedVolume;
 	}
 
@@ -587,14 +587,14 @@ public class ParticleImpl implements Cloneable, Particle {
 	 * @param enclosedVolume
 	 *            the enclosedVolume to set
 	 */
-	protected void setEnclosedVolume(double enclosedVolume) {
+	public void setEnclosedVolume(double enclosedVolume) {
 		this.enclosedVolume = enclosedVolume;
 	}
 
 	/**
 	 * @return the eulerCharacter
 	 */
-	protected double[] getEulerCharacter() {
+	public double[] getEulerCharacter() {
 		return this.eulerCharacter;
 	}
 
@@ -602,14 +602,14 @@ public class ParticleImpl implements Cloneable, Particle {
 	 * @param eulerCharacter
 	 *            the eulerCharacter to set
 	 */
-	protected void setEulerCharacter(double[] eulerCharacter) {
+	public void setEulerCharacter(double[] eulerCharacter) {
 		this.eulerCharacter = eulerCharacter;
 	}
 
 	/**
 	 * @return the thickness
 	 */
-	protected double[] getThickness() {
+	public double[] getThickness() {
 		return this.thickness;
 	}
 
@@ -617,14 +617,14 @@ public class ParticleImpl implements Cloneable, Particle {
 	 * @param thickness
 	 *            the thickness to set
 	 */
-	protected void setThickness(double[] thickness) {
+	public void setThickness(double[] thickness) {
 		this.thickness = thickness;
 	}
 
 	/**
 	 * @return the ellipsoid
 	 */
-	protected Object[] getEllipsoid() {
+	public Object[] getEllipsoid() {
 		return this.ellipsoid;
 	}
 
@@ -632,7 +632,7 @@ public class ParticleImpl implements Cloneable, Particle {
 	 * @param ellipsoid
 	 *            the ellipsoid to set
 	 */
-	protected void setEllipsoid(Object[] ellipsoid) {
+	public void setEllipsoid(Object[] ellipsoid) {
 		this.ellipsoid = ellipsoid;
 	}
 

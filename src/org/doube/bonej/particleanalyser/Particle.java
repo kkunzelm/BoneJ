@@ -8,6 +8,7 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 
 import org.doube.bonej.particleanalyser.impl.Face;
+import org.doube.jama.EigenvalueDecomposition;
 
 import customnode.CustomMesh;
 import customnode.CustomPointMesh;
@@ -347,5 +348,23 @@ public interface Particle {
 	 * @return
 	 */
 	public Object getParamterByKey(Particle.ParameterKey key);
+
+	public EigenvalueDecomposition getEigen();
+
+	public void setEigen(EigenvalueDecomposition eigen);
+
+	public void setEllipsoid(Object[] ellipsoid);
+
+	public Object[] getEllipsoid();
+
+	public void setSurfaceArea(double surfaceArea);
+
+	public void setEnclosedVolume(double surfaceVolume);
+
+	public void setFeretDiameter(double feret);
+
+	public void setEulerCharacter(double[] eulerC);
+
+	public void setThickness(double[] thickness);
 
 }

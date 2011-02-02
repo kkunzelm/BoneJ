@@ -65,7 +65,7 @@ public class ParticleManagerImpl {
 	private ImagePlus imp;
 	private int[][] particleLabels;
 	private byte[][] particleWorkArray;
-	private List<ParticleImpl> particles;
+	private List<Particle> particles;
 	
 	private boolean closed = false;
 
@@ -93,7 +93,7 @@ public class ParticleManagerImpl {
 	 * @param particles
 	 */
 	public ParticleManagerImpl(ImagePlus imp, int[][] particleLabels,
-			byte[][] particleWorkArray, List<ParticleImpl> particles) {
+			byte[][] particleWorkArray, List<Particle> particles) {
 		super();
 		this.imp = imp;
 		this.particleLabels = particleLabels;
@@ -126,7 +126,7 @@ public class ParticleManagerImpl {
 	 * @param ellipsoidsCalculated
 	 */
 	public ParticleManagerImpl(ImagePlus imp, int[][] particleLabels,
-			byte[][] particleWorkArray, List<ParticleImpl> particles,
+			byte[][] particleWorkArray, List<Particle> particles,
 			boolean calculateEigens, boolean calculateSurfaceArea,
 			boolean calculateEnclosedVolume, boolean calculateFeretDiameters,
 			boolean calculateEulerCharacters, boolean calculateThickness,
@@ -150,7 +150,7 @@ public class ParticleManagerImpl {
 		}
 
 		if (calculateSurfaceArea) {
-			for (ParticleImpl p : this.particles) {
+			for (Particle p : this.particles) {
 				IJ.showStatus("Calculating surface areas...");
 				IJ.showProgress(p.getID(), this.particles.size());
 				ParticleUtilities.calculateSurfaceArea(p);
@@ -160,7 +160,7 @@ public class ParticleManagerImpl {
 		}
 
 		if (calculateEnclosedVolume) {
-			for (ParticleImpl p : this.particles) {
+			for (Particle p : this.particles) {
 				IJ.showStatus("Calculating enclosed volumes...");
 				IJ.showProgress(p.getID(), this.particles.size());
 				ParticleUtilities.calculateEnclosedVolume(p);
@@ -170,7 +170,7 @@ public class ParticleManagerImpl {
 		}
 
 		if (calculateFeretDiameters) {
-			for (ParticleImpl p : this.particles)
+			for (Particle p : this.particles)
 				ParticleUtilities.calculateFeretDiameter(p);
 			this.feretDiametersCalculated = true;
 		}
@@ -186,7 +186,7 @@ public class ParticleManagerImpl {
 		}
 
 		if (calculateEllipsoids) {
-			for (ParticleImpl p : this.particles)
+			for (Particle p : this.particles)
 				ParticleUtilities.generateEllipsoid(p);
 		}
 
@@ -211,7 +211,7 @@ public class ParticleManagerImpl {
 	/**
 	 * @return the imp
 	 */
-	public ImagePlus getImp() {
+	public ImagePlus getImagePlus() {
 		return imp;
 	}
 
@@ -280,7 +280,7 @@ public class ParticleManagerImpl {
 	/**
 	 * @return the particles
 	 */
-	public List<ParticleImpl> getAllParticles() {
+	public List<Particle> getAllParticles() {
 		return particles;
 	}
 
@@ -288,13 +288,13 @@ public class ParticleManagerImpl {
 	 * @param particles
 	 *            the particles to set
 	 */
-	public void setParticles(List<ParticleImpl> particles) {
+	public void setParticles(List<Particle> particles) {
 		this.particles = particles;
 	}
 
-	public List<ParticleImpl> getVisibleParticles() {
-		List<ParticleImpl> visibleParticles = new ArrayList<ParticleImpl>();
-		for (ParticleImpl p : particles)
+	public List<Particle> getVisibleParticles() {
+		List<Particle> visibleParticles = new ArrayList<Particle>();
+		for (Particle p : particles)
 			if (p.isVisible())
 				visibleParticles.add(p);
 
@@ -711,8 +711,8 @@ public class ParticleManagerImpl {
 		}
 		show3DViewer();
 		int p = 0;
-		List<ParticleImpl> visibleParticles = getVisibleParticles();
-		Iterator<ParticleImpl> iter = visibleParticles.iterator();
+		List<Particle> visibleParticles = getVisibleParticles();
+		Iterator<Particle> iter = visibleParticles.iterator();
 		while (iter.hasNext()) {
 			Particle particle = iter.next();
 
@@ -755,8 +755,8 @@ public class ParticleManagerImpl {
 		show3DViewer();
 		int p = 0;
 
-		List<ParticleImpl> visibleParticles = getVisibleParticles();
-		Iterator<ParticleImpl> iter = visibleParticles.iterator();
+		List<Particle> visibleParticles = getVisibleParticles();
+		Iterator<Particle> iter = visibleParticles.iterator();
 		while (iter.hasNext()) {
 			Particle particle = iter.next();
 			IJ.showStatus("Rendering centroids...");
@@ -807,8 +807,8 @@ public class ParticleManagerImpl {
 				particleLabels, particles);
 
 		int p = 0;
-		List<ParticleImpl> visibleParticles = getVisibleParticles();
-		Iterator<ParticleImpl> iter = visibleParticles.iterator();
+		List<Particle> visibleParticles = getVisibleParticles();
+		Iterator<Particle> iter = visibleParticles.iterator();
 		while (iter.hasNext()) {
 			Particle particle = iter.next();
 			IJ.showStatus("Rendering axes...");
@@ -844,14 +844,14 @@ public class ParticleManagerImpl {
 		if (!surfacePointsCalculated && !ellipsoidsCalculated) {
 			setAllSurfacePoints(imp, particleLabels, particles, 2);
 			this.setSurfaceAreaCalculated(true);
-			for (ParticleImpl p : particles) {
+			for (Particle p : particles) {
 				IJ.showStatus("Generating ellipsoids...");
 				IJ.showProgress(p.getID(), particles.size());
 				ParticleUtilities.generateEllipsoid(p);
 			}
 			this.setEllipsoidsCalculated(true);
 		} else if (!ellipsoidsCalculated) {
-			for (ParticleImpl p : particles) {
+			for (Particle p : particles) {
 				IJ.showStatus("Generating ellipsoids...");
 				IJ.showProgress(p.getID(), particles.size());
 				ParticleUtilities.generateEllipsoid(p);
@@ -862,9 +862,9 @@ public class ParticleManagerImpl {
 		show3DViewer();
 
 		int p = 0;
-		Iterator<ParticleImpl> iter = getVisibleParticles().iterator();
+		Iterator<Particle> iter = getVisibleParticles().iterator();
 		while (iter.hasNext()) {
-			ParticleImpl particle = iter.next();
+			Particle particle = iter.next();
 			IJ.showStatus("Rendering ellipsoids...");
 			IJ.showProgress(p, getVisibleParticles().size());
 
@@ -921,7 +921,7 @@ public class ParticleManagerImpl {
 	 */
 
 	private static boolean setAllSurfacePoints(ImagePlus imp,
-			int[][] particleLabels, List<ParticleImpl> particles, int resampling) {
+			int[][] particleLabels, List<Particle> particles, int resampling) {
 		Calibration cal = imp.getCalibration();
 		final boolean[] channels = { true, false, false };
 		for (Particle p : particles) {
@@ -953,7 +953,7 @@ public class ParticleManagerImpl {
 	}
 
 	private static boolean setAllEigens(ImagePlus imp, int[][] particleLabels,
-			List<ParticleImpl> particles) {
+			List<Particle> particles) {
 		Calibration cal = imp.getCalibration();
 		final double vW = cal.pixelWidth;
 		final double vH = cal.pixelHeight;
@@ -1013,11 +1013,11 @@ public class ParticleManagerImpl {
 	}
 
 	private static boolean setAllEulerCharacters(ImagePlus imp,
-			int[][] particleLabels, List<ParticleImpl> particles) {
+			int[][] particleLabels, List<Particle> particles) {
 		Connectivity con = new Connectivity();
-		ListIterator<ParticleImpl> iter = particles.listIterator();
+		ListIterator<Particle> iter = particles.listIterator();
 		while (iter.hasNext()) {
-			ParticleImpl p = iter.next();
+			Particle p = iter.next();
 			ImagePlus particleImp = ParticleUtilities.getBinaryParticle(p, imp,
 					particleLabels, 1);
 			double euler = con.getSumEuler(particleImp);
@@ -1033,7 +1033,7 @@ public class ParticleManagerImpl {
 	}
 
 	private static boolean setAllThicknesses(ImagePlus imp,
-			int[][] particleLabels, List<ParticleImpl> particles) {
+			int[][] particleLabels, List<Particle> particles) {
 		Thickness th = new Thickness();
 		ImagePlus thickImp = th.getLocalThickness(imp, false);
 		double[][] meanStdDev = ParticleUtilities.getMeanStdDev(thickImp,
@@ -1044,7 +1044,7 @@ public class ParticleManagerImpl {
 		return true;
 	}
 
-	public static void hideZero(List<ParticleImpl> particles) {
+	public static void hideZero(List<Particle> particles) {
 		for (Particle p : particles)
 			if (p.getID() == 0)
 				p.setVisible(false);
