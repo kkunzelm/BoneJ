@@ -20,7 +20,7 @@ import java.util.List;
 
 import javax.swing.JPanel;
 
-import org.doube.bonej.particleanalyser.impl.ParticleImpl;
+import org.doube.bonej.particleanalyser.Particle;
 
 /**
  * @author Keith Schulze
@@ -47,5 +47,5 @@ public interface Selector {
 	 * Specifies which from the list of visible particles is to be selected.
 	 * @param visible particles
 	 */
-	public void selectParticles(List<ParticleImpl> particles);
+	public void selectParticles(List<Particle> particles);
 }

@@ -273,7 +273,7 @@ public class ParticleManagerImpl {
 		return getVisibleParticles().get(index);
 	}
 
-	public void setParticle(ParticleImpl p, int index) {
+	public void setParticle(Particle p, int index) {
 		this.particles.set(index, p);
 	}
 
