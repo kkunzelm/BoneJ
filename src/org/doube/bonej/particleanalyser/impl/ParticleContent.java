@@ -30,22 +30,22 @@ import ij3d.ContentInstant;
 public class ParticleContent extends Content {
 
 	private Particle particle;
-	private ParticleManager pm;
+	private ParticleManagerImpl pm;
 	
-	public ParticleContent(String name, int tp, Particle particle, ParticleManager pm) {
+	public ParticleContent(String name, int tp, Particle particle, ParticleManagerImpl pm) {
 		super(name, tp);
 		this.particle = particle;
 		this.pm = pm;
 	}
 
-	public ParticleContent(String name, Particle particle, ParticleManager pm) {
+	public ParticleContent(String name, Particle particle, ParticleManagerImpl pm) {
 		super(name);
 		this.particle = particle;
 		this.pm = pm;
 	}
 
 	public ParticleContent(String name, TreeMap<Integer, ContentInstant> contents, 
-			Particle particle, ParticleManager pm) {
+			Particle particle, ParticleManagerImpl pm) {
 		super(name, contents);
 		this.particle = particle;
 		this.pm = pm;

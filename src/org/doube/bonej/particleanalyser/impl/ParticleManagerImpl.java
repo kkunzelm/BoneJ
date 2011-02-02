@@ -53,13 +53,13 @@ import ij3d.ImageWindow3D;
  * @author Michael Doube
  * 
  */
-public class ParticleManager {
+public class ParticleManagerImpl {
 
 	public static enum ColorMode {
 		GRADIENT, SPLIT;
 	}
 
-	private static ArrayList<ParticleManager> particleManagers = new ArrayList<ParticleManager>();
+	private static ArrayList<ParticleManagerImpl> particleManagers = new ArrayList<ParticleManagerImpl>();
 	private Image3DUniverse univ = new Image3DUniverse();
 
 	private ImagePlus imp;
@@ -92,7 +92,7 @@ public class ParticleManager {
 	 * @param particleLabels
 	 * @param particles
 	 */
-	public ParticleManager(ImagePlus imp, int[][] particleLabels,
+	public ParticleManagerImpl(ImagePlus imp, int[][] particleLabels,
 			byte[][] particleWorkArray, List<ParticleImpl> particles) {
 		super();
 		this.imp = imp;
@@ -125,7 +125,7 @@ public class ParticleManager {
 	 * @param thicknessCalculated
 	 * @param ellipsoidsCalculated
 	 */
-	public ParticleManager(ImagePlus imp, int[][] particleLabels,
+	public ParticleManagerImpl(ImagePlus imp, int[][] particleLabels,
 			byte[][] particleWorkArray, List<ParticleImpl> particles,
 			boolean calculateEigens, boolean calculateSurfaceArea,
 			boolean calculateEnclosedVolume, boolean calculateFeretDiameters,
@@ -704,7 +704,7 @@ public class ParticleManager {
 	/**
 	 * Display visible particle surfaces in the 3D Viewer.
 	 */
-	public void displaySurfaces(ParticleManager.ColorMode mode) {
+	public void displaySurfaces(ParticleManagerImpl.ColorMode mode) {
 		if (surfacePointsCalculated == false) {
 			setAllSurfacePoints(imp, particleLabels, particles, 2);
 			this.setSurfaceAreaCalculated(true);

@@ -25,7 +25,7 @@ import javax.swing.table.AbstractTableModel;
 
 import org.doube.bonej.particleanalyser.Particle;
 import org.doube.bonej.particleanalyser.impl.ParticleImpl;
-import org.doube.bonej.particleanalyser.impl.ParticleManager;
+import org.doube.bonej.particleanalyser.impl.ParticleManagerImpl;
 
 /**
  * @author Keith Schulze
@@ -37,7 +37,7 @@ public class ParticleTableModel extends AbstractTableModel {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	private ParticleManager particleManager;
+	private ParticleManagerImpl particleManager;
 	//private List<String> columnNames = Arrays.asList("ID", "Name", "Vol.", "x Cent", "y Cent", "z Cent");
 	private List<Particle.ParameterKey> columns;
 	private Calibration calibration;
@@ -55,7 +55,7 @@ public class ParticleTableModel extends AbstractTableModel {
 	 * @param particles
 	 */
 	@SuppressWarnings("serial")
-	public ParticleTableModel(ParticleManager pm) {
+	public ParticleTableModel(ParticleManagerImpl pm) {
 		super();
 		this.particleManager = pm;
 		
@@ -109,7 +109,7 @@ public class ParticleTableModel extends AbstractTableModel {
 		}
 	}
 	
-	public void setParticleManager(ParticleManager pm) {
+	public void setParticleManager(ParticleManagerImpl pm) {
 		this.particleManager = pm;
 	}
 

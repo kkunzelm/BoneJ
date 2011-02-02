@@ -31,11 +31,11 @@ import ij3d.UniverseSettings;
  */
 public class ParticleContentCreator {
 
-	public static Content createContent(CustomMesh mesh, Particle particle, ParticleManager pm) {
+	public static Content createContent(CustomMesh mesh, Particle particle, ParticleManagerImpl pm) {
 		return createContent(mesh, particle, pm, -1);
 	}
 
-	public static Content createContent(CustomMesh mesh, Particle particle, ParticleManager pm, int tp) {
+	public static Content createContent(CustomMesh mesh, Particle particle, ParticleManagerImpl pm, int tp) {
 		ParticleContent c = new ParticleContent(particle.getName(), tp, particle, pm);
 		ContentInstant content = c.getInstant(tp);
 		content.setColor(mesh.getColor());
@@ -47,11 +47,11 @@ public class ParticleContentCreator {
 		return c;
 	}
 	
-	public static Content createContent(CustomMultiMesh node, String name, Particle particle, ParticleManager pm) {
+	public static Content createContent(CustomMultiMesh node, String name, Particle particle, ParticleManagerImpl pm) {
 		return createContent(node, name,  particle, pm, -1);
 	}
 
-	public static Content createContent(CustomMultiMesh node, String name, Particle particle, ParticleManager pm, int tp) {
+	public static Content createContent(CustomMultiMesh node, String name, Particle particle, ParticleManagerImpl pm, int tp) {
 		ParticleContent c = new ParticleContent(name, tp, particle, pm);
 		ContentInstant content = c.getInstant(tp);
 		content.setColor(null);
