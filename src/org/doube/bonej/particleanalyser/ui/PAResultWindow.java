@@ -489,10 +489,7 @@ public class PAResultWindow implements Runnable {
 			@Override
 			public void mouseClicked(MouseEvent e) {
 				e.consume();
-				setMaxVolume(Double.POSITIVE_INFINITY);
-				setMinVolume(0.0);
-				textFieldVolMax.setText(Double.toString(Double.POSITIVE_INFINITY));
-				textFieldVolMin.setText(Double.toString(0.0));
+				resetDefaultSizes();
 			}
 		});
 		panel_9.add(btnResetDefaults);
@@ -653,6 +650,7 @@ public class PAResultWindow implements Runnable {
 						+ "Are you sure you want to continue?")) {
 			pm.resetParticles();
 			includeAllEdges(true);
+			resetDefaultSizes();
 			ptm.fireTableDataChanged();
 		} else {
 			return;
@@ -818,5 +816,12 @@ public class PAResultWindow implements Runnable {
 			}
 		};
 		pool.execute(sw);
+	}
+	
+	private void resetDefaultSizes() {
+		setMaxVolume(Double.POSITIVE_INFINITY);
+		setMinVolume(0.0);
+		textFieldVolMax.setText(Double.toString(Double.POSITIVE_INFINITY));
+		textFieldVolMin.setText(Double.toString(0.0));
 	}
 }
