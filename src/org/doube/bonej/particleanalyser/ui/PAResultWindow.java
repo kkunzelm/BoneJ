@@ -711,6 +711,7 @@ public class PAResultWindow implements Runnable {
 
 	private void showEnclosedVolume(boolean show) {
 		ptm.setShowEnclosedVolume(show);
+		ptm.fireTableStructureChanged();
 	}
 
 	private void showFeretDiameters(boolean show) {
