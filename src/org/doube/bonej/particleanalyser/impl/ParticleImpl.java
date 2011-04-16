@@ -403,12 +403,6 @@ public class ParticleImpl implements Cloneable, Particle {
 
 		return voxelVolume * particleSize;
 	}
-	
-	private double getArea() {
-		final double pixelArea = this.calibration.pixelWidth
-		* this.calibration.pixelHeight;
-		return pixelArea * particleSize;
-	}
 
 	/* (non-Javadoc)
 	 * @see org.doube.bonej.particleanalyser.impl.Paricle#getSurfacePoints()
@@ -701,7 +695,6 @@ public class ParticleImpl implements Cloneable, Particle {
 		resultMap.put(ParameterKey.ID, this.ID);
 		resultMap.put(ParameterKey.NAME, this.name);
 		resultMap.put(ParameterKey.VOLUME, this.getVolume());
-		resultMap.put(ParameterKey.VOLUME, this.getArea());
 		resultMap.put(ParameterKey.X_CENTROID, this.centroid[0]);
 		resultMap.put(ParameterKey.Y_CENTROID, this.centroid[1]);
 		resultMap.put(ParameterKey.Z_CENTROID, this.centroid[2]);
