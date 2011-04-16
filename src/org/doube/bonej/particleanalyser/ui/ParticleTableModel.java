@@ -164,7 +164,7 @@ public class ParticleTableModel extends AbstractTableModel {
 	public void setShowEnclosedVolume(boolean showEnclosedVolume) {
 		this.showEnclosedVolume = showEnclosedVolume;
 		if (showEnclosedVolume) {
-			this.columns.add(Particle.ParameterKey.ENCLOSED_VOLUME);
+			this.columns.add(columns.size(), Particle.ParameterKey.ENCLOSED_VOLUME);
 		} else {
 			this.columns.remove(Particle.ParameterKey.ENCLOSED_VOLUME);
 		}
@@ -183,12 +183,12 @@ public class ParticleTableModel extends AbstractTableModel {
 	public void setShowEigens(boolean showEigens) {
 		this.showEigens = showEigens;
 		if (showEigens) {
-			this.columns.add(Particle.ParameterKey.EIGEN_I1);
-			this.columns.add(Particle.ParameterKey.EIGEN_I2);
-			this.columns.add(Particle.ParameterKey.EIGEN_I3);
-			this.columns.add(Particle.ParameterKey.EIGEN_VX);
-			this.columns.add(Particle.ParameterKey.EIGEN_VY);
-			this.columns.add(Particle.ParameterKey.EIGEN_VZ);
+			this.columns.add(columns.size(), Particle.ParameterKey.EIGEN_I1);
+			this.columns.add(columns.size(), Particle.ParameterKey.EIGEN_I2);
+			this.columns.add(columns.size(), Particle.ParameterKey.EIGEN_I3);
+			this.columns.add(columns.size(), Particle.ParameterKey.EIGEN_VX);
+			this.columns.add(columns.size(), Particle.ParameterKey.EIGEN_VY);
+			this.columns.add(columns.size(), Particle.ParameterKey.EIGEN_VZ);
 		} else {
 			this.columns.remove(Particle.ParameterKey.EIGEN_I1);
 			this.columns.remove(Particle.ParameterKey.EIGEN_I2);
@@ -212,9 +212,9 @@ public class ParticleTableModel extends AbstractTableModel {
 	public void setShowEulerCharacters(boolean showEulerCharacters) {
 		this.showEulerCharacters = showEulerCharacters;
 		if (showEulerCharacters){
-			this.columns.add(Particle.ParameterKey.EULER_CHARACTER);
-			this.columns.add(Particle.ParameterKey.EULER_HOLES);
-			this.columns.add(Particle.ParameterKey.EULER_CAVATIES);
+			this.columns.add(columns.size(), Particle.ParameterKey.EULER_CHARACTER);
+			this.columns.add(columns.size(), Particle.ParameterKey.EULER_HOLES);
+			this.columns.add(columns.size(), Particle.ParameterKey.EULER_CAVATIES);
 		} else {
 			this.columns.remove(Particle.ParameterKey.EULER_CHARACTER);
 			this.columns.remove(Particle.ParameterKey.EULER_HOLES);
@@ -235,9 +235,9 @@ public class ParticleTableModel extends AbstractTableModel {
 	public void setShowThickness(boolean showThickness) {
 		this.showThickness = showThickness;
 		if(showThickness){
-			this.columns.add(Particle.ParameterKey.THICKNESS);
-			this.columns.add(Particle.ParameterKey.THICKNESS_SD);
-			this.columns.add(Particle.ParameterKey.THICKNESS_MAX);
+			this.columns.add(columns.size(), Particle.ParameterKey.THICKNESS);
+			this.columns.add(columns.size(), Particle.ParameterKey.THICKNESS_SD);
+			this.columns.add(columns.size(), Particle.ParameterKey.THICKNESS_MAX);
 		} else {
 			this.columns.remove(Particle.ParameterKey.THICKNESS);
 			this.columns.remove(Particle.ParameterKey.THICKNESS_SD);
@@ -258,9 +258,9 @@ public class ParticleTableModel extends AbstractTableModel {
 	public void setShowEllipsoids(boolean showEllipsoids) {
 		this.showEllipsoids = showEllipsoids;
 		if(showEllipsoids){
-			this.columns.add(Particle.ParameterKey.ELLIPSOID_MAJOR_RADIUS);
-			this.columns.add(Particle.ParameterKey.ELLIPSOID_INT_RADIUS);
-			this.columns.add(Particle.ParameterKey.ELLIPSOID_MINOR_RADIUS);
+			this.columns.add(columns.size(), Particle.ParameterKey.ELLIPSOID_MAJOR_RADIUS);
+			this.columns.add(columns.size(), Particle.ParameterKey.ELLIPSOID_INT_RADIUS);
+			this.columns.add(columns.size(), Particle.ParameterKey.ELLIPSOID_MINOR_RADIUS);
 		} else {
 			this.columns.remove(Particle.ParameterKey.ELLIPSOID_MAJOR_RADIUS);
 			this.columns.remove(Particle.ParameterKey.ELLIPSOID_INT_RADIUS);
