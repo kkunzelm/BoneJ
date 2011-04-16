@@ -253,7 +253,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		List<Particle> particles = ParticleGetter.createParticleList(imp, edgesTouched, centroids, limits, particleSizes);
 
 		// set up resources for analysis
-		ArrayList<List<Point3f>> surfacePoints = new ArrayList<List<Point3f>>();
+		/*ArrayList<List<Point3f>> surfacePoints = new ArrayList<List<Point3f>>();
 		if (doSurfaceArea || doSurfaceVolume || doSurfaceImage || doEllipsoids
 				|| doFeret) {
 			surfacePoints = getSurfacePoints(imp, particleLabels, limits,
@@ -361,7 +361,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 				rt.updateResults();
 			}
 		}
-		rt.show("Results");
+		rt.show("Results");*/
 
 		// Show resulting image stacks
 		if (doParticleImage) {
