@@ -407,7 +407,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		}*/
 		
 		ParticleManagerImpl pm = new ParticleManagerImpl(imp, particleLabels, workArray, particles, doMoments, doSurfaceArea, 
-				doSurfaceVolume, doFeret, doEulerCharacters, doThickness, doEllipsoids);
+				doSurfaceVolume, doFeret, doEulerCharacters, doThickness, doEllipsoids, resampling);
 		pm.createResultTable();
 		IJ.showProgress(1.0);
 		IJ.showStatus("Particle Analysis Complete");

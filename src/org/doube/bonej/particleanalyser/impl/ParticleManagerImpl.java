@@ -130,7 +130,7 @@ public class ParticleManagerImpl {
 			boolean calculateEigens, boolean calculateSurfaceArea,
 			boolean calculateEnclosedVolume, boolean calculateFeretDiameters,
 			boolean calculateEulerCharacters, boolean calculateThickness,
-			boolean calculateEllipsoids) {
+			boolean calculateEllipsoids, int resamplingFactor) {
 		super();
 		this.imp = imp;
 		this.particleLabels = particleLabels;
@@ -141,7 +141,7 @@ public class ParticleManagerImpl {
 		if (calculateSurfaceArea || calculateEnclosedVolume
 				|| calculateEllipsoids || calculateFeretDiameters) {
 			this.surfacePointsCalculated = setAllSurfacePoints(this.imp,
-					this.particleLabels, this.particles, 2);
+					this.particleLabels, this.particles, resamplingFactor);
 		}
 
 		if (calculateEigens) {
