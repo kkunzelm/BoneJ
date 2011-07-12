@@ -35,7 +35,7 @@ public class ParticleContentImpl extends Content {
 	private Particle particle;
 	private ParticleManagerImpl pm;
 	private Color3f color;
-	private static final Color3f selectedColor = new Color3f(Color.WHITE);
+	private static final Color3f selectedColor = new Color3f(new Color(165, 214, 236));
 	
 	public ParticleContentImpl(String name, int tp, Particle particle, ParticleManagerImpl pm, Color3f color) {
 		super(name, tp);

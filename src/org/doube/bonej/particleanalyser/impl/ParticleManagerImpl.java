@@ -684,6 +684,9 @@ public class ParticleManagerImpl {
 				}
 			}
 		});
+		if(univ.getShowBoundingBoxUponSelection())
+			univ.setShowBoundingBoxUponSelection(false);
+		
 		ImageWindow3D win = univ.getWindow();
 
 		if (win == null || !win.isVisible())
