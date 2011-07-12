@@ -16,7 +16,10 @@
  */
 package org.doube.bonej.particleanalyser.impl;
 
+import java.awt.Color;
 import java.util.TreeMap;
+
+import javax.vecmath.Color3f;
 
 import org.doube.bonej.particleanalyser.Particle;
 
@@ -31,24 +34,29 @@ public class ParticleContentImpl extends Content {
 
 	private Particle particle;
 	private ParticleManagerImpl pm;
+	private Color3f color;
+	private static final Color3f selectedColor = new Color3f(Color.WHITE);
 	
-	public ParticleContentImpl(String name, int tp, Particle particle, ParticleManagerImpl pm) {
+	public ParticleContentImpl(String name, int tp, Particle particle, ParticleManagerImpl pm, Color3f color) {
 		super(name, tp);
 		this.particle = particle;
 		this.pm = pm;
+		this.color = color;
 	}
 
-	public ParticleContentImpl(String name, Particle particle, ParticleManagerImpl pm) {
+	public ParticleContentImpl(String name, Particle particle, ParticleManagerImpl pm, Color3f color) {
 		super(name);
 		this.particle = particle;
 		this.pm = pm;
+		this.color = color;
 	}
 
 	public ParticleContentImpl(String name, TreeMap<Integer, ContentInstant> contents, 
-			Particle particle, ParticleManagerImpl pm) {
+			Particle particle, ParticleManagerImpl pm, Color3f color) {
 		super(name, contents);
 		this.particle = particle;
 		this.pm = pm;
+		this.color = color;
 	}
 
 	/* (non-Javadoc)
@@ -73,4 +81,16 @@ public class ParticleContentImpl extends Content {
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see ij3d.Content#setSelected(boolean)
+	 */
+	@Override
+	public void setSelected(boolean selected) {
+		super.setSelected(selected);
+		if (selected) {
+			super.setColor(selectedColor);
+		} else {
+			super.setColor(color);
+		}
+	}
 }
