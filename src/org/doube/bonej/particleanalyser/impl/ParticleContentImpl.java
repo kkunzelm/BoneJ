@@ -1,5 +1,5 @@
 /**
- * BoneJContent.java Copyright 2010 Keith Schulze
+ * ParticleContentImpl.java Copyright 2010 Keith Schulze
  * 
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,24 +27,24 @@ import ij3d.ContentInstant;
  * @author Keith Schulze
  *
  */
-public class ParticleContent extends Content {
+public class ParticleContentImpl extends Content {
 
 	private Particle particle;
 	private ParticleManagerImpl pm;
 	
-	public ParticleContent(String name, int tp, Particle particle, ParticleManagerImpl pm) {
+	public ParticleContentImpl(String name, int tp, Particle particle, ParticleManagerImpl pm) {
 		super(name, tp);
 		this.particle = particle;
 		this.pm = pm;
 	}
 
-	public ParticleContent(String name, Particle particle, ParticleManagerImpl pm) {
+	public ParticleContentImpl(String name, Particle particle, ParticleManagerImpl pm) {
 		super(name);
 		this.particle = particle;
 		this.pm = pm;
 	}
 
-	public ParticleContent(String name, TreeMap<Integer, ContentInstant> contents, 
+	public ParticleContentImpl(String name, TreeMap<Integer, ContentInstant> contents, 
 			Particle particle, ParticleManagerImpl pm) {
 		super(name, contents);
 		this.particle = particle;

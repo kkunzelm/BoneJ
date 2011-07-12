@@ -36,7 +36,7 @@ public class ParticleContentCreator {
 	}
 
 	public static Content createContent(CustomMesh mesh, Particle particle, ParticleManagerImpl pm, int tp) {
-		ParticleContent c = new ParticleContent(particle.getName(), tp, particle, pm);
+		ParticleContentImpl c = new ParticleContentImpl(particle.getName(), tp, particle, pm);
 		ContentInstant content = c.getInstant(tp);
 		content.setColor(mesh.getColor());
 		content.setTransparency(mesh.getTransparency());
@@ -52,7 +52,7 @@ public class ParticleContentCreator {
 	}
 
 	public static Content createContent(CustomMultiMesh node, String name, Particle particle, ParticleManagerImpl pm, int tp) {
-		ParticleContent c = new ParticleContent(name, tp, particle, pm);
+		ParticleContentImpl c = new ParticleContentImpl(name, tp, particle, pm);
 		ContentInstant content = c.getInstant(tp);
 		content.setColor(null);
 		content.setTransparency(0f);
