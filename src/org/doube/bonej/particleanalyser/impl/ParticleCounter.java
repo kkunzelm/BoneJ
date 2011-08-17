@@ -21,6 +21,7 @@ import java.awt.AWTEvent;
 import java.awt.Checkbox;
 import java.awt.Choice;
 import java.awt.TextField;
+import java.awt.image.ColorModel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -56,6 +57,7 @@ import ij.gui.GenericDialog;
 import ij.measure.Calibration;
 import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
@@ -249,6 +251,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		double[] volumes = getVolumes(imp, particleSizes);
 		double[][] centroids = (double[][]) result[3];
 		int[][] limits = (int[][]) result[4];
+		double[] maxXYAreas = getMaxXYArea(imp, particleLabels, limits, origResampling, nParticles, FORE);
 		List<List<Face>> edgesTouched = (List<List<Face>>) result[5];
 		List<Particle> particles = ParticleGetter.createParticleList(imp, edgesTouched, centroids, limits, particleSizes);
 
@@ -1018,6 +1021,59 @@ public class ParticleCounter implements PlugIn, DialogListener {
 			}
 		}
 		return surfacePoints;
+	}
+	
+	private static double[] getMaxXYArea(ImagePlus imp,
+			int[][] particleLabels, int[][] limits, int resampling,
+			int nParticles, int phase) {
+		double[] maxAreas = new double[nParticles];
+		Calibration cal = imp.getCalibration();
+		
+		for(int p = 0; p < nParticles; p++) {
+			IJ.showStatus("Getting max XY Areas...");
+			IJ.showProgress(p, nParticles);
+			
+			if (p > 0) {
+				ImagePlus binaryImp = getBinaryParticle(p, imp, particleLabels,
+						limits, resampling);
+				int w = binaryImp.getWidth();
+				int h = binaryImp.getHeight();
+				int d = binaryImp.getNSlices();
+				
+				byte[] resultArray = new byte[w*h];
+				byte[][] imageArray = makeWorkArray(binaryImp);
+				
+				for(int z = 0; z < d; z++)
+					for(int y = 0; y < h; y++) {
+						final int rowIndex = y * w;
+						for(int x = 0; x < w; x++) {
+							final int arrayIndex = rowIndex + x;
+							if (imageArray[z][arrayIndex] == phase) {
+								resultArray[arrayIndex] = (byte) phase;
+							}
+							
+						}
+					}
+				
+				int maxArea = 0;
+				for (int x = 0; x < resultArray.length; x++) {
+					if (resultArray[x] == phase)
+						maxArea++;
+				}
+				maxAreas[p] = maxArea * (cal.pixelWidth*cal.pixelHeight);
+				
+				//tester
+				if (p == 50) {
+					ImageStack t = new ImageStack(w, h);
+					t.addSlice("Test", resultArray);
+					ImagePlus testImage = new ImagePlus("Test XY Image", t);
+					testImage.show();
+				}
+			}
+		}
+		
+		return maxAreas;
+		
 	}
 
 	/**
@@ -2012,7 +2068,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	 * 
 	 * @return byte[] work array
 	 */
-	private byte[][] makeWorkArray(ImagePlus imp) {
+	private static byte[][] makeWorkArray(ImagePlus imp) {
 		final int s = imp.getStackSize();
 		final int p = imp.getWidth() * imp.getHeight();
 		byte[][] workArray = new byte[s][p];
