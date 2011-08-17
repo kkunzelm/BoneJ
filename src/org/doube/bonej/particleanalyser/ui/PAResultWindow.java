@@ -59,6 +59,7 @@ public class PAResultWindow implements Runnable {
 	private JTable resultTable;
 	private ParticleTableModel ptm;
 	private JCheckBoxMenuItem chckbxmntmShowSurfaceArea;
+	private JCheckBoxMenuItem chckbcmntmShowMaxXYArea;
 	private JCheckBoxMenuItem chckbxmntmShowFeretDiameter;
 	private JCheckBoxMenuItem chckbxmntmShowEnclosedVolume;
 	private JCheckBoxMenuItem chckbxmntmShowEigens;
@@ -176,6 +177,16 @@ public class PAResultWindow implements Runnable {
 			}
 		});
 		mnView.add(chckbxmntmShowSurfaceArea);
+		
+		chckbcmntmShowMaxXYArea = new JCheckBoxMenuItem("Show Max XY Areas");
+		chckbcmntmShowMaxXYArea.addItemListener(new ItemListener() {
+			
+			@Override
+			public void itemStateChanged(ItemEvent e) {
+				showXYAreas(chckbxmntmShowSurfaceArea.isSelected());
+			}
+		});
+		mnView.add(chckbcmntmShowMaxXYArea);
 
 		chckbxmntmShowFeretDiameter = new JCheckBoxMenuItem(
 				"Show Feret Diameter");
@@ -706,6 +717,11 @@ public class PAResultWindow implements Runnable {
 
 	private void showSurfaceAreaResults(boolean show) {
 		ptm.setShowSurfaceArea(show);
+		ptm.fireTableStructureChanged();
+	}
+	
+	private void showXYAreas(boolean show) {
+		ptm.setShowMaxXYArea(show);
 		ptm.fireTableStructureChanged();
 	}
 

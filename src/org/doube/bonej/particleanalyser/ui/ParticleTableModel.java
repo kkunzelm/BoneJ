@@ -43,6 +43,7 @@ public class ParticleTableModel extends AbstractTableModel {
 	private Calibration calibration;
 	
 	private boolean showSurfaceArea = false;
+	private boolean showMaxXYArea = false;
 	private boolean showFeretDiameter = false;
 	private boolean showEnclosedVolume = false;
 	private boolean showEigens = false;
@@ -129,6 +130,24 @@ public class ParticleTableModel extends AbstractTableModel {
 			this.columns.add(columns.size(), Particle.ParameterKey.SURFACE_AREA);
 		} else {
 			this.columns.remove(Particle.ParameterKey.SURFACE_AREA);
+		}
+	}
+
+	/**
+	 * @return the showMaxXYArea
+	 */
+	public boolean isShowMaxXYArea() {
+		return showMaxXYArea;
+	}
+
+	/**
+	 * @param showMaxXYArea the showMaxXYArea to set
+	 */
+	public void setShowMaxXYArea(boolean showMaxXYArea) {
+		if (showMaxXYArea) {
+			this.columns.add(columns.size(), Particle.ParameterKey.MAX_XY_AREA);
+		} else {
+			this.columns.remove(Particle.ParameterKey.MAX_XY_AREA);
 		}
 	}
 
