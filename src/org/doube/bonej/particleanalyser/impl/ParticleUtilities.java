@@ -304,4 +304,50 @@ public class ParticleUtilities {
 				/ (2.0f * (float) particlePopulationSize);
 		return new Color3f(red, green, blue);
 	}
+	
+	public static double getMaxXYArea(Particle p, ImagePlus imp,
+			int[][] particleLabels, int resampling, int phase) {
+		double maxArea = 0;
+		Calibration cal = imp.getCalibration();
+
+		if (p.getID() > 0) {
+			ImagePlus binaryImp = ParticleUtilities.getBinaryParticle(p, imp, particleLabels, resampling);
+			int w = binaryImp.getWidth();
+			int h = binaryImp.getHeight();
+			int d = binaryImp.getNSlices();
+
+			byte[] resultArray = new byte[w * h];
+			byte[][] imageArray = ParticleGetter.makeWorkArray(binaryImp);
+
+			for (int z = 0; z < d; z++)
+				for (int y = 0; y < h; y++) {
+					final int rowIndex = y * w;
+					for (int x = 0; x < w; x++) {
+						final int arrayIndex = rowIndex + x;
+						if (imageArray[z][arrayIndex] == phase) {
+							resultArray[arrayIndex] = (byte) phase;
+						}
+
+					}
+				}
+
+			int pixelArea = 0;
+			for (int x = 0; x < resultArray.length; x++) {
+				if (resultArray[x] == phase)
+					pixelArea++;
+			}
+			maxArea = pixelArea * (cal.pixelWidth * cal.pixelHeight);
+
+			// tester
+			if (p.getID() == 50) {
+				ImageStack t = new ImageStack(w, h);
+				t.addSlice("Test", resultArray);
+				ImagePlus testImage = new ImagePlus("Test XY Image", t);
+				testImage.show();
+			}
+		}
+
+		return maxArea;
+
+	}
 }
