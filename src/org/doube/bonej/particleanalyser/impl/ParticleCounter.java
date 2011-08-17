@@ -1022,7 +1022,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		}
 		return surfacePoints;
 	}
-	
+	@Deprecated
 	private static double[] getMaxXYArea(ImagePlus imp,
 			int[][] particleLabels, int[][] limits, int resampling,
 			int nParticles, int phase) {
