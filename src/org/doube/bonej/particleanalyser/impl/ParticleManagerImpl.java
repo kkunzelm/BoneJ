@@ -70,6 +70,9 @@ public class ParticleManagerImpl {
 	private boolean closed = false;
 
 	private boolean surfacePointsCalculated = false;
+	private boolean maxXYAreaCalculated = false;
+	
+
 	private boolean eigensCalculated = false;
 	private boolean surfaceAreaCalculated = false;
 	private boolean enclosedVolumeCalculated = false;
@@ -127,7 +130,7 @@ public class ParticleManagerImpl {
 	 */
 	public ParticleManagerImpl(ImagePlus imp, int[][] particleLabels,
 			byte[][] particleWorkArray, List<Particle> particles,
-			boolean calculateEigens, boolean calculateSurfaceArea,
+			boolean calculateEigens, boolean calculateSurfaceArea, boolean calculateMaxXYArea,
 			boolean calculateEnclosedVolume, boolean calculateFeretDiameters,
 			boolean calculateEulerCharacters, boolean calculateThickness,
 			boolean calculateEllipsoids, int resamplingFactor) {
@@ -157,6 +160,10 @@ public class ParticleManagerImpl {
 			}
 
 			this.surfaceAreaCalculated = true;
+		}
+		
+		if (calculateMaxXYArea) {
+			this.maxXYAreaCalculated = setAllMaxXYAreas(imp, particleLabels, particles, resamplingFactor);
 		}
 
 		if (calculateEnclosedVolume) {
@@ -420,6 +427,20 @@ public class ParticleManagerImpl {
 	 */
 	public void setSurfacePointsCalculated(boolean surfacePointsCalculated) {
 		this.surfacePointsCalculated = surfacePointsCalculated;
+	}
+	
+	/**
+	 * @return the maxXYAreaCalculated
+	 */
+	public boolean isMaxXYAreaCalculated() {
+		return maxXYAreaCalculated;
+	}
+
+	/**
+	 * @param maxXYAreaCalculated the maxXYAreaCalculated to set
+	 */
+	public void setMaxXYAreaCalculated(boolean maxXYAreaCalculated) {
+		this.maxXYAreaCalculated = maxXYAreaCalculated;
 	}
 
 	/**
@@ -955,6 +976,19 @@ public class ParticleManagerImpl {
 		return true;
 	}
 
+	//This is not a wonderful implementation.
+	private static boolean setAllMaxXYAreas(ImagePlus imp,
+			int[][] particleLabels, List<Particle> particles, int resampling) {
+		for (Particle p : particles) {
+			IJ.showStatus("Getting XY areas...");
+			IJ.showProgress(p.getID(), particles.size());
+			
+			p.setMaxXYArea(ParticleUtilities.getMaxXYArea(p, imp, particleLabels, resampling, ParticleCounter.FORE));
+		}
+		
+		return true;
+	}
+	
 	private static boolean setAllEigens(ImagePlus imp, int[][] particleLabels,
 			List<Particle> particles) {
 		Calibration cal = imp.getCalibration();
@@ -1034,6 +1068,7 @@ public class ParticleManagerImpl {
 		}
 		return true;
 	}
+
 
 	private static boolean setAllThicknesses(ImagePlus imp,
 			int[][] particleLabels, List<Particle> particles) {
