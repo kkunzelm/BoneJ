@@ -96,6 +96,8 @@ public class ParticleImpl implements Cloneable, Particle {
 	 * This particle objects size in pixels.
 	 */
 	private long particleSize;
+	
+	private double maxXYArea;
 
 	/**
 	 * 
@@ -699,6 +701,7 @@ public class ParticleImpl implements Cloneable, Particle {
 		resultMap.put(ParameterKey.Y_CENTROID, this.centroid[1]);
 		resultMap.put(ParameterKey.Z_CENTROID, this.centroid[2]);
 		resultMap.put(ParameterKey.SURFACE_AREA, this.surfaceArea);
+		resultMap.put(ParameterKey.MAX_XY_AREA, this.maxXYArea);
 		resultMap.put(ParameterKey.FERET_DIAMETER, this.feretDiameter);
 		resultMap.put(ParameterKey.ENCLOSED_VOLUME, this.enclosedVolume);
 
@@ -738,6 +741,18 @@ public class ParticleImpl implements Cloneable, Particle {
 	@Override
 	public Object clone() throws CloneNotSupportedException {
 		return super.clone();
+	}
+
+	@Override
+	public double getMaxXYArea() {
+		// TODO Auto-generated method stub
+		return this.maxXYArea;
+	}
+
+	@Override
+	public void setMaxXYArea(double maxXYArea) {
+		this.maxXYArea = maxXYArea;
+		
 	}
 
 }

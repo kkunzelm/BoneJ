@@ -72,6 +72,11 @@ public interface Particle {
 				return "<html>SA (" + calibration.getUnits() + "<sup>2</sup>)</html>";
 			}
 		},
+		MAX_XY_AREA() {
+			@Override public String getStringValue(Calibration calibration) {
+				return "<html>Max XY Area (" + calibration.getUnits() + "<sup>2</sup>)</html>";
+			}
+		},
 		FERET_DIAMETER() {
 			@Override public String getStringValue(Calibration calibration) {
 				return "<html>Feret (" + calibration.getUnits() + ")</html>";
@@ -320,6 +325,10 @@ public interface Particle {
 	public CustomTriangleMesh getSurfaceMesh(Color3f color);
 
 	public CustomPointMesh getCentroidMesh(Color3f color, float transparency);
+	
+	public double getMaxXYArea();
+	
+	public void setMaxXYArea(double maxXYArea);
 
 	/**
 	 * Draws 3 orthogonal axes defined by the centroid, unit vector and axis
@@ -366,5 +375,4 @@ public interface Particle {
 	public void setEulerCharacter(double[] eulerC);
 
 	public void setThickness(double[] thickness);
-
 }
