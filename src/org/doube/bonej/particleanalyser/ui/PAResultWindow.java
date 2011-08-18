@@ -114,7 +114,7 @@ public class PAResultWindow implements Runnable {
 			}
 		});
 		frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		frame.setBounds(0, 0, 700, 540);
+		frame.setBounds(0, 0, 800, 680);
 
 		ptm = new ParticleTableModel(this.pm);
 
@@ -180,10 +180,8 @@ public class PAResultWindow implements Runnable {
 		
 		chckbcmntmShowMaxXYArea = new JCheckBoxMenuItem("Show Max XY Areas");
 		chckbcmntmShowMaxXYArea.addItemListener(new ItemListener() {
-			
-			@Override
 			public void itemStateChanged(ItemEvent e) {
-				showXYAreas(chckbxmntmShowSurfaceArea.isSelected());
+				showXYAreas(chckbcmntmShowMaxXYArea.isSelected());
 			}
 		});
 		mnView.add(chckbcmntmShowMaxXYArea);

@@ -144,6 +144,7 @@ public class ParticleTableModel extends AbstractTableModel {
 	 * @param showMaxXYArea the showMaxXYArea to set
 	 */
 	public void setShowMaxXYArea(boolean showMaxXYArea) {
+		this.showMaxXYArea = showMaxXYArea;
 		if (showMaxXYArea) {
 			this.columns.add(columns.size(), Particle.ParameterKey.MAX_XY_AREA);
 		} else {
