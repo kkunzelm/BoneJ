@@ -171,7 +171,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		defaultValues[7] = false;
 		labels[8] = "Max XY Area";
 		defaultValues[8] = false;
-		gd.addCheckboxGroup(4, 2, labels, defaultValues, headers);
+		gd.addCheckboxGroup(5, 2, labels, defaultValues, headers);
 		gd.addNumericField("Min Volume", 0, 3, 7, units + "³");
 		gd.addNumericField("Max Volume", Double.POSITIVE_INFINITY, 3, 7, units
 				+ "³");
@@ -254,7 +254,6 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		double[] volumes = getVolumes(imp, particleSizes);
 		double[][] centroids = (double[][]) result[3];
 		int[][] limits = (int[][]) result[4];
-		double[] maxXYAreas = getMaxXYArea(imp, particleLabels, limits, origResampling, nParticles, FORE);
 		List<List<Face>> edgesTouched = (List<List<Face>>) result[5];
 		List<Particle> particles = ParticleGetter.createParticleList(imp, edgesTouched, centroids, limits, particleSizes);
 
