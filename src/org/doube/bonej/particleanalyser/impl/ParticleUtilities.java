@@ -308,7 +308,6 @@ public class ParticleUtilities {
 	public static double getMaxXYArea(Particle p, ImagePlus imp,
 			int[][] particleLabels, int resampling, int phase) {
 		double maxArea = 0;
-		Calibration cal = imp.getCalibration();
 
 		if (p.getID() > 0) {
 			ImagePlus binaryImp = ParticleUtilities.getBinaryParticle(p, imp, particleLabels, resampling);
@@ -336,15 +335,16 @@ public class ParticleUtilities {
 				if (resultArray[x] == phase)
 					pixelArea++;
 			}
-			maxArea = pixelArea * (cal.pixelWidth * cal.pixelHeight);
+			maxArea = pixelArea * (p.getCalibration().pixelWidth*p.getCalibration().pixelHeight);
 
 			// tester
-			if (p.getID() == 50) {
+			/*if (p.getID() == 50) {
 				ImageStack t = new ImageStack(w, h);
 				t.addSlice("Test", resultArray);
 				ImagePlus testImage = new ImagePlus("Test XY Image", t);
+				testImage.setCalibration(p.getCalibration());
 				testImage.show();
-			}
+			}*/
 		}
 
 		return maxArea;
