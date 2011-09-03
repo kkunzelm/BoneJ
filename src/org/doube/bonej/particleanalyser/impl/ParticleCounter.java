@@ -170,7 +170,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		labels[7] = "Ellipsoids";
 		defaultValues[7] = false;
 		labels[8] = "Max XY Area";
-		defaultValues[8] = false;
+		defaultValues[8] = true;
 		gd.addCheckboxGroup(5, 2, labels, defaultValues, headers);
 		gd.addNumericField("Min Volume", 0, 3, 7, units + "³");
 		gd.addNumericField("Max Volume", Double.POSITIVE_INFINITY, 3, 7, units
@@ -1064,13 +1064,13 @@ public class ParticleCounter implements PlugIn, DialogListener {
 				}
 				maxAreas[p] = maxArea * (cal.pixelWidth*cal.pixelHeight);
 				
-				//tester
+				/*//tester
 				if (p == 50) {
 					ImageStack t = new ImageStack(w, h);
 					t.addSlice("Test", resultArray);
 					ImagePlus testImage = new ImagePlus("Test XY Image", t);
 					testImage.show();
-				}
+				}*/
 			}
 		}
 		
