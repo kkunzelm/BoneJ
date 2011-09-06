@@ -1,3 +1,19 @@
+/**
+ * Particle.java Copyright 2010 Keith Schulze
+ * 
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 package org.doube.bonej.particleanalyser;
 
 import ij.measure.Calibration;
@@ -14,6 +30,11 @@ import customnode.CustomMesh;
 import customnode.CustomPointMesh;
 import customnode.CustomTriangleMesh;
 
+/**
+ * @author Keith Schulze
+ * 
+ * Particle interface - provides an interface for accessing particle data.
+ */
 public interface Particle {
 
 	/**
@@ -310,6 +331,18 @@ public interface Particle {
 	 * @return
 	 */
 	public double getVolume();
+	
+	/**
+	 * Gets the maximum XY area for this particle.
+	 * @return
+	 */
+	public double getMaxXYArea();
+	
+	/**
+	 * Sets the maximum XY Area for this particle.
+	 * @param maxXYArea
+	 */
+	public void setMaxXYArea(double maxXYArea);
 
 	/**
 	 * @return the surfacePoints
@@ -322,13 +355,20 @@ public interface Particle {
 	 */
 	public void setSurfacePoints(List<Point3f> surfacePoints);
 
+	/**
+	 * Get surface mesh for this particle with certain color.
+	 * @param color
+	 * @return
+	 */
 	public CustomTriangleMesh getSurfaceMesh(Color3f color);
 
+	/**
+	 * Get a mesh for the centroid of this particle
+	 * @param color
+	 * @param transparency
+	 * @return centroid mesh
+	 */
 	public CustomPointMesh getCentroidMesh(Color3f color, float transparency);
-	
-	public double getMaxXYArea();
-	
-	public void setMaxXYArea(double maxXYArea);
 
 	/**
 	 * Draws 3 orthogonal axes defined by the centroid, unit vector and axis

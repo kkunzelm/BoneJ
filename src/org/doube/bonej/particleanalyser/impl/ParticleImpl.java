@@ -1,5 +1,5 @@
 /**
- * Particle.java Copyright 2010 Keith Schulze
+ * ParticleImpl.java Copyright 2010 Keith Schulze
  * 
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -39,7 +39,9 @@ import ij.measure.Calibration;
  * @author Keith Schulze
  * 
  *         This class attempts to modularize the particle counter somewhat by
- *         creating a particle object that holds
+ *         creating a particle object that holds.
+ *         
+ *         First implementation of the Particle interface.
  */
 public class ParticleImpl implements Cloneable, Particle {
 
@@ -100,46 +102,48 @@ public class ParticleImpl implements Cloneable, Particle {
 	private double maxXYArea;
 
 	/**
-	 * 
+	 * Surface point coordinates for create surface mesh's etc.
 	 */
 	private List<Point3f> surfacePoints = null;
 	
 	/**
-	 * 
+	 * EigenDecomposition values.
 	 */
 	private EigenvalueDecomposition eigen = null;
 	
 	/**
-	 * 
+	 * Surface area
 	 */
 	private double surfaceArea = Double.NaN;
 	
 	/**
-	 * 
+	 * Feret diameter
 	 */
 	private double feretDiameter = 0.0;
 	
 	/**
-	 * 
+	 * Volume enclosed by surface points
 	 */
 	private double enclosedVolume = Double.NaN;
 	
 	/**
-	 * 
+	 * Euler characters
 	 */
 	private double[] eulerCharacter = null;
 	
 	/**
-	 * 
+	 * Particle thickness
 	 */
 	private double[] thickness = null;
 	
 	/**
-	 * 
+	 * Ellipsoid that encloses particle.
 	 */
 	private Object[] ellipsoid = null;
 
 	/**
+	 * Particle constructor.
+	 * 
 	 * @param iD
 	 * @param name
 	 * @param visible
@@ -168,6 +172,7 @@ public class ParticleImpl implements Cloneable, Particle {
 	}
 
 	/**
+	 * Particle constructor.
 	 * @param iD
 	 * @param name
 	 * @param touchingEdge
