@@ -247,11 +247,16 @@ public class ParticleManagerImpl implements ParticleManager {
 		return closed;
 	}
 
+	/**
+	 * Sets whether this object is closed.
+	 * @param closed
+	 */
 	public void setClosed(boolean closed) {
 		this.closed = closed;
 	}
 
 	/**
+	 * Returns the particleLabels object.
 	 * @return the particleLabels
 	 */
 	public int[][] getParticleLabels() {
@@ -363,6 +368,7 @@ public class ParticleManagerImpl implements ParticleManager {
 		for (int i = startIndex; i <= endIndex; i++)
 			hideParticle(i, hiddenBy);
 	}
+
 
 	public void showParticle(int index) {
 		showParticle(getParticle(index));
