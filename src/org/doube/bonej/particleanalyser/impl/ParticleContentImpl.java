@@ -22,6 +22,7 @@ import java.util.TreeMap;
 import javax.vecmath.Color3f;
 
 import org.doube.bonej.particleanalyser.Particle;
+import org.doube.bonej.particleanalyser.ParticleManager;
 
 import ij3d.Content;
 import ij3d.ContentInstant;
@@ -33,18 +34,18 @@ import ij3d.ContentInstant;
 public class ParticleContentImpl extends Content {
 
 	private Particle particle;
-	private ParticleManagerImpl pm;
+	private ParticleManager pm;
 	private Color3f color;
 	private static final Color3f selectedColor = new Color3f(new Color(165, 214, 236));
 	
-	public ParticleContentImpl(String name, int tp, Particle particle, ParticleManagerImpl pm, Color3f color) {
+	public ParticleContentImpl(String name, int tp, Particle particle, ParticleManager pm, Color3f color) {
 		super(name, tp);
 		this.particle = particle;
 		this.pm = pm;
 		this.color = color;
 	}
 
-	public ParticleContentImpl(String name, Particle particle, ParticleManagerImpl pm, Color3f color) {
+	public ParticleContentImpl(String name, Particle particle, ParticleManager pm, Color3f color) {
 		super(name);
 		this.particle = particle;
 		this.pm = pm;
@@ -52,7 +53,7 @@ public class ParticleContentImpl extends Content {
 	}
 
 	public ParticleContentImpl(String name, TreeMap<Integer, ContentInstant> contents, 
-			Particle particle, ParticleManagerImpl pm, Color3f color) {
+			Particle particle, ParticleManager pm, Color3f color) {
 		super(name, contents);
 		this.particle = particle;
 		this.pm = pm;

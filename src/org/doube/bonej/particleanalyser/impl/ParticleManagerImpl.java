@@ -32,6 +32,7 @@ import marchingcubes.MCTriangulator;
 import org.doube.bonej.Connectivity;
 import org.doube.bonej.Thickness;
 import org.doube.bonej.particleanalyser.Particle;
+import org.doube.bonej.particleanalyser.ParticleManager;
 import org.doube.bonej.particleanalyser.ui.PAResultWindow;
 import org.doube.jama.EigenvalueDecomposition;
 import org.doube.jama.Matrix;
@@ -53,11 +54,7 @@ import ij3d.ImageWindow3D;
  * @author Michael Doube
  * 
  */
-public class ParticleManagerImpl {
-
-	public static enum ColorMode {
-		GRADIENT, SPLIT;
-	}
+public class ParticleManagerImpl implements ParticleManager {
 
 	private static ArrayList<ParticleManagerImpl> particleManagers = new ArrayList<ParticleManagerImpl>();
 	private Image3DUniverse univ = new Image3DUniverse();
@@ -201,6 +198,10 @@ public class ParticleManagerImpl {
 		particleManagers.add(this);
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#close()
+	 */
+	@Override
 	public void close() {
 		for (int i = 0; i < getAllParticles().size(); i++)
 			particles.remove(i);
@@ -230,10 +231,18 @@ public class ParticleManagerImpl {
 		this.imp = imp;
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#getCalibration()
+	 */
+	@Override
 	public Calibration getCalibration() {
 		return this.imp.getCalibration();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#isClosed()
+	 */
+	@Override
 	public boolean isClosed() {
 		return closed;
 	}
@@ -272,10 +281,18 @@ public class ParticleManagerImpl {
 		this.particleWorkArray = particleWorkArray;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#getParticle(int)
+	 */
+	@Override
 	public Particle getParticle(int index) {
 		return particles.get(index);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#getVisibleParticle(int)
+	 */
+	@Override
 	public Particle getVisibleParticle(int index) {
 		return getVisibleParticles().get(index);
 	}
@@ -284,9 +301,10 @@ public class ParticleManagerImpl {
 		this.particles.set(index, p);
 	}
 
-	/**
-	 * @return the particles
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#getAllParticles()
 	 */
+	@Override
 	public List<Particle> getAllParticles() {
 		return particles;
 	}
@@ -299,6 +317,10 @@ public class ParticleManagerImpl {
 		this.particles = particles;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#getVisibleParticles()
+	 */
+	@Override
 	public List<Particle> getVisibleParticles() {
 		List<Particle> visibleParticles = new ArrayList<Particle>();
 		for (Particle p : particles)
@@ -308,10 +330,18 @@ public class ParticleManagerImpl {
 		return visibleParticles;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#hideParticle(int, org.doube.bonej.particleanalyser.Particle.HideType)
+	 */
+	@Override
 	public void hideParticle(int index, Particle.HideType hiddenBy) {
 		hideParticle(getParticle(index), hiddenBy);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#hideParticle(org.doube.bonej.particleanalyser.Particle, org.doube.bonej.particleanalyser.Particle.HideType)
+	 */
+	@Override
 	public void hideParticle(Particle particle, Particle.HideType hiddenBy) {
 		particle.setVisible(false);
 		particle.setHiddenBy(hiddenBy);
@@ -324,6 +354,10 @@ public class ParticleManagerImpl {
 		resultWindow.getParticleTableModel().fireTableDataChanged();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#hideParticles(int, int, org.doube.bonej.particleanalyser.Particle.HideType)
+	 */
+	@Override
 	public void hideParticles(int startIndex, int endIndex,
 			Particle.HideType hiddenBy) {
 		for (int i = startIndex; i <= endIndex; i++)
@@ -369,6 +403,10 @@ public class ParticleManagerImpl {
 		resultWindow.getParticleTableModel().fireTableDataChanged();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#resetParticles()
+	 */
+	@Override
 	public void resetParticles() {
 		if (univ.getWindow() == null) {
 			univ = new Image3DUniverse();
@@ -396,6 +434,10 @@ public class ParticleManagerImpl {
 		EventQueue.invokeLater(resultWindow);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#selectParticle(org.doube.bonej.particleanalyser.Particle)
+	 */
+	@Override
 	public void selectParticle(Particle particle) {
 		if (univ.getWindow() != null && univ.getWindow().isShowing())
 			if (univ.getSelected() != univ.getContent(particle.getName())) {
@@ -409,6 +451,10 @@ public class ParticleManagerImpl {
 			resultWindow.selectParticle(particle);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#deselectAllParticles()
+	 */
+	@Override
 	public void deselectAllParticles() {
 		for (Particle p : particles)
 			p.setSelected(false);
@@ -548,14 +594,10 @@ public class ParticleManagerImpl {
 		this.ellipsoidsCalculated = ellipsoidsCalculated;
 	}
 
-	/**
-	 * Handles the inclusion/exclusion of particles that touch a given side.
-	 * TODO: need to handle particles hidden by other means i.e.
-	 * Particle.HideTypes.DELETE and SIZE
-	 * 
-	 * @param show
-	 * @param edge
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#excludeOnEdge(boolean, org.doube.bonej.particleanalyser.impl.Face)
 	 */
+	@Override
 	public synchronized void excludeOnEdge(boolean show, Face edge) {
 		for (Particle p : this.getAllParticles()) {
 			if (p.getEdgesTouched().size() == 1 && p.isTouchingEdge(edge)) {
@@ -591,17 +633,18 @@ public class ParticleManagerImpl {
 		}
 	}
 
-	/**
-	 * @return the maxVolume
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#getMaxVolume()
 	 */
+	@Override
 	public double getMaxVolume() {
 		return maxVolume;
 	}
 
-	/**
-	 * @param newMaxVolume
-	 *            the maxVolume to set
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#setMaxVolume(double)
 	 */
+	@Override
 	public void setMaxVolume(double newMaxVolume) {
 		if (newMaxVolume < this.maxVolume) {
 			for (Particle particle : this.getAllParticles()) {
@@ -625,17 +668,18 @@ public class ParticleManagerImpl {
 		this.maxVolume = newMaxVolume;
 	}
 
-	/**
-	 * @return the minVolume
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#getMinVolume()
 	 */
+	@Override
 	public double getMinVolume() {
 		return minVolume;
 	}
 
-	/**
-	 * @param minVolume
-	 *            the minVolume to set
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#setMinVolume(double)
 	 */
+	@Override
 	public void setMinVolume(double minVolume) {
 		if (minVolume > this.minVolume) {
 			for (Particle particle : this.getAllParticles()) {
@@ -725,10 +769,10 @@ public class ParticleManagerImpl {
 		}
 	}
 
-	/**
-	 * Display visible particle surfaces in the 3D Viewer.
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#displaySurfaces(org.doube.bonej.particleanalyser.impl.ParticleManagerImpl.ColorMode)
 	 */
-	public void displaySurfaces(ParticleManagerImpl.ColorMode mode) {
+	public void displaySurfaces(ParticleManager.ColorMode mode) {
 		if (surfacePointsCalculated == false) {
 			setAllSurfacePoints(imp, particleLabels, particles, 2);
 			this.setSurfaceAreaCalculated(true);
@@ -772,9 +816,10 @@ public class ParticleManagerImpl {
 		this.reAdjustView();
 	}
 
-	/**
-	 * Display visible particle centroids in the 3D Viewer.
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#displayCentroids()
 	 */
+	@Override
 	public void displayCentroids() {
 		show3DViewer();
 		int p = 0;
@@ -811,9 +856,10 @@ public class ParticleManagerImpl {
 		reAdjustView();
 	}
 
-	/**
-	 * Display visible particle axes in the 3D Viewer.
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#displayAxes()
 	 */
+	@Override
 	public void displayAxes() {
 		if (!surfacePointsCalculated && !eigensCalculated) {
 			setAllSurfacePoints(imp, particleLabels, particles, 2);
@@ -861,9 +907,10 @@ public class ParticleManagerImpl {
 		this.reAdjustView();
 	}
 
-	/**
-	 * Display visible particle ellipsoids in the 3D Viewer.
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#displayEllipsoids()
 	 */
+	@Override
 	public void displayEllipsoids() {
 		if (!surfacePointsCalculated && !ellipsoidsCalculated) {
 			setAllSurfacePoints(imp, particleLabels, particles, 2);
@@ -920,10 +967,10 @@ public class ParticleManagerImpl {
 		reAdjustView();
 	}
 
-	/**
-	 * Display the original binary stack in the 3D Viewer. TODO: Add option for
-	 * setting re-sampling.
+	/* (non-Javadoc)
+	 * @see org.doube.bonej.particleanalyser.impl.ParticleManager#displayOriginal3DImage()
 	 */
+	@Override
 	public void displayOriginal3DImage() {
 		Color3f colour = new Color3f(1.0f, 1.0f, 1.0f);
 		boolean[] channels = { true, true, true };

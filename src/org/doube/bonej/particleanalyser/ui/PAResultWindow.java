@@ -40,9 +40,8 @@ import javax.swing.JTextField;
 import javax.swing.UIManager;
 
 import org.doube.bonej.particleanalyser.Particle;
+import org.doube.bonej.particleanalyser.ParticleManager;
 import org.doube.bonej.particleanalyser.impl.Face;
-import org.doube.bonej.particleanalyser.impl.ParticleImpl;
-import org.doube.bonej.particleanalyser.impl.ParticleManagerImpl;
 
 import java.awt.event.ItemListener;
 import java.awt.event.ItemEvent;
@@ -51,7 +50,7 @@ import java.awt.event.WindowEvent;
 
 public class PAResultWindow implements Runnable {
 
-	private ParticleManagerImpl pm;
+	private ParticleManager pm;
 	private ExecutorService pool;
 
 	private JFrame frame;
@@ -84,7 +83,7 @@ public class PAResultWindow implements Runnable {
 	/**
 	 * Create the frame.
 	 */
-	public PAResultWindow(ParticleManagerImpl pm) {
+	public PAResultWindow(ParticleManager pm) {
 		this.pm = pm;
 		this.pool = Executors.newCachedThreadPool();
 	}
@@ -538,7 +537,7 @@ public class PAResultWindow implements Runnable {
 
 			@Override
 			protected Boolean doInBackground() throws Exception {
-				pm.displaySurfaces(ParticleManagerImpl.ColorMode.GRADIENT);
+				pm.displaySurfaces(ParticleManager.ColorMode.GRADIENT);
 				return Boolean.TRUE;
 			}
 

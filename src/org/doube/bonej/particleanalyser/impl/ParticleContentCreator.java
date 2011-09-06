@@ -17,6 +17,7 @@
 package org.doube.bonej.particleanalyser.impl;
 
 import org.doube.bonej.particleanalyser.Particle;
+import org.doube.bonej.particleanalyser.ParticleManager;
 
 import customnode.CustomMesh;
 import customnode.CustomMeshNode;
@@ -31,11 +32,11 @@ import ij3d.UniverseSettings;
  */
 public class ParticleContentCreator {
 
-	public static Content createContent(CustomMesh mesh, Particle particle, ParticleManagerImpl pm) {
+	public static Content createContent(CustomMesh mesh, Particle particle, ParticleManager pm) {
 		return createContent(mesh, particle, pm, -1);
 	}
 
-	public static Content createContent(CustomMesh mesh, Particle particle, ParticleManagerImpl pm, int tp) {
+	public static Content createContent(CustomMesh mesh, Particle particle, ParticleManager pm, int tp) {
 		ParticleContentImpl c = new ParticleContentImpl(particle.getName(), tp, particle, pm, mesh.getColor());
 		ContentInstant content = c.getInstant(tp);
 		content.setColor(mesh.getColor());
@@ -47,11 +48,11 @@ public class ParticleContentCreator {
 		return c;
 	}
 	
-	public static Content createContent(CustomMultiMesh node, String name, Particle particle, ParticleManagerImpl pm) {
+	public static Content createContent(CustomMultiMesh node, String name, Particle particle, ParticleManager pm) {
 		return createContent(node, name,  particle, pm, -1);
 	}
 
-	public static Content createContent(CustomMultiMesh node, String name, Particle particle, ParticleManagerImpl pm, int tp) {
+	public static Content createContent(CustomMultiMesh node, String name, Particle particle, ParticleManager pm, int tp) {
 		ParticleContentImpl c = new ParticleContentImpl(name, tp, particle, pm, node.getMesh().getColor());
 		ContentInstant content = c.getInstant(tp);
 		content.setColor(null);
