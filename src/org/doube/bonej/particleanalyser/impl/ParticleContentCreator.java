@@ -33,7 +33,7 @@ import ij3d.UniverseSettings;
 public class ParticleContentCreator {
 
 	public static Content createContent(CustomMesh mesh, Particle particle, ParticleManager pm) {
-		return createContent(mesh, particle, pm, -1);
+		return createContent(mesh, particle, pm, 0);
 	}
 
 	public static Content createContent(CustomMesh mesh, Particle particle, ParticleManager pm, int tp) {
@@ -49,7 +49,7 @@ public class ParticleContentCreator {
 	}
 	
 	public static Content createContent(CustomMultiMesh node, String name, Particle particle, ParticleManager pm) {
-		return createContent(node, name,  particle, pm, -1);
+		return createContent(node, name,  particle, pm, 0);
 	}
 
 	public static Content createContent(CustomMultiMesh node, String name, Particle particle, ParticleManager pm, int tp) {

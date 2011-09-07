@@ -783,7 +783,6 @@ public class ParticleManagerImpl implements ParticleManager {
 			setAllSurfacePoints(imp, particleLabels, particles, 2);
 			this.setSurfaceAreaCalculated(true);
 		}
-		show3DViewer();
 		int p = 0;
 		List<Particle> visibleParticles = getVisibleParticles();
 		Iterator<Particle> iter = visibleParticles.iterator();
@@ -819,6 +818,9 @@ public class ParticleManagerImpl implements ParticleManager {
 			}
 			p++;
 		}
+		
+		// TODO: Showing needs to be implemented better.
+		this.show3DViewer();
 		this.reAdjustView();
 	}
 
@@ -827,7 +829,6 @@ public class ParticleManagerImpl implements ParticleManager {
 	 */
 	@Override
 	public void displayCentroids() {
-		show3DViewer();
 		int p = 0;
 
 		List<Particle> visibleParticles = getVisibleParticles();
@@ -859,7 +860,9 @@ public class ParticleManagerImpl implements ParticleManager {
 			p++;
 
 		}
-		reAdjustView();
+		// TODO: Showing needs to be implemented better.
+		this.show3DViewer();
+		this.reAdjustView();
 	}
 
 	/* (non-Javadoc)
@@ -876,8 +879,6 @@ public class ParticleManagerImpl implements ParticleManager {
 			setAllEigens(imp, particleLabels, particles);
 			this.setEigensCalculated(true);
 		}
-
-		show3DViewer();
 
 		double[][] lengths = ParticleGetter.getMaxDistances(imp,
 				particleLabels, particles);
@@ -910,6 +911,9 @@ public class ParticleManagerImpl implements ParticleManager {
 			}
 			p++;
 		}
+		
+		// TODO: Showing needs to be implemented better.
+		this.show3DViewer();
 		this.reAdjustView();
 	}
 
@@ -935,8 +939,6 @@ public class ParticleManagerImpl implements ParticleManager {
 			}
 			this.setEllipsoidsCalculated(true);
 		}
-
-		show3DViewer();
 
 		int p = 0;
 		Iterator<Particle> iter = getVisibleParticles().iterator();
@@ -970,7 +972,9 @@ public class ParticleManagerImpl implements ParticleManager {
 			}
 			p++;
 		}
-		reAdjustView();
+		// TODO: Showing needs to be implemented better.
+		this.show3DViewer();
+		this.reAdjustView();
 	}
 
 	/* (non-Javadoc)
