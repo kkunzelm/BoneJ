@@ -1,5 +1,5 @@
 /**
- * BoneJContentCreator.java Copyright 2010 Keith Schulze
+ * ParticleContentCreator.java Copyright 2010 Keith Schulze
  * 
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ import ij3d.UniverseSettings;
 
 /**
  * @author Keith
- *
+ * Utility class for creating ImageJ 3D viewer 3D universe contents for particles.
  */
 public class ParticleContentCreator {
 

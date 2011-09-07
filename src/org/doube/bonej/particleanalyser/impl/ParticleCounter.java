@@ -2,6 +2,7 @@ package org.doube.bonej.particleanalyser.impl;
 
 /**
  * ParticleCounter Copyright 2009 2010 Michael Doube
+ * Modified by Keith Schulze 2010
  * 
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,7 +22,6 @@ import java.awt.AWTEvent;
 import java.awt.Checkbox;
 import java.awt.Choice;
 import java.awt.TextField;
-import java.awt.image.ColorModel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -35,7 +35,6 @@ import javax.vecmath.Point3f;
 
 import org.doube.bonej.Connectivity;
 import org.doube.bonej.MeasureSurface;
-import org.doube.bonej.Thickness;
 import org.doube.bonej.particleanalyser.Particle;
 import org.doube.geometry.FitEllipsoid;
 import org.doube.jama.EigenvalueDecomposition;
@@ -44,7 +43,6 @@ import org.doube.util.DialogModifier;
 import org.doube.util.ImageCheck;
 import org.doube.util.Multithreader;
 
-import customnode.CustomPointMesh;
 import customnode.CustomTriangleMesh;
 
 import marchingcubes.MCTriangulator;
@@ -55,12 +53,8 @@ import ij.ImageStack;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.measure.Calibration;
-import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
-import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
-import ij3d.Content;
-import ij3d.Image3DUniverse;
 
 /**
  * <p>
@@ -98,6 +92,11 @@ import ij3d.Image3DUniverse;
  * increase should be in the region of <i>n</i> * <i>c</i>, minus overhead.
  * </p>
  * 
+ * <p> Several methods have been deprecated and moved to utility classes <class>ParticleUtilities</class>,
+ * <class>ParticleGetter</class> and <class>ParticleManagerImpl</class>. Overtime the hope is that this 
+ * class will be exclusively used for plugin initialization. - Keith Schulze 2011.
+ * 
+ * @author Keith Schulze
  * @author Michael Doube
  * @author Jonathan Jackson
  * @author Fabrice Cordelires

@@ -29,7 +29,7 @@ import ij3d.ContentInstant;
 
 /**
  * @author Keith Schulze
- *
+ * Implementation of the Particle interface. Object that stores attributes related to each particle.
  */
 public class ParticleContentImpl extends Content {
 

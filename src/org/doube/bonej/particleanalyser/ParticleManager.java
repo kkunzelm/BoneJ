@@ -1,11 +1,32 @@
 package org.doube.bonej.particleanalyser;
 
+/**
+ * Particle.java Copyright 2011 Keith Schulze
+ * 
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 import ij.measure.Calibration;
 
 import java.util.List;
 
 import org.doube.bonej.particleanalyser.impl.Face;
 
+/**
+ * @author Keith Schulze
+ * Initial attempt to create an interface for managing and interacting with particles.
+ */
 public interface ParticleManager {
 
 	public static enum ColorMode {
@@ -14,12 +35,14 @@ public interface ParticleManager {
 	
 	/**
 	 * Closes the Particle manager and ends particle analysis.
+	 * TODO: These are not ideal.
 	 */
 	public void close();
 	
 	/**
 	 * Determines whether the ParticleManager has been closed.
-	 * @return
+	 * TODO: These are not ideal.
+	 * @return isClosed?
 	 */
 	public boolean isClosed();
 

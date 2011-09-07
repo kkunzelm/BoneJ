@@ -1,5 +1,6 @@
 /**
- * ParticleGetter.java Copyright 2010 Keith Schulze
+ * ParticleCounter Copyright 2009 2010 Michael Doube
+ * Extracted from <class>ParticleCounter</class> by Keith Schulze 2010
  * 
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
