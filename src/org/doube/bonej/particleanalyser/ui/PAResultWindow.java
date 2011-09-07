@@ -308,7 +308,7 @@ public class PAResultWindow implements Runnable {
 
 		JPanel panel_2 = new JPanel();
 		eastPanel.add(panel_2);
-		panel_2.setLayout(new GridLayout(5, 0, 0, 0));
+		panel_2.setLayout(new GridLayout(6, 0, 0, 0));
 
 		JLabel lbldViewer = new JLabel("3D Viewer");
 		lbldViewer.setBorder(UIManager.getBorder("DesktopIcon.border"));
@@ -354,6 +354,17 @@ public class PAResultWindow implements Runnable {
 				showEllipsoids3D();
 			}
 		});
+		
+		JButton btnShowOrigImage = new JButton("Show Orig. Image (3D)");
+		panel_2.add(btnShowOrigImage);
+		btnShowOrigImage.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				e.consume();
+				showOrigImage3D();
+			}
+		});
+		
 
 		JPanel panel_1 = new JPanel();
 		eastPanel.add(panel_1);
@@ -596,6 +607,27 @@ public class PAResultWindow implements Runnable {
 			@Override
 			protected Boolean doInBackground() throws Exception {
 				pm.displayCentroids();
+				return Boolean.TRUE;
+			}
+			
+			/* (non-Javadoc)
+			 * @see javax.swing.SwingWorker#done()
+			 */
+			@Override
+			protected void done() {
+				super.done();
+			}
+
+		};
+		pool.execute(worker);
+	}
+	
+	private void showOrigImage3D() {
+		SwingWorker<Boolean, Void> worker = new SwingWorker<Boolean, Void>() {
+
+			@Override
+			protected Boolean doInBackground() throws Exception {
+				pm.displayOriginal3DImage();
 				return Boolean.TRUE;
 			}
 			

@@ -990,6 +990,10 @@ public class ParticleManagerImpl implements ParticleManager {
 		} catch (NullPointerException npe) {
 			IJ.log("3D Viewer was closed before rendering completed.");
 		}
+		
+		// TODO: Showing needs to be implemented better.
+		this.show3DViewer();
+		this.reAdjustView();
 		return;
 	}
 
