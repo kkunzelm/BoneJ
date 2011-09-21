@@ -7,11 +7,12 @@ import ij.plugin.frame.RoiManager;
 
 import java.awt.List;
 import java.awt.Rectangle;
+import java.util.ArrayList;
 
 /**
  * Do useful things with ImageJ's ROI Manager
  * 
- * @author mdoube
+ * @author Michael Doube
  * */
 public class RoiMan {
 	/**
@@ -49,5 +50,66 @@ public class RoiMan {
 			}
 		}
 		return dataPoints;
+	}
+
+	/**
+	 * Return a list of ROIs that are active in the given slice, s.
+	 * ROIs without a slice number are assumed to be active in all slices.
+	 * 
+	 * @param roiMan
+	 * @param s
+	 * @return
+	 */
+	public static ArrayList<Roi> getSliceRoi(RoiManager roiMan, int s) {
+		ArrayList<Roi> roiList = new ArrayList<Roi>();
+		Roi[] rois = roiMan.getRoisAsArray();
+		for (Roi roi : rois){
+			int sliceNumber = roiMan.getSliceNumber(roi.getName());
+			if (sliceNumber == s || sliceNumber == -1)
+				roiList.add(roi);
+		}
+		return roiList;
+	}
+
+	/**
+	 * Find the x, y and z limits of the ROIs in the ROI Manager
+	 * 
+	 * @param roiMan
+	 * @return int[] containing x min, x max, y min, y max, z min and z max, or
+	 *         null if there is no ROI Manager or if the ROI Manager is empty.
+	 *         If any of the ROIs contains no slice information, z min is set to 1
+	 *         and z max is set to Integer.MAX_VALUE
+	 */
+	public static int[] getLimits(RoiManager roiMan) {
+		if (roiMan == null || roiMan.getCount() == 0)
+			return null;
+		int xmin = Integer.MAX_VALUE;
+		int xmax = 0;
+		int ymin = Integer.MAX_VALUE;
+		int ymax = 0;
+		int zmin = Integer.MAX_VALUE;
+		int zmax = 1;
+		boolean noZroi = false;
+		Roi[] rois = roiMan.getRoisAsArray();
+		for (Roi roi : rois) {
+			Rectangle r = roi.getBounds();
+			xmin = Math.min(r.x, xmin);
+			xmax = Math.max(r.x + r.width, xmax);
+			ymin = Math.min(r.y, ymin);
+			ymax = Math.max(r.y + r.height, ymax);
+			int slice = roiMan.getSliceNumber(roi.getName());
+			if (slice > 0) {
+				zmin = Math.min(slice, zmin);
+				zmax = Math.max(slice, zmax);
+			} else
+				noZroi = true; //found a ROI with no Z info
+		}
+		if (noZroi) {
+			int[] limits = { xmin, xmax, ymin, ymax, 1, Integer.MAX_VALUE };
+			return limits;
+		} else {
+			int[] limits = { xmin, xmax, ymin, ymax, zmin, zmax };
+			return limits;
+		}
 	}
 }

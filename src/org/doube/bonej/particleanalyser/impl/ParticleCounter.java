@@ -382,7 +382,6 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		if (doSurfaceImage || doCentroidImage || doAxesImage || do3DOriginal
 				|| doEllipsoidImage) {
 			Image3DUniverse univ = new Image3DUniverse();
-			univ.show();
 			if (doSurfaceImage) {
 				displayParticleSurfaces(univ, surfacePoints, colourMode,
 						volumes, splitValue);
