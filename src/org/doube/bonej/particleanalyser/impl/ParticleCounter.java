@@ -381,24 +381,25 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		/*// show 3D renderings
 		if (doSurfaceImage || doCentroidImage || doAxesImage || do3DOriginal
 				|| doEllipsoidImage) {
+			Image3DUniverse univ = new Image3DUniverse();
 			univ.show();
 			if (doSurfaceImage) {
-				displayParticleSurfaces(surfacePoints, colourMode, volumes,
-						splitValue);
+				displayParticleSurfaces(univ, surfacePoints, colourMode,
+						volumes, splitValue);
 			}
 			if (doCentroidImage) {
-				displayCentroids(centroids);
+				displayCentroids(centroids, univ);
 			}
 			if (doAxesImage) {
 				double[][] lengths = (double[][]) getMaxDistances(imp,
 						particleLabels, centroids, eigens)[1];
-				displayPrincipalAxes(eigens, centroids, lengths);
+				displayPrincipalAxes(univ, eigens, centroids, lengths);
 			}
 			if (doEllipsoidImage) {
-				displayEllipsoids(ellipsoids);
+				displayEllipsoids(ellipsoids, univ);
 			}
 			if (do3DOriginal) {
-				display3DOriginal(imp, origResampling);
+				display3DOriginal(imp, origResampling, univ);
 			}
 			try {
 				if (univ.contains(imp.getTitle())) {
@@ -475,8 +476,8 @@ public class ParticleCounter implements PlugIn, DialogListener {
 				return;
 			}
 			// Add some axes
-			displayAxes(centre, eV, radii, 1.0f, 1.0f, 0.0f, "Ellipsoid Axes "
-					+ el);
+			displayAxes(univ, centre, eV, radii, 1.0f, 1.0f, 0.0f,
+					"Ellipsoid Axes " + el);
 		}
 	}*/
 
@@ -770,24 +771,24 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		Color3f colour = new Color3f(1.0f, 1.0f, 1.0f);
 		boolean[] channels = { true, true, true };
 		try {
-			univ
-					.addVoltex(imp, colour, imp.getTitle(), 0, channels,
-							resampling).setLocked(true);
+			univ.addVoltex(imp, colour, imp.getTitle(), 0, channels, resampling)
+					.setLocked(true);
 		} catch (NullPointerException npe) {
 			IJ.log("3D Viewer was closed before rendering completed.");
 		}
 		return;
 	}
 
-	private void displayPrincipalAxes(EigenvalueDecomposition[] eigens,
-			double[][] centroids, double[][] lengths) {
+	private void displayPrincipalAxes(Image3DUniverse univ,
+			EigenvalueDecomposition[] eigens, double[][] centroids,
+			double[][] lengths) {
 		final int nEigens = eigens.length;
 		for (int p = 1; p < nEigens; p++) {
 			IJ.showStatus("Rendering principal axes...");
 			IJ.showProgress(p, nEigens);
 			final Matrix eVec = eigens[p].getV();
-			displayAxes(centroids[p], eVec.getArray(), lengths[p], 1.0f, 0.0f,
-					0.0f, "Principal Axes " + p);
+			displayAxes(univ, centroids[p], eVec.getArray(), lengths[p], 1.0f,
+					0.0f, 0.0f, "Principal Axes " + p);
 		}
 		return;
 	}
@@ -796,6 +797,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	 * Draws 3 orthogonal axes defined by the centroid, unitvector and axis
 	 * length.
 	 * 
+	 * @param univ
 	 * @param centroid
 	 * @param unitVector
 	 * @param lengths
@@ -904,6 +906,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	*//**
 	 * Draw the particle surfaces in a 3D viewer
 	 * 
+	 * @param univ
 	 * @param surfacePoints
 	 *//*
 	private void displayParticleSurfaces(
@@ -2363,6 +2366,8 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	}
 
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+		if (!DialogModifier.allNumbersValid(gd.getNumericFields()))
+			return false;
 		Vector<?> choices = gd.getChoices();
 		Vector<?> checkboxes = gd.getCheckboxes();
 		Vector<?> numbers = gd.getNumericFields();

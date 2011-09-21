@@ -154,7 +154,7 @@ public class SliceGeometry implements PlugIn, DialogListener {
 	/** List of perimeter lengths */
 	private double[] perimeter;
 	/** List of maximal distances from centroid */
-//	private double[] maxRadCentre;
+	// private double[] maxRadCentre;
 	/** List of polar section moduli */
 	private double[] Zpol;
 	private boolean do3DAnnotation;
@@ -176,9 +176,11 @@ public class SliceGeometry implements PlugIn, DialogListener {
 	private double[] Z1;
 	/** Section modulus around secondary axis */
 	private double[] Z2;
-//	private double[] Zp;
+	// private double[] Zp;
 	private double[] principalDiameter;
 	private double[] secondaryDiameter;
+	/** Flag to clear the results table or concatenate */
+	private boolean clearResults;
 
 	public void run(String arg) {
 		if (!ImageCheck.checkEnvironment())
@@ -220,6 +222,7 @@ public class SliceGeometry implements PlugIn, DialogListener {
 		gd.addCheckbox("Annotated_Copy_(2D)", true);
 		gd.addCheckbox("3D_Annotation", false);
 		gd.addCheckbox("Process_Stack", false);
+		gd.addCheckbox("Clear_results", false);
 		gd.addCheckbox("Use Orientation", (orienteer != null));
 		// String[] analyses = { "Weighted", "Unweighted", "Both" };
 		// gd.addChoice("Calculate: ", analyses, analyses[1]);
@@ -244,6 +247,7 @@ public class SliceGeometry implements PlugIn, DialogListener {
 		this.doCopy = gd.getNextBoolean();
 		this.do3DAnnotation = gd.getNextBoolean();
 		this.doStack = gd.getNextBoolean();
+		this.clearResults = gd.getNextBoolean();
 		this.doOriented = gd.getNextBoolean();
 		if (this.doStack) {
 			this.startSlice = 1;
@@ -282,7 +286,8 @@ public class SliceGeometry implements PlugIn, DialogListener {
 		// TODO locate centroids of multiple sections in a single plane
 
 		ResultsTable rt = ResultsTable.getResultsTable();
-		rt.reset();
+		if (clearResults)
+			rt.reset();
 
 		String title = imp.getTitle();
 		for (int s = this.startSlice; s <= this.endSlice; s++) {
@@ -329,8 +334,10 @@ public class SliceGeometry implements PlugIn, DialogListener {
 			}
 			if (this.doOriented && orienteer != null) {
 				String[] dirs = orienteer.getDirections(imp);
-				rt.addValue(dirs[0] +" (rad)", orienteer.getOrientation(imp, dirs[0]));
-				rt.addValue(dirs[2] +" (rad)", orienteer.getOrientation(imp, dirs[2]));
+				rt.addValue(dirs[0] + " (rad)", orienteer.getOrientation(imp,
+						dirs[0]));
+				rt.addValue(dirs[2] + " (rad)", orienteer.getOrientation(imp,
+						dirs[2]));
 				rt.addValue("I" + dirs[0] + dirs[1] + "(" + units + "^4)",
 						this.I1[s]);
 				rt.addValue("I" + dirs[2] + dirs[3] + "(" + units + "^4)",
@@ -686,7 +693,7 @@ public class SliceGeometry implements PlugIn, DialogListener {
 			this.maxRad1 = result2[6];
 			this.Z1 = result2[7];
 			this.Z2 = result2[8];
-//			this.Zp = result2[9];
+			// this.Zp = result2[9];
 		}
 	}
 
@@ -1044,20 +1051,17 @@ public class SliceGeometry implements PlugIn, DialogListener {
 	}
 
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+		if (!DialogModifier.allNumbersValid(gd.getNumericFields()))
+			return false;
 		Vector<?> checkboxes = gd.getCheckboxes();
 		Vector<?> nFields = gd.getNumericFields();
-		Checkbox calibration = (Checkbox) checkboxes.get(8);
+		Checkbox calibration = (Checkbox) checkboxes.get(9);
 		boolean isHUCalibrated = calibration.getState();
 		TextField minT = (TextField) nFields.get(0);
 		TextField maxT = (TextField) nFields.get(1);
-		double min = 0;
-		double max = 0;
-		try {
-			min = Double.parseDouble(minT.getText());
-			max = Double.parseDouble(maxT.getText());
-		} catch (Exception ex) {
-			IJ.error("You put text in a number field");
-		}
+
+		double min = Double.parseDouble(minT.getText());
+		double max = Double.parseDouble(maxT.getText());
 		if (isHUCalibrated && !fieldUpdated) {
 			minT.setText("" + cal.getCValue(min));
 			maxT.setText("" + cal.getCValue(max));
@@ -1073,7 +1077,7 @@ public class SliceGeometry implements PlugIn, DialogListener {
 		else
 			DialogModifier.replaceUnitString(gd, "HU", "grey");
 
-		Checkbox oriented = (Checkbox) checkboxes.get(7);
+		Checkbox oriented = (Checkbox) checkboxes.get(8);
 		if (orienteer == null) {
 			oriented.setState(false);
 			oriented.setEnabled(false);
