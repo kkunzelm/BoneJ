@@ -1,10 +1,10 @@
 package org.bonej;
-import ij.plugin.PlugIn;
-import ij.plugin.BrowserLauncher;
+
+import imagej.ext.plugin.ImageJPlugin;
+import imagej.ext.plugin.Plugin;
+import imagej.workflowpipes.util.OpenBrowser;
 
 import java.awt.BorderLayout;
-
-import java.io.IOException;
 
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
@@ -13,18 +13,16 @@ import javax.swing.JPanel;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 
-public class Help implements PlugIn {
+@Plugin(menuPath = "Help>About Plugins>BoneJ...")
+public class Help implements ImageJPlugin {
 
 	/**
 	 * BoneJ version
 	 */
-	public static final String bonejVersion = "1.3.3";
+	public static final String bonejVersion = "2.0.0-dev";
 
-	public void run(String arg) {
-		if (arg.equals("about")) {
+	public void run() {
 			showAbout();
-			return;
-		}
 	}
 
 	private void showAbout() {
@@ -43,11 +41,7 @@ public class Help implements PlugIn {
 		htmlPane.addHyperlinkListener(new HyperlinkListener() {
 			public void hyperlinkUpdate(HyperlinkEvent e) {
 				if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType()))
-					try {
-						BrowserLauncher.openURL(e.getURL().toString());
-					} catch (IOException exception) {
-						// ignore
-					}
+					OpenBrowser.openURL(e.getURL().toString());
 			}
 		});
 
@@ -60,5 +54,4 @@ public class Help implements PlugIn {
 		frame.pack();
 		frame.setVisible(true);
 	}
-
 }
