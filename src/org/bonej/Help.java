@@ -2,7 +2,6 @@ package org.bonej;
 
 import imagej.ext.plugin.ImageJPlugin;
 import imagej.ext.plugin.Plugin;
-import imagej.workflowpipes.util.OpenBrowser;
 
 import java.awt.BorderLayout;
 
@@ -41,7 +40,8 @@ public class Help implements ImageJPlugin {
 		htmlPane.addHyperlinkListener(new HyperlinkListener() {
 			public void hyperlinkUpdate(HyperlinkEvent e) {
 				if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType()))
-					OpenBrowser.openURL(e.getURL().toString());
+//					OpenBrowser.openURL(e.getURL().toString()) TODO harass Curtis to get a browser opener 
+					;
 			}
 		});
 
