@@ -1,9 +1,15 @@
 package org.bonej;
 
 import imagej.ext.plugin.ImageJPlugin;
+import imagej.ext.plugin.Parameter;
 import imagej.ext.plugin.Plugin;
+import imagej.platform.PlatformService;
+import imagej.util.Log;
 
 import java.awt.BorderLayout;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
@@ -20,8 +26,11 @@ public class Help implements ImageJPlugin {
 	 */
 	public static final String bonejVersion = "2.0.0-dev";
 
+	@Parameter
+	private PlatformService platformService;
+
 	public void run() {
-			showAbout();
+		showAbout();
 	}
 
 	private void showAbout() {
@@ -40,8 +49,14 @@ public class Help implements ImageJPlugin {
 		htmlPane.addHyperlinkListener(new HyperlinkListener() {
 			public void hyperlinkUpdate(HyperlinkEvent e) {
 				if (HyperlinkEvent.EventType.ACTIVATED.equals(e.getEventType()))
-//					OpenBrowser.openURL(e.getURL().toString()) TODO harass Curtis to get a browser opener 
-					;
+					try {
+						platformService.open(new URL(e.getURL().toString()));
+					} catch (MalformedURLException e1) {
+						Log.error(e1);
+					} catch (IOException e1) {
+						Log.error(e1);
+					}
+				;
 			}
 		});
 
