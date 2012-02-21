@@ -30,6 +30,9 @@ import ij.measure.Calibration;
 // for 3D plotting of coordinates
 import javax.vecmath.Point3f;
 import javax.vecmath.Color3f;
+
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
 import customnode.CustomPointMesh;
 
 import java.util.Enumeration;
@@ -42,10 +45,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 import ij3d.Image3DUniverse;
 import ij3d.Content;
 
+import org.bonej.maths.MatrixHelper;
 import org.doube.geometry.FitEllipsoid;
 import org.doube.geometry.Vectors;
-import org.doube.jama.Matrix;
-import org.doube.jama.EigenvalueDecomposition;
 import org.doube.util.ImageCheck;
 import org.doube.util.Multithreader;
 import org.doube.util.ResultInserter;
@@ -625,9 +627,9 @@ public class Anisotropy implements PlugIn {
 		double[][] tensor = { { coEf[0], coEf[3], coEf[4] },
 				{ coEf[3], coEf[1], coEf[5] }, { coEf[4], coEf[5], coEf[2] } };
 		Matrix M = new Matrix(tensor);
-		EigenvalueDecomposition E = M.eig();
+		Jama.EigenvalueDecomposition E = M.eig();
 		Matrix EigenVal = E.getD();
-		double[] diag = EigenVal.diag().getColumnPackedCopy();
+		double[] diag = MatrixHelper.diag(EigenVal).getColumnPackedCopy();
 		da = 1 - diag[0] / diag[2];
 		if (da > 1)
 			da = 1;
