@@ -1317,53 +1317,6 @@ public class Matrix implements Cloneable, java.io.Serializable {
 		v.copyInto(A); // copy the rows out of the vector
 		return new Matrix(A);
 	}
-
-	/**
-	 * Create an m * n Matrix filled with 1
-	 * 
-	 * @param m
-	 *            number of rows
-	 * @param n
-	 *            number of columns
-	 * @return m * n Matrix filled with 1
-	 */
-	public static Matrix ones(final int m, final int n) {
-		double[][] ones = new double[m][n];
-		for (int i = 0; i < m; i++) {
-			for (int j = 0; j < n; j++) {
-				ones[i][j] = 1;
-			}
-		}
-		return new Matrix(ones);
-	}
-
-	/**
-	 * Create an n * n square identity matrix with 1 on the diagonal and 0
-	 * elsewhere
-	 * 
-	 * @param n
-	 *            square matrix dimension
-	 * @return n * n identity matrix
-	 */
-	public static Matrix eye(final int n) {
-		return eye(n, n);
-	}
-
-	/**
-	 * Create an m * n identity matrix
-	 * 
-	 * @param m
-	 * @param n
-	 * @return
-	 */
-	public static Matrix eye(int m, int n) {
-		double[][] eye = new double[m][n];
-		final int min = Math.min(m, n);
-		for (int i = 0; i < min; i++) {
-			eye[i][i] = 1;
-		}
-		return new Matrix(eye);
-	}
 	
 	/** Check if size(A) == size(B) **/
 
