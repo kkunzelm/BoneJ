@@ -41,12 +41,14 @@ import java.util.Vector;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 
-import org.doube.jama.Matrix;
-import org.doube.jama.EigenvalueDecomposition;
+import org.bonej.maths.MatrixHelper;
 import org.doube.util.DialogModifier;
 import org.doube.util.ImageCheck;
 import org.doube.util.ResultInserter;
 import org.doube.util.ThresholdGuesser;
+
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
 
 import customnode.CustomPointMesh;
 
@@ -382,8 +384,8 @@ public class Moments implements PlugIn, DialogListener {
 		// do the Eigenvalue decomposition
 		EigenvalueDecomposition E = new EigenvalueDecomposition(
 				inertiaTensorMatrix);
-		E.getD().printToIJLog("Eigenvalues");
-		E.getV().printToIJLog("Eigenvectors");
+		MatrixHelper.printToIJLog(E.getD(), "Eigenvalues");
+		MatrixHelper.printToIJLog(E.getV(), "Eigenvectors");
 
 		double[] moments = { sumVoxVol, sumVoxMass, Icxx, Icyy, Iczz, Icxy,
 				Icxz, Icyz };
@@ -447,7 +449,7 @@ public class Moments implements PlugIn, DialogListener {
 		final int hi = sides[1];
 		final int di = sides[2];
 
-		E.printToIJLog("Original Rotation Matrix (Source -> Target)");
+		MatrixHelper.printToIJLog(E, "Original Rotation Matrix (Source -> Target)");
 		Matrix rotation = new Matrix(new double[3][3]);
 
 		// put long axis in z, middle axis in y and short axis in x
@@ -474,13 +476,13 @@ public class Moments implements PlugIn, DialogListener {
 			rotation = E;
 		}
 		// Check for z-flipping
-		if (rotation.isZFlipped()) {
+		if (MatrixHelper.isZFlipped(rotation)) {
 			rotation = rotation.times(RotX).times(RotX);
 			IJ.log("Corrected Z-flipping");
 		}
 
 		// Check for reflection
-		if (!rotation.isRightHanded()) {
+		if (!MatrixHelper.isRightHanded(rotation)) {
 			double[][] reflectY = new double[3][3];
 			reflectY[0][0] = -1;
 			reflectY[1][1] = 1;
@@ -489,10 +491,10 @@ public class Moments implements PlugIn, DialogListener {
 			rotation = rotation.times(RefY);
 			IJ.log("Reflected the rotation matrix");
 		}
-		rotation.printToIJLog("Rotation Matrix (Source -> Target)");
+		MatrixHelper.printToIJLog(rotation, "Rotation Matrix (Source -> Target)");
 
 		Matrix eVecInv = rotation.inverse();
-		eVecInv.printToIJLog("Inverse Rotation Matrix (Target -> Source)");
+		MatrixHelper.printToIJLog(eVecInv, "Inverse Rotation Matrix (Target -> Source)");
 		final double[][] eigenVecInv = eVecInv.getArrayCopy();
 
 		// create the target stack
