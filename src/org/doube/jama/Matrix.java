@@ -1256,38 +1256,6 @@ public class Matrix implements Cloneable, java.io.Serializable {
 	}
 
 	/**
-	 * Print Matrix to ImageJ log window
-	 */
-	public void printToIJLog() {
-		printToIJLog("");
-		return;
-	}
-
-	/**
-	 * Print the Matrix to the ImageJ log
-	 * 
-	 * @param title
-	 *            Title of the Matrix
-	 */
-	public void printToIJLog(String title) {
-		if (!title.isEmpty())
-			IJ.log(title);
-		int nCols = getColumnDimension();
-		int nRows = getRowDimension();
-		double[][] eVal = getArrayCopy();
-		for (int r = 0; r < nRows; r++) {
-			String row = "||";
-			for (int c = 0; c < nCols; c++) {
-				row = row + IJ.d2s(eVal[r][c], 3) + "|";
-			}
-			row = row + "|";
-			IJ.log(row);
-		}
-		IJ.log("");
-		return;
-	}
-
-	/**
 	 * Read a matrix from a stream. The format is the same the print method, so
 	 * printed matrices can be read back in (provided they were printed using US
 	 * Locale). Elements are separated by whitespace, all the elements for each
