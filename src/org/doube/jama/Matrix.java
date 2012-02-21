@@ -1397,19 +1397,7 @@ public class Matrix implements Cloneable, java.io.Serializable {
 		return new Matrix(eye);
 	}
 
-	/**
-	 * Get the diagonal of the matrix as a column vector
-	 * 
-	 * @return Column vector containing diagonal
-	 */
-	public Matrix diag() {
-		final int min = Math.min(m, n);
-		double[][] diag = new double[min][1];
-		for (int i = 0; i < min; i++) {
-			diag[i][0] = get(i, i);
-		}
-		return new Matrix(diag);
-	}
+	
 
 	/**
 	 * Check if a 3 x 3 Matrix is right handed. If the matrix is a rotation
