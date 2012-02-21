@@ -1,5 +1,9 @@
 package org.doube.geometry;
 
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
+import Jama.SingularValueDecomposition;
+
 /**
  * FitCircle Java class for fitting circles to 2D coordinate data
  * 
@@ -18,10 +22,6 @@ package org.doube.geometry;
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-import org.doube.jama.Matrix;
-import org.doube.jama.EigenvalueDecomposition;
-import org.doube.jama.SingularValueDecomposition;
 
 /**
  * Methods for fitting circles to coordinates
