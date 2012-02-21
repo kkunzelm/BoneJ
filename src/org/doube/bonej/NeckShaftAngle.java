@@ -33,16 +33,19 @@ import java.awt.TextField;
 import java.awt.event.*;
 import java.util.Vector;
 
+import org.bonej.maths.MatrixHelper;
 import org.doube.geometry.FitCircle;
 import org.doube.geometry.FitSphere;
 import org.doube.geometry.Trig;
 import org.doube.geometry.Vectors;
-import org.doube.jama.*;
 import org.doube.util.DialogModifier;
 import org.doube.util.ImageCheck;
 import org.doube.util.ResultInserter;
 import org.doube.util.RoiMan;
 import org.doube.util.ThresholdGuesser;
+
+import Jama.Matrix;
+import Jama.SingularValueDecomposition;
 
 /**
  *<p>
@@ -219,7 +222,7 @@ public class NeckShaftAngle implements PlugIn, MouseListener, DialogListener {
 		cHVec[2][0] = (headCentre[2] - centroid[2]) / d;
 
 		Matrix cH = new Matrix(cHVec);
-		cH.printToIJLog("cHVec");
+		MatrixHelper.printToIJLog(cH, "cHVec");
 
 		// projectionPlane is the cross product of cHVec and shaftVector
 		double[][] projectionPlane = Vectors.crossProduct(cHVec, shaftVector);
@@ -310,11 +313,11 @@ public class NeckShaftAngle implements PlugIn, MouseListener, DialogListener {
 		C[2][1] = sDyDz;
 		double invCount = 1 / count;
 		Matrix covarianceMatrix = new Matrix(C).times(invCount);
-		covarianceMatrix.printToIJLog("Covariance matrix");
+		MatrixHelper.printToIJLog(covarianceMatrix, "Covariance matrix");
 		SingularValueDecomposition S = new SingularValueDecomposition(
 				covarianceMatrix);
 		Matrix leftVectors = S.getU();
-		leftVectors.printToIJLog("Left vectors");
+		MatrixHelper.printToIJLog(leftVectors, "Left vectors");
 		double[][] orthogonalDistanceRegression = new double[3][1];
 		orthogonalDistanceRegression[0][0] = leftVectors.get(0, 0);
 		orthogonalDistanceRegression[1][0] = leftVectors.get(1, 0);
@@ -342,16 +345,16 @@ public class NeckShaftAngle implements PlugIn, MouseListener, DialogListener {
 		// P . Q = ||P|| ||Q|| cos(a) so if P and Q are unit vectors, then P.Q =
 		// cos(a)
 		Matrix PP = new Matrix(projectionPlane);
-		PP.printToIJLog("projectionPlane");
+		MatrixHelper.printToIJLog(PP, "projectionPlane");
 
 		Matrix tV = new Matrix(testVector);
-		tV.printToIJLog("testVector");
+		MatrixHelper.printToIJLog(tV, "testVector");
 
 		Matrix sV = new Matrix(shaftVector);
-		sV.printToIJLog("shaftVector");
+		MatrixHelper.printToIJLog(sV, "shaftVector");
 
 		Matrix nV = new Matrix(neckVector);
-		nV.printToIJLog("neckVector");
+		MatrixHelper.printToIJLog(nV, "neckVector");
 
 		double cosA1 = sV.get(0, 0) * tV.get(0, 0) + sV.get(1, 0)
 				* tV.get(1, 0) + sV.get(2, 0) * tV.get(2, 0);
