@@ -33,8 +33,8 @@ import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 
 import org.doube.geometry.FitEllipsoid;
-import org.doube.jama.EigenvalueDecomposition;
-import org.doube.jama.Matrix;
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
 import org.doube.util.DialogModifier;
 import org.doube.util.ImageCheck;
 import org.doube.util.Multithreader;
