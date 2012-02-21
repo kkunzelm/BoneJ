@@ -17,10 +17,11 @@ package org.doube.geometry;
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import ij.IJ;
+import org.bonej.maths.MatrixHelper;
 
-import org.doube.jama.EigenvalueDecomposition;
-import org.doube.jama.Matrix;
+import Jama.EigenvalueDecomposition;
+import Jama.Matrix;
+import ij.IJ;
 
 /**
  * Ellipsoid fitting methods. Both rely on eigenvalue decomposition, which fails
@@ -104,9 +105,9 @@ public class FitEllipsoid {
 
 		EigenvalueDecomposition E = new EigenvalueDecomposition(Eq15);
 		Matrix eigenValues = E.getD();
-		eigenValues.printToIJLog("eigenValues");
+		MatrixHelper.printToIJLog(eigenValues, "eigenValues");
 		Matrix eigenVectors = E.getV();
-		eigenVectors.printToIJLog("eigenVectors");
+		MatrixHelper.printToIJLog(eigenVectors, "eigenVectors");
 		Matrix v1 = new Matrix(6, 1);
 		double[][] EigenValueMatrix = eigenValues.getArray();
 		double posVal = 1 - Double.MAX_VALUE;
@@ -117,9 +118,9 @@ public class FitEllipsoid {
 				v1 = eigenVectors.getMatrix(0, 5, p, p);
 			}
 		}
-		v1.printToIJLog("v1");
+		MatrixHelper.printToIJLog(v1, "v1");
 		Matrix v2 = S22.inverse().times(S12.transpose()).times(v1).times(-1);
-		v2.printToIJLog("v2");
+		MatrixHelper.printToIJLog(v2, "v2");
 		Matrix v = new Matrix(10, 1);
 		int[] c = { 0 };
 		v.setMatrix(0, 5, c, v1);
@@ -180,7 +181,7 @@ public class FitEllipsoid {
 		}
 
 		Matrix D = new Matrix(d);
-		Matrix ones = Matrix.ones(nPoints, 1);
+		Matrix ones = MatrixHelper.ones(nPoints, 1);
 		Matrix V = ((D.transpose().times(D)).inverse()).times(D.transpose()
 				.times(ones));
 		double[] v = V.getColumnPackedCopy();
@@ -191,7 +192,7 @@ public class FitEllipsoid {
 		Matrix A = new Matrix(a);
 		Matrix C = (A.getMatrix(0, 2, 0, 2).times(-1).inverse()).times(V
 				.getMatrix(6, 8, 0, 0));
-		Matrix T = Matrix.eye(4);
+		Matrix T = MatrixHelper.eye(4);
 		T.setMatrix(3, 3, 0, 2, C.transpose());
 		Matrix R = T.times(A.times(T.transpose()));
 		double r33 = R.get(3, 3);
@@ -200,7 +201,7 @@ public class FitEllipsoid {
 				/ r33));
 		Matrix eVal = E.getD();
 		Matrix eVec = E.getV();
-		Matrix diagonal = eVal.diag();
+		Matrix diagonal = MatrixHelper.diag(eVal);
 		final int nEvals = diagonal.getRowDimension();
 		double[] radii = new double[nEvals];
 		for (int i = 0; i < nEvals; i++) {
