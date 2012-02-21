@@ -23,7 +23,7 @@ public class MatrixHelper {
 	/**
 	 * Print Matrix to ImageJ log window
 	 */
-	public void printToIJLog(Matrix matrix) {
+	public static void printToIJLog(Matrix matrix) {
 		printToIJLog(matrix, "");
 		return;
 	}
@@ -34,7 +34,7 @@ public class MatrixHelper {
 	 * @param title
 	 *            Title of the Matrix
 	 */
-	public void printToIJLog(Matrix matrix, String title) {
+	public static void printToIJLog(Matrix matrix, String title) {
 		if (!title.isEmpty())
 			IJ.log(title);
 		int nCols = matrix.getColumnDimension();
@@ -52,4 +52,60 @@ public class MatrixHelper {
 		return;
 	}
 
+	/**
+	 * Check if a 3 x 3 Matrix is right handed. If the matrix is a rotation
+	 * matrix, then right-handedness implies rotation only, while
+	 * left-handedness implies a reflection will be performed.
+	 * 
+	 * @return true if the Matrix is right handed, false if it is left handed
+	 */
+	public static boolean isRightHanded(Matrix matrix) {
+		int m = matrix.getRowDimension();
+		int n = matrix.getColumnDimension();
+		if (m != 3 || n != 3) {
+			throw new IllegalArgumentException();
+		}
+
+		final double x0 = matrix.get(0, 0);
+		final double x1 = matrix.get(1, 0);
+		final double x2 = matrix.get(2, 0);
+		final double y0 = matrix.get(0, 1);
+		final double y1 = matrix.get(1, 1);
+		final double y2 = matrix.get(2, 1);
+		final double z0 = matrix.get(0, 2);
+		final double z1 = matrix.get(1, 2);
+		final double z2 = matrix.get(2, 2);
+
+		final double c0 = x1 * y2 - x2 * y1;
+		final double c1 = x2 * y0 - x0 * y2;
+		final double c2 = x0 * y1 - x1 * y0;
+
+		final double dot = c0 * z0 + c1 * z1 + c2 * z2;
+
+		if (dot > 0)
+			return true;
+		else
+			return false;
+	}
+
+	/**
+	 * Check if a rotation matrix will flip the direction of the z component of
+	 * the original
+	 * 
+	 * @return true if the rotation matrix will cause z-flipping
+	 */
+	public static boolean isZFlipped(Matrix matrix) {
+		final double x2 = matrix.get(2, 0);
+		final double y2 = matrix.get(2, 1);
+		final double z2 = matrix.get(2, 2);
+
+		final double dot = x2 + y2 + z2;
+
+		if (dot < 0)
+			return true;
+		else
+			return false;
+	}
+
+	
 }
