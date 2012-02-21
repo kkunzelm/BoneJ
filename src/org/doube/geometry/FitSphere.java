@@ -18,7 +18,7 @@ package org.doube.geometry;
  *along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import org.doube.jama.Matrix;
+import Jama.Matrix;
 
 /**
  *<p>
