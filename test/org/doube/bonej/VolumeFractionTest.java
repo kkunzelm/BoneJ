@@ -8,6 +8,7 @@ import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
 
+import org.bonej.VolumeFraction;
 import org.doube.geometry.TestDataMaker;
 import org.junit.Test;
 
