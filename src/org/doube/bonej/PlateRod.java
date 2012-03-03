@@ -124,7 +124,8 @@ public class PlateRod implements PlugIn {
 
 	private double[][] skeletonPoints(ImagePlus imp) {
 		Skeletonize3D sk = new Skeletonize3D();
-		ImageStack skeletonStack = sk.getSkeleton(imp).getStack();
+//		ImageStack skeletonStack = sk.getSkeleton(imp).getStack(); //TODO fix
+		ImageStack skeletonStack = null;
 		final int d = imp.getStackSize();
 		final int h = imp.getHeight();
 		final int w = imp.getWidth();
