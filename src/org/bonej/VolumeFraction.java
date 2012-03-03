@@ -1,4 +1,4 @@
-package org.doube.bonej;
+package org.bonej;
 
 /**
  * VolumeFraction plugin for ImageJ
@@ -33,6 +33,7 @@ import javax.vecmath.Point3f;
 
 import marchingcubes.MCTriangulator;
 
+import org.doube.bonej.Moments;
 import org.doube.util.DialogModifier;
 import org.doube.util.ImageCheck;
 import org.doube.util.Multithreader;
