@@ -37,6 +37,7 @@ import javax.vecmath.Point3d;
 import org.doube.bonej.geomorph.Crosshairs;
 import org.doube.bonej.geomorph.Landmark;
 import org.doube.util.ImageCheck;
+import org.doube.util.RoiMan;
 
 import orthoslice.OrthoGroup;
 import vib.BenesNamedPoint;
@@ -48,11 +49,14 @@ import ij.ImagePlus;
 import ij.gui.GenericDialog;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
+import ij.gui.PointRoi;
+import ij.gui.Roi;
 import ij.gui.ScrollbarWithLabel;
 import ij.measure.Calibration;
 import ij.plugin.Duplicator;
 import ij.plugin.Orthogonal_Views;
 import ij.plugin.PlugIn;
+import ij.plugin.frame.RoiManager;
 import ij.process.StackConverter;
 import ij3d.AxisConstants;
 import ij3d.Content;
@@ -90,12 +94,15 @@ public class GeometricMorphometrics implements PlugIn, UniverseListener,
 	/** Position of the orthoviewers */
 	private int x, y, z;
 	private int resampling = 2;
+	/** Master list of landmarks. Other lists are synched to this */
 	private ArrayList<Landmark> landmarks;
 	private PointList pointList;
 	private PointListShape plShape;
 	private PointListPanel plPanel;
 	private PointListDialog pld = null;
 	private Calibration cal;
+	private RoiManager roiManager;
+	private RoiMan roiMan;
 
 	public void run(String arg) {
 		if (!ImageCheck.checkEnvironment())
@@ -108,7 +115,6 @@ public class GeometricMorphometrics implements PlugIn, UniverseListener,
 			return;
 		}
 		cal = imp.getCalibration();
-
 		orthoViewer = Orthogonal_Views.getInstance();
 		if (orthoViewer == null) {
 			new Orthogonal_Views().run("");
@@ -122,6 +128,9 @@ public class GeometricMorphometrics implements PlugIn, UniverseListener,
 		crossHairs = new Crosshairs(c[0] * cal.pixelWidth, c[1]
 				* cal.pixelHeight, c[2] * cal.pixelDepth, univ);
 		univ.show();
+		roiManager = RoiManager.getInstance();
+		if (roiManager == null)
+			roiManager = new RoiManager();
 		canvas = imp.getCanvas();
 		xz_imp = orthoViewer.getXZImage();
 		yz_imp = orthoViewer.getYZImage();
@@ -310,20 +319,37 @@ public class GeometricMorphometrics implements PlugIn, UniverseListener,
 		ortho3D.setSlice(AxisConstants.Z_AXIS, z / resampling);
 	}
 
+	private BenesNamedPoint getPointByName(String name, PointList list) {
+		for (BenesNamedPoint p : list)
+			if (p.getName().equals(name))
+				return p;
+		// we didn't find it, return null
+		return null;
+	}
+
+	private Landmark getLandmarkByName(String name, ArrayList<Landmark> list) {
+		for (Landmark l : list)
+			if (l.getName().equals(name))
+				return l;
+		// we didn't find it, return null
+		return null;
+	}
+
 	/**
 	 * Display the landmarks in both 3D and 2D viewers
 	 */
 	private void updateLandmarks() {
+		// check if all landmarks are in both point list and ROI manager
 		for (Landmark l : landmarks) {
-			// check if landmark is already in 3D viewer
+			// check if landmark is already logged
 			// and add if it is new. Use Bene's Point for 3D visualisation
+			// and ROI Manager for 2.5D logging
 			String name = l.getName();
 			if (pointList.get(name) == null) {
 				BenesNamedPoint bnp = new BenesNamedPoint(l.getName(),
 						l.getX(), l.getY(), l.getZ());
 				pointList.add(bnp);
 				pointList.highlight(bnp);
-				return;
 			} else {
 
 				// point moved in 3D viewer
@@ -333,6 +359,14 @@ public class GeometricMorphometrics implements PlugIn, UniverseListener,
 
 				// point moved in 2D viewer
 
+			}
+			if (roiManager.getROIs().get(name) == null) {
+				PointRoi roi = new PointRoi(l.getX() / cal.pixelWidth, l.getY()
+						/ cal.pixelHeight);
+				roi.setName(name);
+				int slice = (int) (l.getZ() / cal.pixelDepth);
+				roi.setPosition(slice);
+				roiManager.add(imp, roi, slice);
 			}
 		}
 	}
@@ -345,19 +379,16 @@ public class GeometricMorphometrics implements PlugIn, UniverseListener,
 	@Override
 	public void contentAdded(Content c) {
 		syncViewers();
-
 	}
 
 	@Override
 	public void contentChanged(Content c) {
 		syncViewers();
-
 	}
 
 	@Override
 	public void contentRemoved(Content c) {
 		syncViewers();
-
 	}
 
 	@Override
@@ -461,6 +492,8 @@ public class GeometricMorphometrics implements PlugIn, UniverseListener,
 
 	@Override
 	public void added(BenesNamedPoint p) {
+		landmarks.add(new Landmark(p.x, p.y, p.z, p.getName()));
+		updateLandmarks();
 	}
 
 	@Override
