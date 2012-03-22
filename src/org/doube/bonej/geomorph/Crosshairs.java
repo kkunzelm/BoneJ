@@ -1,5 +1,6 @@
 package org.doube.bonej.geomorph;
 
+import java.awt.Color;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import javax.vecmath.Vector3d;
 import customnode.CustomLineMesh;
 
 import ij.IJ;
+import ij.gui.Roi;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 import ij3d.UniverseListener;
@@ -191,10 +193,12 @@ public class Crosshairs implements UniverseListener, KeyListener {
 	}
 
 	private void resetColor() {
-		Color3f yellow = new Color3f(1.0f, 1.0f, 0.0f);
-		cX.setColor(yellow);
-		cY.setColor(yellow);
-		cZ.setColor(yellow);
+		Color c = Roi.getColor();
+		Color3f color = new Color3f((float)(c.getRed()/255),
+				(float)(c.getGreen()/255), (float)(c.getBlue()/255));
+		cX.setColor(color);
+		cY.setColor(color);
+		cZ.setColor(color);
 	}
 
 	@Override
