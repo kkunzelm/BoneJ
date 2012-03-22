@@ -37,6 +37,7 @@ import org.doube.bonej.Dilate;
 import org.doube.geometry.Vectors;
 import org.doube.util.ImageCheck;
 import org.doube.util.ResultInserter;
+import org.doube.util.UsageReporter;
 
 import customnode.CustomTriangleMesh;
 
@@ -95,7 +96,7 @@ public class StructureModelIndex implements PlugIn {
 		ResultInserter ri = ResultInserter.getInstance();
 		ri.setResultInRow(imp, "SMI", smi);
 		ri.updateTable();
-
+		UsageReporter.reportEvent(this).send();
 		return;
 	}
 
@@ -211,7 +212,7 @@ public class StructureModelIndex implements PlugIn {
 
 		// get all the unique vertices
 		// associate each unique vertex with the triangles around it
-		Hashtable vertexHash = new Hashtable();
+		Hashtable<Point3f, ArrayList<Integer>> vertexHash = new Hashtable<Point3f, ArrayList<Integer>>();
 		ArrayList<Integer> locations = new ArrayList<Integer>();
 		final int nPoints = triangles.size();
 		for (int p = 0; p < nPoints; p++) {
@@ -231,9 +232,9 @@ public class StructureModelIndex implements PlugIn {
 
 		// get the normals of the triangles around each vertex
 		// and calculate the normal of the vertex as the mean triangle normal
-		Hashtable normalsHash = new Hashtable();
+		Hashtable<Point3f, Point3f> normalsHash = new Hashtable<Point3f, Point3f>();
 		Point3f vert = new Point3f();
-		Enumeration e = vertexHash.keys();
+		Enumeration<Point3f> e = vertexHash.keys();
 		while (e.hasMoreElements()) {
 			IJ.showStatus("Calculating vertex normals...");
 			vert = (Point3f) e.nextElement();
@@ -249,22 +250,22 @@ public class StructureModelIndex implements PlugIn {
 				switch (corner) {
 				case 0:
 					point0 = triangles.get(pointIndex);
-					point1 = triangles.get(pointIndex + 1);
-					point2 = triangles.get(pointIndex + 2);
-					break;
-				case 1:
-					point0 = triangles.get(pointIndex - 1);
-					point1 = triangles.get(pointIndex);
+					point1 = triangles.get(pointIndex + 2);
 					point2 = triangles.get(pointIndex + 1);
 					break;
+				case 1:
+					point0 = triangles.get(pointIndex + 1);
+					point1 = triangles.get(pointIndex);
+					point2 = triangles.get(pointIndex - 1);
+					break;
 				case 2:
-					point0 = triangles.get(pointIndex - 2);
-					point1 = triangles.get(pointIndex - 1);
+					point0 = triangles.get(pointIndex - 1);
+					point1 = triangles.get(pointIndex - 2);
 					point2 = triangles.get(pointIndex);
 					break;
 				}
-				Point3f surfaceNormal = Vectors.crossProduct(point0,
-						point1, point2);
+				Point3f surfaceNormal = Vectors.crossProduct(point0, point1,
+						point2);
 				sumNormals.x += surfaceNormal.x;
 				sumNormals.y += surfaceNormal.y;
 				sumNormals.z += surfaceNormal.z;
@@ -308,13 +309,13 @@ public class StructureModelIndex implements PlugIn {
 			Point3f point0 = triangles.get(i);
 			Point3f point1 = triangles.get(i + 1);
 			Point3f point2 = triangles.get(i + 2);
-			double area1 = 0.5 * Vectors.crossProduct(point0, point1,
-					point2).distance(origin);
+			double area1 = 0.5 * Vectors.crossProduct(point0, point1, point2)
+					.distance(origin);
 			point0 = movedTriangles.get(i);
 			point1 = movedTriangles.get(i + 1);
 			point2 = movedTriangles.get(i + 2);
-			double area2 = 0.5 * Vectors.crossProduct(point0, point1,
-					point2).distance(origin);
+			double area2 = 0.5 * Vectors.crossProduct(point0, point1, point2)
+					.distance(origin);
 
 			double deltaArea = area2 - area1;
 
@@ -328,11 +329,10 @@ public class StructureModelIndex implements PlugIn {
 		}
 
 		double concaveFraction = concaveArea / (concaveArea + convexArea);
-		IJ.log("Fraction of surface area that is concave: "
-				+ concaveFraction);
+		IJ.log("Fraction of surface area that is concave: " + concaveFraction);
 		double sRconvex = convexDelta / r;
 		double sRconcave = concaveDelta / r;
-		double convexSMI = 6 * sRconvex * v  / (s1 * s1);
+		double convexSMI = 6 * sRconvex * v / (s1 * s1);
 		double concaveSMI = 6 * sRconcave * v / (s1 * s1);
 		IJ.log("Convex SMI = " + convexSMI);
 		IJ.log("Concave SMI = " + concaveSMI);

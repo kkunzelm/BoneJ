@@ -27,6 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.doube.util.DialogModifier;
 import org.doube.util.ImageCheck;
 import org.doube.util.Multithreader;
+import org.doube.util.UsageReporter;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -75,6 +76,10 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 			IJ.error("Can't threshold a binary image");
 			return;
 		}
+		if (imp.getBitDepth() == 32){
+			IJ.error("Currently unable to threshold 32-bit images");
+			return;
+		}
 		if (!showDialog()) {
 			return;
 		}
@@ -95,7 +100,7 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 			if (doPlot)
 				showPlot(testThreshold, conns);
 		}
-		IJ.log(imp.getTitle() + " threshold  = " + IJ.d2s(threshold, 1));
+		IJ.log(imp.getTitle() + " threshold  = "+IJ.d2s(imp.getCalibration().getCValue(threshold),1)+" ("+ IJ.d2s(threshold, 1)+")");
 
 		if (applyThreshold) {
 			ImageStack stack2 = thresholdStack(imp, threshold);
@@ -105,6 +110,7 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 				IJ.run("Invert LUT");
 		}
 		IJ.showStatus("");
+		UsageReporter.reportEvent(this).send();
 		return;
 	}
 
@@ -354,64 +360,39 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 	 */
 	public int[] getStackHistogram(ImagePlus imp) {
 		final int d = imp.getStackSize();
-		ImageStack stack = imp.getStack();
-		int[][] sliceHistograms = new int[d + 1][1];
-		Roi roi = imp.getRoi();
+		final ImageStack stack = imp.getStack();
+		final int[][] sliceHistograms = new int[d + 1][];
+		final Roi roi = imp.getRoi();
 		if (stack.getSize() == 1) {
 			return imp.getProcessor().getHistogram();
 		}
 
-		int nThreads = Runtime.getRuntime().availableProcessors();
-		HistogramThread[] ht = new HistogramThread[nThreads];
-		for (int thread = 0; thread < nThreads; thread++) {
-			ht[thread] = new HistogramThread(thread, nThreads, stack,
-					sliceHistograms, roi);
-			ht[thread].start();
+		final AtomicInteger ai = new AtomicInteger(1);
+		Thread[] threads = Multithreader.newThreads();
+		for (int thread = 0; thread < threads.length; thread++) {
+			threads[thread] = new Thread(new Runnable() {
+				public void run() {
+					for (int z = ai.getAndIncrement(); z <= d; z = ai
+							.getAndIncrement()) {
+						IJ.showStatus("Getting stack histogram...");
+						ImageProcessor ip = stack.getProcessor(z);
+						ip.setRoi(roi);
+						sliceHistograms[z] = ip.getHistogram();
+					}
+				}
+			});
 		}
-		try {
-			for (int thread = 0; thread < nThreads; thread++) {
-				ht[thread].join();
-			}
-		} catch (InterruptedException ie) {
-			IJ.error("A thread was interrupted.");
-		}
+		Multithreader.startAndJoin(threads);
 
 		final int l = sliceHistograms[1].length;
 		int[] histogram = new int[l];
 
 		for (int z = 1; z <= d; z++) {
-			int[] slice = sliceHistograms[z];
-			for (int i = 0; i < l; i++) {
-				histogram[i] += slice[i];
-			}
+				int[] slice = sliceHistograms[z];
+				for (int i = 0; i < l; i++)
+					histogram[i] += slice[i];
 		}
 		return histogram;
-	}
-
-	class HistogramThread extends Thread {
-		int thread, nThreads;
-		ImageStack stack;
-		int[][] sliceHistograms;
-		Roi roi;
-
-		public HistogramThread(int thread, int nThreads, ImageStack stack,
-				int[][] sliceHistograms, Roi roi) {
-			this.thread = thread;
-			this.nThreads = nThreads;
-			this.stack = stack;
-			this.sliceHistograms = sliceHistograms;
-			this.roi = roi;
-		}
-
-		public void run() {
-			final int d = stack.getSize();
-			for (int z = thread + 1; z <= d; z += nThreads) {
-				IJ.showStatus("Getting stack histogram...");
-				ImageProcessor ip = stack.getProcessor(z);
-				ip.setRoi(roi);
-				sliceHistograms[z] = ip.getHistogram();
-			}
-		}
 	}
 
 	private boolean showDialog() {
@@ -450,6 +431,8 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 	}
 
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+		if (!DialogModifier.allNumbersValid(gd.getNumericFields()))
+			return false;
 		Vector<?> checkboxes = gd.getCheckboxes();
 		Checkbox to = (Checkbox) checkboxes.get(0);
 		thresholdOnly = to.getState();

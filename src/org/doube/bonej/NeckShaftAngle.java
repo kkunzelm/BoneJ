@@ -1,3 +1,4 @@
+package org.doube.bonej;
 /**
  *Neck Shaft Angle ImageJ plugin
  *Copyright 2008 2009 2010 Michael Doube 
@@ -32,7 +33,6 @@ import java.awt.TextField;
 import java.awt.event.*;
 import java.util.Vector;
 
-import org.doube.bonej.Moments;
 import org.doube.geometry.FitCircle;
 import org.doube.geometry.FitSphere;
 import org.doube.geometry.Trig;
@@ -43,6 +43,7 @@ import org.doube.util.ImageCheck;
 import org.doube.util.ResultInserter;
 import org.doube.util.RoiMan;
 import org.doube.util.ThresholdGuesser;
+import org.doube.util.UsageReporter;
 
 /**
  *<p>
@@ -69,7 +70,7 @@ import org.doube.util.ThresholdGuesser;
  *@author Michael Doube
  *@version 0.1
  */
-public class Neck_Shaft_Angle implements PlugIn, MouseListener, DialogListener {
+public class NeckShaftAngle implements PlugIn, MouseListener, DialogListener {
 
 	private ImageCanvas canvas;
 
@@ -191,6 +192,7 @@ public class Neck_Shaft_Angle implements PlugIn, MouseListener, DialogListener {
 				+ "Neck-shaft angle and out-of-plane skew\n"
 				+ "will be recorded until you hit \'OK\'").show();
 		this.canvas.removeMouseListener(this);
+		UsageReporter.reportEvent(this).send();
 		return;
 	}
 
@@ -231,36 +233,6 @@ public class Neck_Shaft_Angle implements PlugIn, MouseListener, DialogListener {
 		projectionPlane[2][0] /= d;
 
 		return projectionPlane;
-	}
-
-	/**
-	 * Calculate the vector associated with the plane formed between neckVector
-	 * and the normal to projectionPlane from the regression vector and the
-	 * vector connecting the centroid and the femoral head centre
-	 * 
-	 * @param projectionPlane
-	 *            double[][]
-	 * @param neckVector
-	 *            double[][]
-	 * @return double[][] neckPlane
-	 */
-	private double[][] neckPlane(double[][] projectionPlane,
-			double[][] neckVector) {
-		// neckPlane is the cross product of neckVector and projectionPlane
-		return Vectors.crossProduct(projectionPlane, neckVector);
-	}
-
-	/**
-	 * Find the intersection between neckPlane and projectionPlane
-	 * 
-	 * @param projectionPlane
-	 * @param neckPlane
-	 * @return double[][] testVector.
-	 */
-	private double[][] testVector(double[][] projectionPlane,
-			double[][] neckPlane) {
-		// testVector is the cross product of neckPlane and projectionPlane
-		return Vectors.crossProduct(projectionPlane, neckPlane);
 	}
 
 	/**
@@ -324,7 +296,7 @@ public class Neck_Shaft_Angle implements PlugIn, MouseListener, DialogListener {
 				}
 			}
 		}
-		if (count == 0){
+		if (count == 0) {
 			IJ.log("Count == 0");
 			return null;
 		}
@@ -367,8 +339,8 @@ public class Neck_Shaft_Angle implements PlugIn, MouseListener, DialogListener {
 		double[][] neckVector = neckVector(headCentre, neckPoint);
 		double[][] projectionPlane = getProjectionPlane(shaftVector,
 				headCentre, this.centroid);
-		double[][] neckPlane = neckPlane(neckVector, projectionPlane);
-		double[][] testVector = testVector(projectionPlane, neckPlane);
+		double[][] neckPlane = Vectors.crossProduct(neckVector, projectionPlane);
+		double[][] testVector = Vectors.crossProduct(projectionPlane, neckPlane);
 		// P . Q = ||P|| ||Q|| cos(a) so if P and Q are unit vectors, then P.Q =
 		// cos(a)
 		Matrix PP = new Matrix(projectionPlane);
@@ -428,7 +400,6 @@ public class Neck_Shaft_Angle implements PlugIn, MouseListener, DialogListener {
 		final int rW = r.x + r.width;
 		final int rH = r.y + r.height;
 		// pixel counters
-		double cstack = 0;
 
 		boolean[] emptySlices = new boolean[stack.getSize() + 1];
 		double[] cortArea = new double[stack.getSize() + 1];
@@ -454,7 +425,6 @@ public class Neck_Shaft_Angle implements PlugIn, MouseListener, DialogListener {
 			if (cslice > 0) {
 				sliceCentroids[0][s] = sumX / cslice;
 				sliceCentroids[1][s] = sumY / cslice;
-				cstack += cslice;
 				emptySlices[s] = false;
 			} else {
 				emptySlices[s] = true;
@@ -605,20 +575,17 @@ public class Neck_Shaft_Angle implements PlugIn, MouseListener, DialogListener {
 	}
 
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+		if (!DialogModifier.allNumbersValid(gd.getNumericFields()))
+			return false;
 		Vector<?> checkboxes = gd.getCheckboxes();
 		Vector<?> nFields = gd.getNumericFields();
 		Checkbox box0 = (Checkbox) checkboxes.get(0);
 		boolean isHUCalibrated = box0.getState();
-		double min = 0;
-		double max = 0;
 		TextField minT = (TextField) nFields.get(2);
 		TextField maxT = (TextField) nFields.get(3);
-		try{
-			min = Double.parseDouble(minT.getText());
-			max = Double.parseDouble(maxT.getText());
-		} catch (Exception ex){
-			IJ.error("You put text in a number field");
-		}
+		double min = Double.parseDouble(minT.getText().replace("∞", "Infinity"));
+		double max = Double.parseDouble(maxT.getText().replace("∞", "Infinity"));
+
 		if (isHUCalibrated && !fieldUpdated) {
 			minT.setText("" + cal.getCValue(min));
 			maxT.setText("" + cal.getCValue(max));

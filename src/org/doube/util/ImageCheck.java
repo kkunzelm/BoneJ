@@ -17,7 +17,7 @@ public class ImageCheck {
 	/**
 	 * ImageJ version required by BoneJ
 	 */
-	public static final String requiredIJVersion = "1.44f";
+	public static final String requiredIJVersion = "1.45r";
 
 	/**
 	 * Check if image is binary
@@ -107,7 +107,8 @@ public class ImageCheck {
 	 *         there is no DICOM slice position information.
 	 */
 	public double dicomVoxelDepth(ImagePlus imp) {
-		double vD = imp.getCalibration().pixelDepth;
+		Calibration cal = imp.getCalibration();
+		double vD = cal.pixelDepth;
 
 		String position = getDicomAttribute(imp, 1, "0020,0032");
 		if (position == null) {
@@ -132,17 +133,25 @@ public class ImageCheck {
 		double sliceSpacing = Math.abs((last - first)
 				/ (imp.getStackSize() - 1));
 
-		String units = imp.getCalibration().getUnits();
+		String units = cal.getUnits();
 
+		double error = Math.abs((sliceSpacing-vD)/sliceSpacing)*100;
+		
 		if (vD != sliceSpacing) {
 			IJ
 					.log(imp.getTitle()
 							+ ":\n"
-							+ "Current voxel depth does not agree with DICOM header slice spacing.\n"
-							+ "Current voxel depth: " + IJ.d2s(vD, 4) + " "
+							+ "Current voxel depth disagrees by "+error+"% with DICOM header slice spacing.\n"
+							+ "Current voxel depth: " + IJ.d2s(vD, 6) + " "
 							+ units + "\n" + "DICOM slice spacing: "
-							+ IJ.d2s(sliceSpacing, 4) + " " + units + "\n");
-		}
+							+ IJ.d2s(sliceSpacing, 6) + " " + units + "\n"+
+							"Updating image properties...");
+			cal.pixelDepth = sliceSpacing;
+			imp.setCalibration(cal);
+		} else
+			IJ
+					.log(imp.getTitle()
+							+ ": Voxel depth agrees with DICOM header.\n");
 		return sliceSpacing;
 	}
 
@@ -212,16 +221,16 @@ public class ImageCheck {
 		try {
 			Class.forName("javax.media.j3d.VirtualUniverse");
 		} catch (ClassNotFoundException e) {
-			IJ.showMessage("Java 3D libraries are not installed.\n" +
-					"Please install and run the ImageJ 3D Viewer,\n" +
-					"which will automatically install Java's 3D libraries.");
+			IJ.showMessage("Java 3D libraries are not installed.\n"
+					+ "Please install and run the ImageJ 3D Viewer,\n"
+					+ "which will automatically install Java's 3D libraries.");
 			return false;
 		}
 		try {
 			Class.forName("ij3d.ImageJ3DViewer");
-		} catch (ClassNotFoundException e){
-			IJ.showMessage("ImageJ 3D Viewer is not installed.\n" +
-					"Please install and run the ImageJ 3D Viewer.");
+		} catch (ClassNotFoundException e) {
+			IJ.showMessage("ImageJ 3D Viewer is not installed.\n"
+					+ "Please install and run the ImageJ 3D Viewer.");
 			return false;
 		}
 		if (!checkIJVersion())

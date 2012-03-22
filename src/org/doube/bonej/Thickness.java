@@ -4,10 +4,14 @@ import ij.*;
 import ij.gui.GenericDialog;
 import ij.macro.Interpreter;
 import ij.plugin.PlugIn;
+import ij.plugin.frame.RoiManager;
 import ij.process.*;
 
 import org.doube.util.ImageCheck;
 import org.doube.util.ResultInserter;
+import org.doube.util.RoiMan;
+import org.doube.util.StackStats;
+import org.doube.util.UsageReporter;
 
 /* Bob Dougherty 8/10/2007
  Perform all of the steps for the local thickness calculation
@@ -78,10 +82,22 @@ public class Thickness implements PlugIn {
 			return;
 		}
 
+		if (!ic.isVoxelIsotropic(imp, 1E-3)) {
+			if (IJ.showMessageWithCancel(
+					"Anisotropic voxels",
+					"This image contains anisotropic voxels, which will\n"
+							+ "result in incorrect thickness calculation.\n\n"
+							+ "Consider rescaling your data so that voxels are isotropic\n"
+							+ "(Image > Scale...).\n\n" + "Continue anyway?")) {
+			} else
+				return;
+
+		}
 		GenericDialog gd = new GenericDialog("Options");
 		gd.addCheckbox("Thickness", true);
 		gd.addCheckbox("Spacing", false);
 		gd.addCheckbox("Graphic Result", true);
+		gd.addCheckbox("Use_ROI_Manager", false);
 		gd.addHelp("http://bonej.org/thickness");
 		gd.showDialog();
 		if (gd.wasCanceled()) {
@@ -90,17 +106,27 @@ public class Thickness implements PlugIn {
 		boolean doThickness = gd.getNextBoolean();
 		boolean doSpacing = gd.getNextBoolean();
 		boolean doGraphic = gd.getNextBoolean();
+		boolean doRoi = gd.getNextBoolean();
 
 		long startTime = System.currentTimeMillis();
 		String title = stripExtension(imp.getTitle());
 
+		RoiManager roiMan = RoiManager.getInstance();
 		// calculate trabecular thickness (Tb.Th)
 		if (doThickness) {
 			boolean inverse = false;
-			ImagePlus impLTC = getLocalThickness(imp, inverse);
-			impLTC.setTitle(title + "_Tr.Th");
+			ImagePlus impLTC = new ImagePlus();
+			if (doRoi && roiMan != null) {
+				ImageStack stack = RoiMan.cropStack(roiMan, imp.getStack(),
+						true, 0, 1);
+				ImagePlus crop = new ImagePlus(imp.getTitle(), stack);
+				crop.setCalibration(imp.getCalibration());
+				impLTC = getLocalThickness(crop, inverse);
+			} else
+				impLTC = getLocalThickness(imp, inverse);
+			impLTC.setTitle(title + "_Tb.Th");
 			impLTC.setCalibration(imp.getCalibration());
-			double[] stats = meanStdDev(impLTC);
+			double[] stats = StackStats.meanStdDev(impLTC);
 			insertResults(imp, stats, inverse);
 			if (doGraphic && !Interpreter.isBatchMode()) {
 				impLTC.show();
@@ -111,11 +137,19 @@ public class Thickness implements PlugIn {
 		}
 		if (doSpacing) {
 			boolean inverse = true;
+			ImagePlus impLTCi = new ImagePlus();
+			if (doRoi && roiMan != null) {
+				ImageStack stack = RoiMan.cropStack(roiMan, imp.getStack(),
+						true, 255, 1);
+				ImagePlus crop = new ImagePlus(imp.getTitle(), stack);
+				crop.setCalibration(imp.getCalibration());
+				impLTCi = getLocalThickness(crop, inverse);
+			} else
+				impLTCi = getLocalThickness(imp, inverse);
 			// check marrow cavity size (i.e. trabcular separation, Tb.Sp)
-			ImagePlus impLTCi = getLocalThickness(imp, inverse);
 			impLTCi.setTitle(title + "_Tb.Sp");
 			impLTCi.setCalibration(imp.getCalibration());
-			double[] stats = meanStdDev(impLTCi);
+			double[] stats = StackStats.meanStdDev(impLTCi);
 			insertResults(imp, stats, inverse);
 			if (doGraphic && !Interpreter.isBatchMode()) {
 				impLTCi.show();
@@ -129,6 +163,7 @@ public class Thickness implements PlugIn {
 		double duration = ((double) System.currentTimeMillis() - (double) startTime)
 				/ (double) 1000;
 		IJ.log("Duration = " + IJ.d2s(duration, 3) + " s");
+		UsageReporter.reportEvent(this).send();
 		return;
 	}
 
@@ -148,7 +183,7 @@ public class Thickness implements PlugIn {
 	 * application of Algorithm 1. Bob Dougherty 8/8/2006
 	 * </p>
 	 * 
-	 *<ul>
+	 * <ul>
 	 * <li>Version S1A: lower memory usage.</li>
 	 * <li>Version S1A.1 A fixed indexing bug for 666-bin data set</li>
 	 * <li>Version S1A.2 Aug. 9, 2006. Changed noResult value.</li>
@@ -159,7 +194,7 @@ public class Thickness implements PlugIn {
 	 * <li>Version D July 30, 2007. Multithread processing for step 2.</li>
 	 * </ul>
 	 * 
-	 *<p>
+	 * <p>
 	 * This version assumes the input stack is already in memory, 8-bit, and
 	 * outputs to a new 32-bit stack. Versions that are more stingy with memory
 	 * may be forthcoming.
@@ -968,17 +1003,20 @@ public class Thickness implements PlugIn {
 				}// i
 			}// j
 		}// k
-		// Process the surface points. Initially set results to negative values
-		// to be able to avoid including them in averages of for subsequent
-		// points.
-		// During the calculation, positive values in sNew are interior
-		// non-background
-		// local thicknesses. Negative values are surface points. In this case
-		// the
-		// value might be -1 (not processed yet) or -result, where result is the
-		// average of the neighboring interior points. Negative values are
-		// excluded from
-		// the averaging.
+			// Process the surface points. Initially set results to negative
+			// values
+			// to be able to avoid including them in averages of for subsequent
+			// points.
+			// During the calculation, positive values in sNew are interior
+			// non-background
+			// local thicknesses. Negative values are surface points. In this
+			// case
+			// the
+			// value might be -1 (not processed yet) or -result, where result is
+			// the
+			// average of the neighboring interior points. Negative values are
+			// excluded from
+			// the averaging.
 		for (int k = 0; k < d; k++) {
 			for (int j = 0; j < h; j++) {
 				final int wj = w * j;
@@ -991,7 +1029,7 @@ public class Thickness implements PlugIn {
 				}// i
 			}// j
 		}// k
-		// Fix the negative values and double the results
+			// Fix the negative values and double the results
 		for (int k = 0; k < d; k++) {
 			for (int j = 0; j < h; j++) {
 				final int wj = w * j;
@@ -1242,56 +1280,6 @@ public class Thickness implements PlugIn {
 		return sNew[k][i + w * j];
 	}
 
-	/**
-	 * Work out some summary stats
-	 * 
-	 * @param imp
-	 *            32-bit thickness image
-	 * @param inverse
-	 *            true if Tb.Sp, false if Tb.Th
-	 * @return double[] containing mean, standard deviation and maximum as its
-	 *         0th and 1st and 2nd elements respectively
-	 * 
-	 */
-	private double[] meanStdDev(ImagePlus imp) {
-		final int w = imp.getWidth();
-		final int h = imp.getHeight();
-		final int d = imp.getStackSize();
-		final int wh = w * h;
-		final ImageStack stack = imp.getStack();
-		long pixCount = 0;
-		double sumThick = 0;
-		double maxThick = 0;
-
-		for (int s = 1; s <= d; s++) {
-			final float[] slicePixels = (float[]) stack.getPixels(s);
-			for (int p = 0; p < wh; p++) {
-				final double pixVal = slicePixels[p];
-				if (pixVal > 0) {
-					sumThick += pixVal;
-					maxThick = Math.max(maxThick, pixVal);
-					pixCount++;
-				}
-			}
-		}
-		final double meanThick = sumThick / pixCount;
-
-		double sumSquares = 0;
-		for (int s = 1; s <= d; s++) {
-			final float[] slicePixels = (float[]) stack.getPixels(s);
-			for (int p = 0; p < wh; p++) {
-				final double pixVal = slicePixels[p];
-				if (pixVal > 0) {
-					final double residual = meanThick - pixVal;
-					sumSquares += residual * residual;
-				}
-			}
-		}
-		final double stDev = Math.sqrt(sumSquares / pixCount);
-		double[] stats = { meanThick, stDev, maxThick };
-		return stats;
-	}
-
 	private void insertResults(ImagePlus imp, double[] stats, boolean inverse) {
 		final double meanThick = stats[0];
 		final double stDev = stats[1];
@@ -1325,6 +1313,9 @@ public class Thickness implements PlugIn {
 	 * @return 32-bit ImagePlus containing a local thickness map
 	 */
 	public ImagePlus getLocalThickness(ImagePlus imp, boolean inv) {
+		if (!(new ImageCheck()).isVoxelIsotropic(imp, 1E-3)) {
+			IJ.log("Warning: voxels are anisotropic. Local thickness results will be inaccurate");
+		}
 		float[][] s = geometryToDistanceMap(imp, inv);
 		distanceMaptoDistanceRidge(imp, s);
 		distanceRidgetoLocalThickness(imp, s);

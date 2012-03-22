@@ -1,7 +1,7 @@
 package org.doube.bonej;
 
 /**
- * ParticleCounter Copyright 2009 2010 Michael Doube
+ * ParticleCounter Copyright 2009 2010 2011 Michael Doube
  * 
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ import org.doube.jama.Matrix;
 import org.doube.util.DialogModifier;
 import org.doube.util.ImageCheck;
 import org.doube.util.Multithreader;
+import org.doube.util.UsageReporter;
 
 import customnode.CustomPointMesh;
 import customnode.CustomTriangleMesh;
@@ -53,7 +54,6 @@ import ij.measure.Calibration;
 import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
-import ij3d.Content;
 import ij3d.Image3DUniverse;
 
 /**
@@ -66,7 +66,7 @@ import ij3d.Image3DUniverse;
  * This plugin is based on Object_Counter3D by Fabrice P Cordelires and Jonathan
  * Jackson, but with significant speed increases through reduction of recursion
  * and multi-threading. Thanks to Robert Barbour for the suggestion to 'chunk'
- * the stack. Ch@param compsunking works as follows:
+ * the stack. Chunking works as follows:
  * </p>
  * <ol>
  * <li>Perform initial labelling on the whole stack in a single thread</li>
@@ -103,9 +103,6 @@ import ij3d.Image3DUniverse;
  * 
  */
 public class ParticleCounter implements PlugIn, DialogListener {
-
-	/** 3D viewer for rendering graphical output */
-	private Image3DUniverse univ = new Image3DUniverse();
 
 	/** Foreground value */
 	public final static int FORE = -1;
@@ -318,9 +315,9 @@ public class ParticleCounter implements PlugIn, DialogListener {
 					rt.addValue("I1", E.getD().get(2, 2));
 					rt.addValue("I2", E.getD().get(1, 1));
 					rt.addValue("I3", E.getD().get(0, 0));
-					rt.addValue("vX", E.getV().get(0, 2));
-					rt.addValue("vY", E.getV().get(1, 2));
-					rt.addValue("vZ", E.getV().get(2, 2));
+					rt.addValue("vX", E.getV().get(0, 0));
+					rt.addValue("vY", E.getV().get(1, 0));
+					rt.addValue("vZ", E.getV().get(2, 0));
 				}
 				if (doEulerCharacters) {
 					rt.addValue("Euler (χ)", eulerCharacters[i][0]);
@@ -366,40 +363,34 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		// show 3D renderings
 		if (doSurfaceImage || doCentroidImage || doAxesImage || do3DOriginal
 				|| doEllipsoidImage) {
-			univ.show();
+			Image3DUniverse univ = new Image3DUniverse();
 			if (doSurfaceImage) {
-				displayParticleSurfaces(surfacePoints, colourMode, volumes,
-						splitValue);
+				displayParticleSurfaces(univ, surfacePoints, colourMode,
+						volumes, splitValue);
 			}
 			if (doCentroidImage) {
-				displayCentroids(centroids);
+				displayCentroids(centroids, univ);
 			}
 			if (doAxesImage) {
 				double[][] lengths = (double[][]) getMaxDistances(imp,
 						particleLabels, centroids, eigens)[1];
-				displayPrincipalAxes(eigens, centroids, lengths);
+				displayPrincipalAxes(univ, eigens, centroids, lengths);
 			}
 			if (doEllipsoidImage) {
-				displayEllipsoids(ellipsoids);
+				displayEllipsoids(ellipsoids, univ);
 			}
 			if (do3DOriginal) {
-				display3DOriginal(imp, origResampling);
+				display3DOriginal(imp, origResampling, univ);
 			}
-			try {
-				if (univ.contains(imp.getTitle())) {
-					Content c = univ.getContent(imp.getTitle());
-					univ.adjustView(c);
-				}
-			} catch (NullPointerException npe) {
-				IJ.log("3D Viewer was closed before rendering completed.");
-			}
+			univ.show();
 		}
 		IJ.showProgress(1.0);
 		IJ.showStatus("Particle Analysis Complete");
+		UsageReporter.reportEvent(this).send();
 		return;
 	}
 
-	private void displayEllipsoids(Object[][] ellipsoids) {
+	private void displayEllipsoids(Object[][] ellipsoids, Image3DUniverse univ) {
 		final int nEllipsoids = ellipsoids.length;
 		ellipsoidLoop: for (int el = 1; el < nEllipsoids; el++) {
 			IJ.showStatus("Rendering ellipsoids...");
@@ -456,8 +447,8 @@ public class ParticleCounter implements PlugIn, DialogListener {
 				return;
 			}
 			// Add some axes
-			displayAxes(centre, eV, radii, 1.0f, 1.0f, 0.0f, "Ellipsoid Axes "
-					+ el);
+			displayAxes(univ, centre, eV, radii, 1.0f, 1.0f, 0.0f,
+					"Ellipsoid Axes " + el);
 		}
 	}
 
@@ -747,28 +738,29 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		return maxDistances;
 	}
 
-	private void display3DOriginal(ImagePlus imp, int resampling) {
+	private void display3DOriginal(ImagePlus imp, int resampling,
+			Image3DUniverse univ) {
 		Color3f colour = new Color3f(1.0f, 1.0f, 1.0f);
 		boolean[] channels = { true, true, true };
 		try {
-			univ
-					.addVoltex(imp, colour, imp.getTitle(), 0, channels,
-							resampling).setLocked(true);
+			univ.addVoltex(imp, colour, imp.getTitle(), 0, channels, resampling)
+					.setLocked(true);
 		} catch (NullPointerException npe) {
 			IJ.log("3D Viewer was closed before rendering completed.");
 		}
 		return;
 	}
 
-	private void displayPrincipalAxes(EigenvalueDecomposition[] eigens,
-			double[][] centroids, double[][] lengths) {
+	private void displayPrincipalAxes(Image3DUniverse univ,
+			EigenvalueDecomposition[] eigens, double[][] centroids,
+			double[][] lengths) {
 		final int nEigens = eigens.length;
 		for (int p = 1; p < nEigens; p++) {
 			IJ.showStatus("Rendering principal axes...");
 			IJ.showProgress(p, nEigens);
 			final Matrix eVec = eigens[p].getV();
-			displayAxes(centroids[p], eVec.getArray(), lengths[p], 1.0f, 0.0f,
-					0.0f, "Principal Axes " + p);
+			displayAxes(univ, centroids[p], eVec.getArray(), lengths[p], 1.0f,
+					0.0f, 0.0f, "Principal Axes " + p);
 		}
 		return;
 	}
@@ -777,6 +769,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	 * Draws 3 orthogonal axes defined by the centroid, unitvector and axis
 	 * length.
 	 * 
+	 * @param univ
 	 * @param centroid
 	 * @param unitVector
 	 * @param lengths
@@ -785,8 +778,9 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	 * @param blue
 	 * @param title
 	 */
-	private void displayAxes(double[] centroid, double[][] unitVector,
-			double[] lengths, float red, float green, float blue, String title) {
+	private void displayAxes(Image3DUniverse univ, double[] centroid,
+			double[][] unitVector, double[] lengths, float red, float green,
+			float blue, String title) {
 		final double cX = centroid[0];
 		final double cY = centroid[1];
 		final double cZ = centroid[2];
@@ -853,8 +847,9 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	 * Draw the particle centroids in a 3D viewer
 	 * 
 	 * @param centroids
+	 * @param univ
 	 */
-	private void displayCentroids(double[][] centroids) {
+	private void displayCentroids(double[][] centroids, Image3DUniverse univ) {
 		int nCentroids = centroids.length;
 		for (int p = 1; p < nCentroids; p++) {
 			IJ.showStatus("Rendering centroids...");
@@ -885,20 +880,15 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	/**
 	 * Draw the particle surfaces in a 3D viewer
 	 * 
+	 * @param univ
 	 * @param surfacePoints
+	 * 
 	 */
-	private void displayParticleSurfaces(
+	private void displayParticleSurfaces(Image3DUniverse univ,
 			ArrayList<List<Point3f>> surfacePoints, int colourMode,
 			double[] volumes, double splitValue) {
 		int p = 0;
-		int drawnParticles = 0;
 		final int nParticles = surfacePoints.size();
-		Iterator<List<Point3f>> i = surfacePoints.iterator();
-		while (i.hasNext()) {
-			List<Point3f> points = i.next();
-			if (p > 0 && points.size() > 0)
-				drawnParticles++;
-		}
 		Iterator<List<Point3f>> iter = surfacePoints.iterator();
 		while (iter.hasNext()) {
 			IJ.showStatus("Rendering surfaces...");
@@ -2287,6 +2277,8 @@ public class ParticleCounter implements PlugIn, DialogListener {
 	}
 
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+		if (!DialogModifier.allNumbersValid(gd.getNumericFields()))
+			return false;
 		Vector<?> choices = gd.getChoices();
 		Vector<?> checkboxes = gd.getCheckboxes();
 		Vector<?> numbers = gd.getNumericFields();
