@@ -80,7 +80,7 @@ import ij3d.pointlist.PointListShape;
  * @author Michael Doube
  * 
  */
-public class GeometricMorphometrics implements PlugIn, UniverseListener,
+public class LandmarkHelper implements PlugIn, UniverseListener,
 		MouseListener, MouseWheelListener, MouseMotionListener, KeyListener,
 		AdjustmentListener, PointListListener {
 	private Image3DUniverse univ;
