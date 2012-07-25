@@ -3,7 +3,7 @@ package org.bonej;
 import imagej.ext.plugin.ImageJPlugin;
 import imagej.ext.plugin.Parameter;
 import imagej.ext.plugin.Plugin;
-import imagej.platform.PlatformService;
+import imagej.platform.DefaultPlatformService;
 import imagej.util.Log;
 
 import java.awt.BorderLayout;
@@ -27,7 +27,7 @@ public class Help implements ImageJPlugin {
 	public static final String bonejVersion = "2.0.0-dev";
 
 	@Parameter
-	private PlatformService platformService;
+	private DefaultPlatformService platformService;
 
 	public void run() {
 		showAbout();
