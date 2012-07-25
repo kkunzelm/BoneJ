@@ -23,10 +23,7 @@ import java.util.ArrayList;
 import org.doube.geometry.Centroid;
 import org.doube.geometry.Trig;
 import org.doube.skeleton.AnalyzeSkeleton;
-import org.doube.skeleton.Edge;
-import org.doube.skeleton.Graph;
-import org.doube.skeleton.Point;
-import org.doube.skeleton.Vertex;
+import skeleton_analysis.*;
 import org.doube.util.ResultInserter;
 import org.doube.util.UsageReporter;
 

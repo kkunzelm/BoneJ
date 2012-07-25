@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 
-import org.doube.skeleton.Point;
+import skeleton_analysis.Point;
 import org.junit.Test;
 
 public class CentroidTest {

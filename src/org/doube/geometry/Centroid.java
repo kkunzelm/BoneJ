@@ -2,7 +2,7 @@ package org.doube.geometry;
 
 import java.util.ArrayList;
 
-import org.doube.skeleton.Point;
+import skeleton_analysis.Point;
 
 public class Centroid {
 
