@@ -62,6 +62,16 @@
 			<artifactId>jama</artifactId>
 			<version>1.0.2</version>
 		</dependency>
+		<dependency>
+			<groupId>java3d</groupId>
+			<artifactId>j3d-core</artifactId>
+			<version>1.5.2</version>
+		</dependency>
+		<dependency>
+			<groupId>java3d</groupId>
+			<artifactId>vecmath</artifactId>
+			<version>1.5.2</version>
+		</dependency>
 	</dependencies>
 	<parent>
 		<groupId>org.scijava</groupId>
