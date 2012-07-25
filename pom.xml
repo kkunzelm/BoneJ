@@ -31,7 +31,32 @@
     <artifactId>ij</artifactId>
     <version>1.46j</version>
   </dependency>
-</dependencies>
+  <dependency>
+  	<groupId>imagej</groupId>
+    <artifactId>imagej</artifactId>
+    <version>2.0-SNAPSHOT</version>
+  </dependency>
+  <dependency>
+  	<groupId>imagej</groupId>
+    <artifactId>ij-ext</artifactId>
+    <version>2.0-SNAPSHOT</version>
+  </dependency>
+  <dependency>
+  	<groupId>net.imagej</groupId>
+    <artifactId>ij-platform</artifactId>
+    <version>2.0-SNAPSHOT</version>
+  </dependency>
+  <dependency>
+  	<groupId>net.imagej</groupId>
+    <artifactId>ij-data</artifactId>
+    <version>2.0-SNAPSHOT</version>
+  </dependency>
+  <dependency>
+  	<groupId>net.imglib2</groupId>
+    <artifactId>imglib2</artifactId>
+    <version>2.0-SNAPSHOT</version>
+  </dependency>
+  </dependencies>
 <parent>
   <groupId>org.scijava</groupId>
   <artifactId>pom-scijava</artifactId>
@@ -49,4 +74,12 @@
     <url>http://maven.imagej.net/content/repositories/snapshots</url>
   </repository>
 </repositories>
+	<name>BoneJ</name>
+	<url>http://bonej.org/</url>
+	<description>BoneJ is an ImageJ plugin for bone image analysis.</description>
+	<inceptionYear>2009</inceptionYear>
+	<organization>
+		<name>Skeletal Biology, The Royal Veterinary College</name>
+		<url>http://rvc.ac.uk/</url>
+	</organization>
 </project>
