@@ -32,6 +32,7 @@ package org.bonej;
 //import javax.vecmath.Point3f;
 
 //import marchingcubes.MCTriangulator;
+import mpicbg.imglib.image.Image;
 import net.imglib2.Cursor;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
@@ -86,17 +87,18 @@ public class VolumeFraction implements ImageJPlugin {
 //		if (!ImageCheck.checkEnvironment())
 //			return;
 		final Dataset dataset = view.getData();
-		imageType = dataset.getTypeLabelShort();
+		imageType = dataset.getPixelType();
 		@SuppressWarnings("unchecked")
-		double[] result = getVoxelBvTv((ImgPlus)dataset.getImgPlus());
+		Image<?> img = dataset.getImage();
+		double[] result = getVoxelBvTv(img);
 		double bv = result[0];
 		double tv = result[1];
 		double bvtv = result[2];
 		output = "BV = "+bv+", TV = "+tv+" BV/TV = "+bvtv;
 	}
 
-	private <T extends RealType<T>> double[] getVoxelBvTv(ImgPlus<T> img) {
-		Cursor<T> c = img.cursor();
+	private <T extends RealType<T>> double[] getVoxelBvTv(Image<?> img) {
+		Cursor<?> c  = (Cursor<?>) img.createCursor();
 		T type;
 		double tV = 0;
 		double bV = 0;
@@ -104,7 +106,7 @@ public class VolumeFraction implements ImageJPlugin {
 		while (c.hasNext()){
 			c.fwd();
 			tV++;
-			type = c.get();
+			type = (T) c.get();
 			if (type.getRealDouble() >= threshold)
 				bV++;
 		}
