@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.doube.util.DialogModifier;
 import org.doube.util.ImageCheck;
 import org.doube.util.Multithreader;
+import org.doube.util.UsageReporter;
 
 import ij.*;
 import ij.plugin.PlugIn;
@@ -113,6 +114,7 @@ public class Purify implements PlugIn, DialogListener {
 
 		if (showPerformance)
 			showResults(duration, imp, slicesPerChunk, labelMethod);
+		UsageReporter.reportEvent(this).send();
 		return;
 	}
 
@@ -390,7 +392,6 @@ public class Purify implements PlugIn, DialogListener {
 		return;
 	}
 
-	@Override
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
 		if (!DialogModifier.allNumbersValid(gd.getNumericFields()))
 			return false;

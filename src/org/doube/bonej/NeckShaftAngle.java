@@ -43,6 +43,7 @@ import org.doube.util.ImageCheck;
 import org.doube.util.ResultInserter;
 import org.doube.util.RoiMan;
 import org.doube.util.ThresholdGuesser;
+import org.doube.util.UsageReporter;
 
 import Jama.Matrix;
 import Jama.SingularValueDecomposition;
@@ -194,6 +195,7 @@ public class NeckShaftAngle implements PlugIn, MouseListener, DialogListener {
 				+ "Neck-shaft angle and out-of-plane skew\n"
 				+ "will be recorded until you hit \'OK\'").show();
 		this.canvas.removeMouseListener(this);
+		UsageReporter.reportEvent(this).send();
 		return;
 	}
 

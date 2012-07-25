@@ -38,6 +38,7 @@ import Jama.Matrix;
 import org.doube.util.DialogModifier;
 import org.doube.util.ImageCheck;
 import org.doube.util.Multithreader;
+import org.doube.util.UsageReporter;
 
 import customnode.CustomPointMesh;
 import customnode.CustomTriangleMesh;
@@ -65,7 +66,7 @@ import ij3d.Image3DUniverse;
  * This plugin is based on Object_Counter3D by Fabrice P Cordelires and Jonathan
  * Jackson, but with significant speed increases through reduction of recursion
  * and multi-threading. Thanks to Robert Barbour for the suggestion to 'chunk'
- * the stack. Ch@param compsunking works as follows:
+ * the stack. Chunking works as follows:
  * </p>
  * <ol>
  * <li>Perform initial labelling on the whole stack in a single thread</li>
@@ -385,6 +386,7 @@ public class ParticleCounter implements PlugIn, DialogListener {
 		}
 		IJ.showProgress(1.0);
 		IJ.showStatus("Particle Analysis Complete");
+		UsageReporter.reportEvent(this).send();
 		return;
 	}
 

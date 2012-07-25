@@ -30,6 +30,8 @@ import ij.plugin.*;
 import ij.measure.*;						//Calibration
 import javax.activation.*;					//UnsupportedDataTypeException
 
+import org.doube.util.UsageReporter;
+
 public class Read_Stratec_File extends ImagePlus implements PlugIn {
 	//Global variables
 	//Stratec header stuff
@@ -108,6 +110,7 @@ public class Read_Stratec_File extends ImagePlus implements PlugIn {
 		}catch (Exception err){
 			IJ.error("Stratec file read failed ", err.getMessage());
 		}
+		UsageReporter.reportEvent(this).send();
 	}
 	
 	private void fileInfo() {
@@ -116,10 +119,14 @@ public class Read_Stratec_File extends ImagePlus implements PlugIn {
 		catch (NullPointerException npe){} 
 		fi.pixelWidth = VoxelSize;
 		fi.pixelHeight = VoxelSize;
+		fi.width = PicMatrixX;
+		fi.height  = PicMatrixY;
 		fi.valueUnit = "mm";
 		fi.fileName = fileName;
 		fi.info		= properties;
-		fi.fileType = ij.io.FileInfo.GRAY16_SIGNED;	//
+		fi.fileFormat = fi.RAW;
+		fi.compression = fi.COMPRESSION_NONE;
+		fi.fileType = fi.GRAY16_SIGNED;	//
         this.setFileInfo(fi);
 	}
 	/**

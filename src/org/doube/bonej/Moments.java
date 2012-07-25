@@ -46,6 +46,7 @@ import org.doube.util.DialogModifier;
 import org.doube.util.ImageCheck;
 import org.doube.util.ResultInserter;
 import org.doube.util.ThresholdGuesser;
+import org.doube.util.UsageReporter;
 
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
@@ -158,7 +159,7 @@ public class Moments implements PlugIn, DialogListener {
 
 		if (doAxes3D)
 			show3DAxes(imp, E.getV(), centroid, startSlice, endSlice, min, max);
-
+		UsageReporter.reportEvent(this).send();
 		return;
 	}
 
