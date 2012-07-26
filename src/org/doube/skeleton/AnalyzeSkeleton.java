@@ -19,6 +19,7 @@ public class AnalyzeSkeleton implements PlugInFilter {
 	private AnalyzeSkeleton_ analyser;
 
 	public int setup(String arg, ImagePlus imp) {
+		analyser = new AnalyzeSkeleton_();
 		return analyser.setup(arg, imp);
 	}
 
