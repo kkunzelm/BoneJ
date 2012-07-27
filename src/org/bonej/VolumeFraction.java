@@ -86,15 +86,15 @@ public class VolumeFraction implements ImageJPlugin {
 		//disable for now
 //		if (!ImageCheck.checkEnvironment())
 //			return;
-		final Dataset dataset = view.getData();
-		imageType = dataset.getPixelType();
-		@SuppressWarnings("unchecked")
-		Image<?> img = dataset.getImage();
-		double[] result = getVoxelBvTv(img);
-		double bv = result[0];
-		double tv = result[1];
-		double bvtv = result[2];
-		output = "BV = "+bv+", TV = "+tv+" BV/TV = "+bvtv;
+//		final Dataset dataset = view.getData();
+//		imageType = dataset.getTypeLabelLong();
+//		@SuppressWarnings("unchecked")
+//		Image<?> img = dataset.getImage();
+//		double[] result = getVoxelBvTv(img);
+//		double bv = result[0];
+//		double tv = result[1];
+//		double bvtv = result[2];
+//		output = "BV = "+bv+", TV = "+tv+" BV/TV = "+bvtv;
 	}
 
 	private <T extends RealType<T>> double[] getVoxelBvTv(Image<?> img) {

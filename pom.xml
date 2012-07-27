@@ -33,9 +33,9 @@
 			<version>1.46j</version>
 		</dependency>
 		<dependency>
-			<groupId>imagej</groupId>
-			<artifactId>imagej</artifactId>
-			<version>2.0-SNAPSHOT</version>
+			<groupId>net.imagej</groupId>
+			<artifactId>ij-core</artifactId>
+			<version>2.0.0-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>imagej</groupId>
