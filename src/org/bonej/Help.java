@@ -4,7 +4,6 @@ import imagej.ext.plugin.ImageJPlugin;
 import imagej.ext.plugin.Parameter;
 import imagej.ext.plugin.Plugin;
 import imagej.platform.DefaultPlatformService;
-import imagej.util.Log;
 
 import java.awt.BorderLayout;
 import java.io.IOException;
@@ -52,9 +51,9 @@ public class Help implements ImageJPlugin {
 					try {
 						platformService.open(new URL(e.getURL().toString()));
 					} catch (MalformedURLException e1) {
-						Log.error(e1);
+//						Log.error(e1);
 					} catch (IOException e1) {
-						Log.error(e1);
+//						Log.error(e1);
 					}
 				;
 			}
