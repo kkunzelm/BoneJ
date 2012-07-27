@@ -24,7 +24,7 @@ public class Help implements ImageJPlugin {
 	/**
 	 * BoneJ version
 	 */
-	public static final String bonejVersion = "2.0.0-dev";
+	public static final String bonejVersion = "2.0.0-SNAPSHOT";
 
 	@Parameter
 	private DefaultPlatformService platformService;
