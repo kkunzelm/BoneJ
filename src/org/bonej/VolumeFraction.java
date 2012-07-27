@@ -32,7 +32,7 @@ package org.bonej;
 //import javax.vecmath.Point3f;
 
 //import marchingcubes.MCTriangulator;
-import mpicbg.imglib.image.Image;
+//import mpicbg.imglib.image.Image;
 import net.imglib2.Cursor;
 import net.imglib2.img.ImgPlus;
 import net.imglib2.type.numeric.RealType;
@@ -97,23 +97,23 @@ public class VolumeFraction implements ImageJPlugin {
 //		output = "BV = "+bv+", TV = "+tv+" BV/TV = "+bvtv;
 	}
 
-	private <T extends RealType<T>> double[] getVoxelBvTv(Image<?> img) {
-		Cursor<?> c  = (Cursor<?>) img.createCursor();
-		T type;
-		double tV = 0;
-		double bV = 0;
-		
-		while (c.hasNext()){
-			c.fwd();
-			tV++;
-			type = (T) c.get();
-			if (type.getRealDouble() >= threshold)
-				bV++;
-		}
-		
-		double[] result = {bV, tV, bV/tV};
-		return result;
-	}
+//	private <T extends RealType<T>> double[] getVoxelBvTv(Image<?> img) {
+//		Cursor<?> c  = (Cursor<?>) img.createCursor();
+//		T type;
+//		double tV = 0;
+//		double bV = 0;
+//		
+//		while (c.hasNext()){
+//			c.fwd();
+//			tV++;
+//			type = (T) c.get();
+//			if (type.getRealDouble() >= threshold)
+//				bV++;
+//		}
+//		
+//		double[] result = {bV, tV, bV/tV};
+//		return result;
+//	}
 
 //	public void run(String arg) {
 //		if (imp.getBitDepth() == 32 || imp.getBitDepth() == 24) {
