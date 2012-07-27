@@ -1,0 +1,69 @@
+<project name="BoneJ" default="" basedir=".">
+	<description>
+        BoneJ build file
+    </description>
+	<property name="src" location="src" />
+	<property name="build" location="javacbin" />
+	<property name="dist" location="dist" />
+
+	<property name="imagej2Plugins" location="/home/mdoube/ImageJ.app/plugins/" />
+
+	<property name="user.name" value="Michael Doube" />
+
+	<target name="init">
+		<!-- Create the time stamp -->
+		<tstamp />
+		<!-- Create the build directory structure used by compile -->
+		<mkdir dir="${build}" />
+	</target>
+	
+	<path id="bonej-classpath">
+	  <fileset dir="/home/mdoube/JavaLibs/">
+	    <include name="vecmath.jar"/>
+	  	<include name="j3dcore.jar"/>
+	  	<include name="j3dutils.jar"/>
+	  	<include name="imglib.jar"/>
+	    <include name="ImageJ_3D_Viewer.jar"/>
+	  	<include name="imagej-2.0.0-SNAPSHOT-all.jar"/>
+	  	
+	  	<!-- needed during transition -->
+	  	<include name="ij.jar" />
+	  	<include name="Jama-1.0.2.jar" />
+	  	
+	  </fileset>
+	
+		<!-- for Fiji plugins -->
+	  <fileset dir="/home/mdoube/Fiji.app/plugins/">
+		<include name="Skeletonize_3D.jar"/>
+	  	<include name="AnalyzeSkeleton_.jar"/>
+	  </fileset>
+
+	  <pathelement path="${build.dir}"/>
+	</path>
+
+	<target name="compile" depends="" description="compile the source ">
+		<!-- Compile the java code from ${src} into ${build} -->
+		<javac includeantruntime="false" srcdir="${src}" destdir="${build}" >
+			<classpath refid="bonej-classpath"/>
+		</javac> 
+		<echo>
+			Building the .jar file.
+		</echo>
+	</target>
+
+	<target name="compress" depends="" description="generate the distribution">
+		<jar jarfile="BoneJ.jar">
+					<fileset dir="${build}" includes="**/*.*" />
+					<manifest>
+						<attribute name="Built-By" value="${user.name}" />
+					</manifest>
+				</jar>
+		<copy file="BoneJ.jar" toDir="${imagej2Plugins}" />
+	</target>
+	
+	<target name="clean" description="clean up">
+		<!-- Delete the ${build} directory tree -->
+		<delete dir="${build}" />
+	</target>
+
+</project>
