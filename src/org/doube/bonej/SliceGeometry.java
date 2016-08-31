@@ -279,7 +279,9 @@ public class SliceGeometry implements PlugIn, DialogListener {
 		if (isHUCalibrated) {
 			min = cal.getRawValue(min);
 			max = cal.getRawValue(max);
-
+			this.background = cal.getRawValue(this.background);
+			this.foreground = cal.getRawValue(this.foreground);
+			
 			// convert HU->density user input into raw->density coefficients
 			// for use in later calculations
 			this.c = this.m * cal.getCoefficients()[0] + this.c;
