@@ -19,26 +19,29 @@
 */
 
 package org.doube.bonej.pqct.selectroi;
-import java.util.*;	//Vector, Collections
 
-public class DetectedRadialEdge implements Comparable<DetectedRadialEdge>{
-	public int ii;		//indexes for x-coordinates
-	public int jj;	//indexes for y-coordinates
+public class DetectedRadialEdge implements Comparable<DetectedRadialEdge> {
+	public int ii; // indexes for x-coordinates
+	public int jj; // indexes for y-coordinates
 	public double theta;
 	public double radius;
 
-	public DetectedRadialEdge(int ii,int jj, double theta, double radius){
+	public DetectedRadialEdge(final int ii, final int jj, final double theta, final double radius) {
 		this.ii = ii;
 		this.jj = jj;
 		this.theta = theta;
 		this.radius = radius;
 	}
-	
+
 	@Override
-	public int compareTo(DetectedRadialEdge o){
-		int returnValue = 0;
-		if (o == null || this == null) {throw new NullPointerException();}
-		if (this.theta == o.theta) {return 0;}
-		return this.theta < o.theta ? -1 : 1;		
-	}	
+	public int compareTo(final DetectedRadialEdge o) {
+		final int returnValue = 0;
+		if (o == null || this == null) {
+			throw new NullPointerException();
+		}
+		if (this.theta == o.theta) {
+			return 0;
+		}
+		return this.theta < o.theta ? -1 : 1;
+	}
 }

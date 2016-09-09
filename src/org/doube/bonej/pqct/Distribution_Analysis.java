@@ -21,123 +21,156 @@
 
 package org.doube.bonej.pqct;
 
-import ij.*;
-import ij.text.*;
-import ij.process.*;
-import ij.gui.*;
-import ij.measure.*;						//Calibration
-import java.util.*;							//Vector
-import java.io.*;							//File IO for reading .TYP files
-import ij.plugin.PlugIn;
-import org.doube.bonej.pqct.analysis.*;		//Analysis stuff..
-import org.doube.bonej.pqct.selectroi.*;	//ROI selection..
-import org.doube.bonej.pqct.io.*;			//image data
-import org.doube.bonej.pqct.utils.*;		//Writing results and creating visual result image
-import org.doube.util.UsageReporter;
-
-import java.awt.*;							//Image, component for debugging...
-import ij.plugin.filter.Info;
-import ij.io.*;
+//File IO for reading .TYP files
+import java.io.InputStream;
+//Vector
+import java.util.StringTokenizer;
+import java.util.Vector;
 import java.util.concurrent.ExecutionException;
 
-public class Distribution_Analysis implements PlugIn {
+//Analysis stuff..
+import org.doube.bonej.pqct.analysis.ConcentricRingAnalysis;
+import org.doube.bonej.pqct.analysis.CorticalAnalysis;
+import org.doube.bonej.pqct.analysis.DetermineAlfa;
+import org.doube.bonej.pqct.analysis.DistributionAnalysis;
+import org.doube.bonej.pqct.analysis.MassDistribution;
+import org.doube.bonej.pqct.analysis.SoftTissueAnalysis;
+//image data
+import org.doube.bonej.pqct.io.ImageAndAnalysisDetails;
+import org.doube.bonej.pqct.io.ScaledImageData;
+//ROI selection..
+import org.doube.bonej.pqct.selectroi.RoiSelector;
+import org.doube.bonej.pqct.selectroi.SelectROI;
+import org.doube.bonej.pqct.selectroi.SelectSoftROI;
+//Writing results and creating visual result image
+import org.doube.bonej.pqct.utils.ResultsImage;
+import org.doube.bonej.pqct.utils.ResultsWriter;
+import org.doube.util.UsageReporter;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.Prefs;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.io.FileSaver;
+//Calibration
+import ij.measure.Calibration;
+import ij.plugin.PlugIn;
+import ij.plugin.filter.Info;
+import ij.text.TextPanel;
+
+public class Distribution_Analysis implements PlugIn {
 
 	String resultString;
 	String imageInfo;
 	double resolution;
 	boolean alphaOn;
 
-	public void run(String arg) {
-	   	//IJ.log("Start plug-in");
-		ImagePlus imp = WindowManager.getCurrentImage();
+	@Override
+	public void run(final String arg) {
+		// IJ.log("Start plug-in");
+		final ImagePlus imp = WindowManager.getCurrentImage();
 		if (imp == null)
 			return;
-		if (imp.getType() != ImagePlus.GRAY16){
+		if (imp.getType() != ImagePlus.GRAY16) {
 			IJ.error("Distribution analysis expects 16-bit greyscale data");
 			return;
 		}
-		//IJ.log("Got 16 bit");
-		/*Set sector widths and division numbers*/
-		int[] sectorsAndDivisions = {10,3,10,10}; /*Distribution analysis sectorWidth, Distribution analysis sectors, Concentric distribution analysis sectorWidth, Concentric distribution analysis sectors*/
-		int[] filterSizes = {3,7};		//first is used for bone analysis filtering and second for soft tissue analysis filtering. ?x? median filter.
+		// IJ.log("Got 16 bit");
+		/* Set sector widths and division numbers */
+		final int[] sectorsAndDivisions = { 10, 3, 10,
+				10 }; /*
+						 * Distribution analysis sectorWidth, Distribution
+						 * analysis sectors, Concentric distribution analysis
+						 * sectorWidth, Concentric distribution analysis sectors
+						 */
+		final int[] filterSizes = { 3, 7 }; // first is used for bone analysis
+											// filtering and second for soft
+											// tissue analysis filtering. ?x?
+											// median filter.
 
-		//A ROI appears on the image every now and then, haven't figured out why -> remove any unwanted rois prior to soft-tissue analysis
+		// A ROI appears on the image every now and then, haven't figured out
+		// why -> remove any unwanted rois prior to soft-tissue analysis
 		byte removeROIs = 0;
-		if (imp.getRoi() == null){
+		if (imp.getRoi() == null) {
 			removeROIs = 1;
 		}
-		//IJ.log("Get Image info");
-		imageInfo = new Info().getImageInfo(imp,imp.getChannelProcessor());
-		/*Check image calibration*/
-		//IJ.log("Try to get calibration");
-		Calibration cal = imp.getCalibration();
-		double[] calibrationCoefficients = {0,1};
-		if (getInfoProperty(imageInfo,"Stratec File") == null){
-			//IJ.log("Try to access calibration");
-			try{
-				if (cal != null && cal.getCoefficients() != null){
-				   	//IJ.log("Trying to get coefficients");
+		// IJ.log("Get Image info");
+		imageInfo = new Info().getImageInfo(imp, imp.getChannelProcessor());
+		/* Check image calibration */
+		// IJ.log("Try to get calibration");
+		final Calibration cal = imp.getCalibration();
+		double[] calibrationCoefficients = { 0, 1 };
+		if (getInfoProperty(imageInfo, "Stratec File") == null) {
+			// IJ.log("Try to access calibration");
+			try {
+				if (cal != null && cal.getCoefficients() != null) {
+					// IJ.log("Trying to get coefficients");
 					calibrationCoefficients = cal.getCoefficients();
-				   	//IJ.log("Got coefficients c0 "+calibrationCoefficients[0]+" c1 "+calibrationCoefficients[0] );
+					// IJ.log("Got coefficients c0
+					// "+calibrationCoefficients[0]+" c1
+					// "+calibrationCoefficients[0] );
 				}
-			}catch (Exception err) {
-			 	//IJ.log("Didn't have calibration");
+			} catch (final Exception err) {
+				// IJ.log("Didn't have calibration");
 			}
-			//IJ.log("Got past calib");
+			// IJ.log("Got past calib");
 		} else {
 			calibrationCoefficients = new double[2];
-			/*Read calibration from TYP file database*/
-			String typFileName = getInfoProperty(imageInfo,"Device");
+			/* Read calibration from TYP file database */
+			final String typFileName = getInfoProperty(imageInfo, "Device");
 			try {
-				InputStream ir = this.getClass().getClassLoader().getResourceAsStream("org/doube/bonej/pqct/typ/"+typFileName);
-				byte[] typFileData = new byte[ir.available()];
+				final InputStream ir = this.getClass().getClassLoader()
+						.getResourceAsStream("org/doube/bonej/pqct/typ/" + typFileName);
+				final byte[] typFileData = new byte[ir.available()];
 				ir.read(typFileData);
 				ir.close();
-				String typFiledDataString = new String(typFileData,"ISO-8859-1");
-				//break the typFileDataString into lines
-				StringTokenizer st = new StringTokenizer(typFiledDataString, "\n");
-				Vector<String> typFileLines = new Vector<String>();
-				while(st.hasMoreTokens()){
+				final String typFiledDataString = new String(typFileData, "ISO-8859-1");
+				// break the typFileDataString into lines
+				final StringTokenizer st = new StringTokenizer(typFiledDataString, "\n");
+				final Vector<String> typFileLines = new Vector<String>();
+				while (st.hasMoreTokens()) {
 					typFileLines.add(st.nextToken());
 				}
-				//Search for XSlope and XInter
-				String[] searchFor = {"XInter","XSlope"};
-				for (int i = 0;i<searchFor.length;++i){
+				// Search for XSlope and XInter
+				final String[] searchFor = { "XInter", "XSlope" };
+				for (int i = 0; i < searchFor.length; ++i) {
 					int index = 0;
 					String temp = typFileLines.get(index);
-					while (temp.indexOf(searchFor[i]) < 0 && index < typFileLines.size()){
+					while (temp.indexOf(searchFor[i]) < 0 && index < typFileLines.size()) {
 						++index;
 						temp = typFileLines.get(index);
 					}
-					if (temp.indexOf(searchFor[i]) >= 0){	//Found line
-						StringTokenizer st2 = new StringTokenizer(temp, "=");
-						Vector<String> typFileLineTokens = new Vector<String>();
-						while(st2.hasMoreTokens()){
+					if (temp.indexOf(searchFor[i]) >= 0) { // Found line
+						final StringTokenizer st2 = new StringTokenizer(temp, "=");
+						final Vector<String> typFileLineTokens = new Vector<String>();
+						while (st2.hasMoreTokens()) {
 							typFileLineTokens.add(st2.nextToken().trim());
 						}
 						calibrationCoefficients[i] = Double.valueOf(typFileLineTokens.get(1));
 					} else {
-						calibrationCoefficients[i] = (double) i*1000.0;
+						calibrationCoefficients[i] = i * 1000.0;
 					}
 				}
-				calibrationCoefficients[1] /= 1000.0;		//1.495
-			} catch (Exception err){System.err.println("Error: "+err.getMessage());}
+				calibrationCoefficients[1] /= 1000.0; // 1.495
+			} catch (final Exception err) {
+				System.err.println("Error: " + err.getMessage());
+			}
 		}
-		//IJ.log("tRYING TO get resol");
+		// IJ.log("tRYING TO get resol");
 		resolution = cal.pixelWidth;
-		//IJ.log("Got resolution "+resolution);
-		if (getInfoProperty(imageInfo,"Pixel Spacing")!= null){
-			String temp = getInfoProperty(imageInfo,"Pixel Spacing");
-			if (temp.indexOf("\\")!=-1){
-				temp = temp.substring(0,temp.indexOf("\\"));
+		// IJ.log("Got resolution "+resolution);
+		if (getInfoProperty(imageInfo, "Pixel Spacing") != null) {
+			String temp = getInfoProperty(imageInfo, "Pixel Spacing");
+			if (temp.indexOf("\\") != -1) {
+				temp = temp.substring(0, temp.indexOf("\\"));
 			}
 			resolution = Double.valueOf(temp);
 		}
-		//Get parameters for scaling the image and for thresholding
-		GenericDialog dialog = new GenericDialog("Analysis parameters");
-		String[] topLabels = new String[4];
-		boolean[] defaultTopValues = new boolean[4];
+		// Get parameters for scaling the image and for thresholding
+		final GenericDialog dialog = new GenericDialog("Analysis parameters");
+		final String[] topLabels = new String[4];
+		final boolean[] defaultTopValues = new boolean[4];
 		topLabels[0] = "Flip_horizontal";
 		defaultTopValues[0] = false;
 		topLabels[1] = "Flip_vertical";
@@ -148,46 +181,78 @@ public class Distribution_Analysis implements PlugIn {
 		defaultTopValues[3] = false;
 		dialog.addCheckboxGroup(1, 4, topLabels, defaultTopValues);
 
-		dialog.addNumericField("Air_threshold", -40, 4, 8, null);	//Anything above this is fat or more dense
-		dialog.addNumericField("Fat threshold", 40, 4, 8, null);		//Anything between this and air threshold is fat
-		dialog.addNumericField("Muscle_threshold", 40, 4, 8, null);		//Anything above this is muscle or more dense
-		dialog.addNumericField("Edge_divisions", 45, 4, 8, null);		//Used with livewire to include intermuscular fat
-		dialog.addNumericField("Marrow_threshold", 80, 4, 8, null);		//Anything above this is bone
-		dialog.addNumericField("Soft_tissue_threshold", 200.0, 4, 8, null);		//Anything  between this and muscle threshold is muscle
+		dialog.addNumericField("Air_threshold", -40, 4, 8, null); // Anything
+																	// above
+																	// this is
+																	// fat or
+																	// more
+																	// dense
+		dialog.addNumericField("Fat threshold", 40, 4, 8, null); // Anything
+																	// between
+																	// this and
+																	// air
+																	// threshold
+																	// is fat
+		dialog.addNumericField("Muscle_threshold", 40, 4, 8, null); // Anything
+																	// above
+																	// this is
+																	// muscle or
+																	// more
+																	// dense
+		dialog.addNumericField("Edge_divisions", 45, 4, 8, null); // Used with
+																	// livewire
+																	// to
+																	// include
+																	// intermuscular
+																	// fat
+		dialog.addNumericField("Marrow_threshold", 80, 4, 8, null); // Anything
+																	// above
+																	// this is
+																	// bone
+		dialog.addNumericField("Soft_tissue_threshold", 200.0, 4, 8, null); // Anything
+																			// between
+																			// this
+																			// and
+																			// muscle
+																			// threshold
+																			// is
+																			// muscle
 		dialog.addNumericField("Rotation_threshold", 200.0, 4, 8, null);
-		dialog.addNumericField("Area threshold", 550.0, 4, 8, null); 	//550.0
-		dialog.addNumericField("BMD threshold", 690.0, 4, 8, null);		//690.0
-
+		dialog.addNumericField("Area threshold", 550.0, 4, 8, null); // 550.0
+		dialog.addNumericField("BMD threshold", 690.0, 4, 8, null); // 690.0
 
 		dialog.addNumericField("Scaling_coefficient (slope)", calibrationCoefficients[1], 4, 8, null);
-		dialog.addNumericField("Scaling_constant (intercept)",calibrationCoefficients[0], 4, 8, null);
+		dialog.addNumericField("Scaling_constant (intercept)", calibrationCoefficients[0], 4, 8, null);
 
 		/*
-		//Debugging
-		dialog.addNumericField("Scaling_coefficient (slope)", 0.821, 4, 8, null);
-		dialog.addNumericField("Scaling_constant (intercept)",-856.036, 4, 8, null);
-		*/
-		//Get ROI selection
-		String[] choiceLabels = {"Bigger","Smaller","Left","Right","Top","Bottom","Central","Peripheral","SecondLargest","TwoLargestLeft","TwoLargestRight"
-								,"FirstFromLeft","SecondFromLeft","ThirdFromLeft","FourthFromLeft","FifthFromLeft"
-								,"FirstFromTop","SecondFromTop","ThirdFromTop","FourthFromTop","FifthFromTop"};
+		 * //Debugging dialog.addNumericField("Scaling_coefficient (slope)",
+		 * 0.821, 4, 8, null);
+		 * dialog.addNumericField("Scaling_constant (intercept)",-856.036, 4, 8,
+		 * null);
+		 */
+		// Get ROI selection
+		final String[] choiceLabels = { "Bigger", "Smaller", "Left", "Right", "Top", "Bottom", "Central", "Peripheral",
+				"SecondLargest", "TwoLargestLeft", "TwoLargestRight", "FirstFromLeft", "SecondFromLeft",
+				"ThirdFromLeft", "FourthFromLeft", "FifthFromLeft", "FirstFromTop", "SecondFromTop", "ThirdFromTop",
+				"FourthFromTop", "FifthFromTop" };
 		dialog.addChoice("Roi_selection", choiceLabels, choiceLabels[0]);
 		dialog.addChoice("Soft_Tissue_Roi_selection", choiceLabels, choiceLabels[0]);
-		String[] rotationLabels = {"According_to_Imax/Imin","Furthest_point","All_Bones_Imax/Imin","Not_selected_to_right","Selected_to_right"};
-		dialog.addChoice("Rotation_selection", rotationLabels, rotationLabels[0]); //"According_to_Imax/Imin"
+		final String[] rotationLabels = { "According_to_Imax/Imin", "Furthest_point", "All_Bones_Imax/Imin",
+				"Not_selected_to_right", "Selected_to_right" };
+		dialog.addChoice("Rotation_selection", rotationLabels, rotationLabels[0]); // "According_to_Imax/Imin"
 
-		String[] middleLabels = new String[10];
-		boolean[] middleDefaults = new boolean[10];
+		final String[] middleLabels = new String[10];
+		final boolean[] middleDefaults = new boolean[10];
 		middleLabels[0] = "Analyse_cortical_results";
-		middleDefaults[0] = false;//true;
+		middleDefaults[0] = false;// true;
 		middleLabels[1] = "Analyse_mass_distribution";
 		middleDefaults[1] = false;
 		middleLabels[2] = "Analyse_concentric_density_distribution";
 		middleDefaults[2] = false;
 		middleLabels[3] = "Analyse_density_distribution";
-		middleDefaults[3] = false;//true;
+		middleDefaults[3] = false;// true;
 		middleLabels[4] = "Analyse_soft_tissues";
-		middleDefaults[4] = true;//false;
+		middleDefaults[4] = true;// false;
 		middleLabels[5] = "Prevent_peeling_PVE_pixels";
 		middleDefaults[5] = false;
 		middleLabels[6] = "Allow_cleaving";
@@ -202,8 +267,8 @@ public class Distribution_Analysis implements PlugIn {
 
 		dialog.addNumericField("Manual_rotation_[+-_180_deg]", 0.0, 4, 8, null);
 
-		String[] bottomLabels = new String[8];
-		boolean[] bottomDefaults = new boolean[8];
+		final String[] bottomLabels = new String[8];
+		final boolean[] bottomDefaults = new boolean[8];
 		bottomLabels[0] = "Guess_flip";
 		bottomDefaults[0] = false;
 		bottomLabels[1] = "Guess_right";
@@ -222,113 +287,127 @@ public class Distribution_Analysis implements PlugIn {
 		bottomDefaults[7] = false;
 		dialog.addCheckboxGroup(2, 5, bottomLabels, bottomDefaults);
 
-		dialog.addStringField("Image_save_path",Prefs.getDefaultDirectory(),40);
+		dialog.addStringField("Image_save_path", Prefs.getDefaultDirectory(), 40);
 		dialog.addHelp("http://bonej.org/densitydistribution");
 		dialog.showDialog();
-				//IJ.log("Dialog done");
-		if (dialog.wasOKed()){ //Stop in case of cancel..
-			for (int i = 0; i<defaultTopValues.length;++i){
+		// IJ.log("Dialog done");
+		if (dialog.wasOKed()) { // Stop in case of cancel..
+			for (int i = 0; i < defaultTopValues.length; ++i) {
 				defaultTopValues[i] = dialog.getNextBoolean();
 			}
-			double[] thresholdsAndScaling = new double[11];
-			for (int i = 0; i<thresholdsAndScaling.length;++i){
-				thresholdsAndScaling[i]		= dialog.getNextNumber();
+			final double[] thresholdsAndScaling = new double[11];
+			for (int i = 0; i < thresholdsAndScaling.length; ++i) {
+				thresholdsAndScaling[i] = dialog.getNextNumber();
 			}
-			String[] alignmentStrings = new String[3];
-			for (int i = 0; i<alignmentStrings.length;++i){
-				alignmentStrings[i]		= dialog.getNextChoice();
+			final String[] alignmentStrings = new String[3];
+			for (int i = 0; i < alignmentStrings.length; ++i) {
+				alignmentStrings[i] = dialog.getNextChoice();
 			}
-			for (int i = 0; i<middleDefaults.length;++i){
+			for (int i = 0; i < middleDefaults.length; ++i) {
 				middleDefaults[i] = dialog.getNextBoolean();
 			}
-			double manualAlfa			= dialog.getNextNumber()*Math.PI/180.0;
-			for (int i = 0; i<bottomDefaults.length;++i){
+			final double manualAlfa = dialog.getNextNumber() * Math.PI / 180.0;
+			for (int i = 0; i < bottomDefaults.length; ++i) {
 				bottomDefaults[i] = dialog.getNextBoolean();
 			}
-			String imageSavePath 		= dialog.getNextString();
+			final String imageSavePath = dialog.getNextString();
 			ScaledImageData scaledImageData;
 
 			String imageName;
-			if (getInfoProperty(imageInfo,"File Name")!= null){
-				imageName = getInfoProperty(imageInfo,"File Name");
-			}else{
-				if(imp.getImageStackSize() == 1){
+			if (getInfoProperty(imageInfo, "File Name") != null) {
+				imageName = getInfoProperty(imageInfo, "File Name");
+			} else {
+				if (imp.getImageStackSize() == 1) {
 					imageName = imp.getTitle();
-					imageInfo+="File Name:"+imageName+"\n";
-				}else{
-					imageName = imageInfo.substring(0,imageInfo.indexOf("\n"));
-					imageInfo+="File Name:"+imageName+"\n";
+					imageInfo += "File Name:" + imageName + "\n";
+				} else {
+					imageName = imageInfo.substring(0, imageInfo.indexOf("\n"));
+					imageInfo += "File Name:" + imageName + "\n";
 				}
 			}
 
-			/*Look study special, images acquired prior to 2007 need to be flipped horizontally
-			String checkDate = getInfoProperty(imageInfo,"Acquisition Date");
-			if (checkDate.indexOf("2005") >-1 || checkDate.indexOf("2006") >-1){
-				flipHorizontal = true;
-			}
-			*/
-			//IJ.log("Get pixels");
-			short[] tempPointer = (short[]) imp.getProcessor().getPixels();
-			int[] signedShort = new int[tempPointer.length];
-			//IJ.log("Try calib");
-			if (imp.getOriginalFileInfo().fileType == ij.io.FileInfo.GRAY16_SIGNED || cal.isSigned16Bit()){
-			   	//IJ.log("Float");
-				float[] floatPointer = (float[]) imp.getProcessor().toFloat(1,null).getPixels();
-				for (int i=0;i<tempPointer.length;++i){signedShort[i] = (int) (floatPointer[i] - Math.pow(2.0,15.0));}
+			/*
+			 * Look study special, images acquired prior to 2007 need to be
+			 * flipped horizontally String checkDate =
+			 * getInfoProperty(imageInfo,"Acquisition Date"); if
+			 * (checkDate.indexOf("2005") >-1 || checkDate.indexOf("2006") >-1){
+			 * flipHorizontal = true; }
+			 */
+			// IJ.log("Get pixels");
+			final short[] tempPointer = (short[]) imp.getProcessor().getPixels();
+			final int[] signedShort = new int[tempPointer.length];
+			// IJ.log("Try calib");
+			if (imp.getOriginalFileInfo().fileType == ij.io.FileInfo.GRAY16_SIGNED || cal.isSigned16Bit()) {
+				// IJ.log("Float");
+				final float[] floatPointer = (float[]) imp.getProcessor().toFloat(1, null).getPixels();
+				for (int i = 0; i < tempPointer.length; ++i) {
+					signedShort[i] = (int) (floatPointer[i] - Math.pow(2.0, 15.0));
+				}
 			} else {
 				/*
-				Apply the original calibration of the image prior to applying the calibration got from the user
-				-> enables using ImageJ for figuring out the calibration without too much fuss.
-				*/
-				//IJ.log("CalCoeffs");
-				try{
+				 * Apply the original calibration of the image prior to applying
+				 * the calibration got from the user -> enables using ImageJ for
+				 * figuring out the calibration without too much fuss.
+				 */
+				// IJ.log("CalCoeffs");
+				try {
 					double[] origCalCoeffs = imp.getOriginalFileInfo().coefficients;
-					if (origCalCoeffs == null){origCalCoeffs = cal.getCoefficients();}
-					float[] floatPointer = (float[]) imp.getProcessor().toFloat(1,null).getPixels();
-					for (int i=0;i<tempPointer.length;++i){signedShort[i] = (int) (floatPointer[i]*origCalCoeffs[1]+origCalCoeffs[0]);}
-				}catch (Exception err){
-					//IJ.log("No scaling");
-				   	for (int i=0;i<tempPointer.length;++i){signedShort[i] = (int) tempPointer[i];}
+					if (origCalCoeffs == null) {
+						origCalCoeffs = cal.getCoefficients();
+					}
+					final float[] floatPointer = (float[]) imp.getProcessor().toFloat(1, null).getPixels();
+					for (int i = 0; i < tempPointer.length; ++i) {
+						signedShort[i] = (int) (floatPointer[i] * origCalCoeffs[1] + origCalCoeffs[0]);
+					}
+				} catch (final Exception err) {
+					// IJ.log("No scaling");
+					for (int i = 0; i < tempPointer.length; ++i) {
+						signedShort[i] = tempPointer[i];
+					}
 				}
 			}
-			//IJ.log("Got calib");
-			ImageAndAnalysisDetails imageAndAnalysisDetails = new ImageAndAnalysisDetails(	defaultTopValues,
-																							thresholdsAndScaling,
-																							alignmentStrings,choiceLabels,rotationLabels,
-																							middleDefaults,
-																							manualAlfa,
-																							bottomDefaults,
-																							sectorsAndDivisions,
-																							filterSizes);
-			scaledImageData = new ScaledImageData(signedShort, imp.getWidth(), imp.getHeight(),resolution, imageAndAnalysisDetails.scalingFactor, imageAndAnalysisDetails.constant,3,imageAndAnalysisDetails.flipHorizontal,imageAndAnalysisDetails.flipVertical,imageAndAnalysisDetails.noFiltering);	//Scale and 3x3 median filter the data
+			// IJ.log("Got calib");
+			final ImageAndAnalysisDetails imageAndAnalysisDetails = new ImageAndAnalysisDetails(defaultTopValues,
+					thresholdsAndScaling, alignmentStrings, choiceLabels, rotationLabels, middleDefaults, manualAlfa,
+					bottomDefaults, sectorsAndDivisions, filterSizes);
+			scaledImageData = new ScaledImageData(signedShort, imp.getWidth(), imp.getHeight(), resolution,
+					imageAndAnalysisDetails.scalingFactor, imageAndAnalysisDetails.constant, 3,
+					imageAndAnalysisDetails.flipHorizontal, imageAndAnalysisDetails.flipVertical,
+					imageAndAnalysisDetails.noFiltering); // Scale and 3x3
+															// median filter the
+															// data
 			RoiSelector roi = null;
 			RoiSelector softRoi = null;
-			
-			try{
-				if(imageAndAnalysisDetails.cOn || imageAndAnalysisDetails.mOn || imageAndAnalysisDetails.conOn || imageAndAnalysisDetails.dOn){
-					roi = new SelectROI(scaledImageData, imageAndAnalysisDetails,imp,imageAndAnalysisDetails.boneThreshold,true);
+
+			try {
+				if (imageAndAnalysisDetails.cOn || imageAndAnalysisDetails.mOn || imageAndAnalysisDetails.conOn
+						|| imageAndAnalysisDetails.dOn) {
+					roi = new SelectROI(scaledImageData, imageAndAnalysisDetails, imp,
+							imageAndAnalysisDetails.boneThreshold, true);
 				}
-				
-				if(imageAndAnalysisDetails.stOn){
-					if (removeROIs ==1){
-						imp.setRoi(null,false);	//Remove unwanted ROIS
+
+				if (imageAndAnalysisDetails.stOn) {
+					if (removeROIs == 1) {
+						imp.setRoi(null, false); // Remove unwanted ROIS
 					}
 
-					softRoi = new SelectSoftROI(scaledImageData, imageAndAnalysisDetails,imp,imageAndAnalysisDetails.boneThreshold,true);
-					if (roi == null){
+					softRoi = new SelectSoftROI(scaledImageData, imageAndAnalysisDetails, imp,
+							imageAndAnalysisDetails.boneThreshold, true);
+					if (roi == null) {
 						roi = softRoi;
 					}
 				}
-			}catch (ExecutionException err){
-				IJ.log("Caught sieve error "+err.toString());
+			} catch (final ExecutionException err) {
+				IJ.log("Caught sieve error " + err.toString());
 				return;
 			}
 
-			if (roi != null){	/*An analysis was conducted*/
+			if (roi != null) { /* An analysis was conducted */
 				alphaOn = false;
 				DetermineAlfa determineAlfa = null;
-				if (imageAndAnalysisDetails.cOn || imageAndAnalysisDetails.mOn || imageAndAnalysisDetails.conOn || imageAndAnalysisDetails.dOn){
-					determineAlfa = new DetermineAlfa((SelectROI) roi,imageAndAnalysisDetails);
+				if (imageAndAnalysisDetails.cOn || imageAndAnalysisDetails.mOn || imageAndAnalysisDetails.conOn
+						|| imageAndAnalysisDetails.dOn) {
+					determineAlfa = new DetermineAlfa((SelectROI) roi, imageAndAnalysisDetails);
 					alphaOn = true;
 				}
 
@@ -336,128 +415,173 @@ public class Distribution_Analysis implements PlugIn {
 				imageAndAnalysisDetails.stacked = roi.details.stacked;
 
 				TextPanel textPanel = IJ.getTextPanel();
-				if (textPanel == null) {textPanel = new TextPanel();}
-				ResultsWriter resultsWriter = new ResultsWriter(imageInfo,alphaOn);
+				if (textPanel == null) {
+					textPanel = new TextPanel();
+				}
+				final ResultsWriter resultsWriter = new ResultsWriter(imageInfo, alphaOn);
 
-				if (textPanel.getLineCount() == 0){resultsWriter.writeHeader(textPanel,imageAndAnalysisDetails);}
+				if (textPanel.getLineCount() == 0) {
+					resultsWriter.writeHeader(textPanel, imageAndAnalysisDetails);
+				}
 
 				String results = "";
-				results = resultsWriter.printResults(results,imageAndAnalysisDetails, imp);
-				if (determineAlfa != null){
-					results = resultsWriter.printAlfa(results,determineAlfa);
+				results = resultsWriter.printResults(results, imageAndAnalysisDetails, imp);
+				if (determineAlfa != null) {
+					results = resultsWriter.printAlfa(results, determineAlfa);
 				}
 
 				ImagePlus resultImage = null;
 				boolean makeImage = true;
-				if(imageAndAnalysisDetails.suppressImages && !imageAndAnalysisDetails.saveImageOnDisk && roi != null){
+				if (imageAndAnalysisDetails.suppressImages && !imageAndAnalysisDetails.saveImageOnDisk && roi != null) {
 					makeImage = false;
-				}else{
-					//System.out.println("Trying to create image "+roi.scaledImage.length+" "+roi.width+" "+roi.height);
-					resultImage = ResultsImage.getRGBResultImage(roi.scaledImage,roi.width,roi.height, imageSavePath);
-					//System.out.println("Returned image "+resultImage.getWidth()+" height "+resultImage.getHeight());
-					resultImage.setTitle(imp.getTitle()+"-result");
+				} else {
+					// System.out.println("Trying to create image
+					// "+roi.scaledImage.length+" "+roi.width+" "+roi.height);
+					resultImage = ResultsImage.getRGBResultImage(roi.scaledImage, roi.width, roi.height, imageSavePath);
+					// System.out.println("Returned image
+					// "+resultImage.getWidth()+" height
+					// "+resultImage.getHeight());
+					resultImage.setTitle(imp.getTitle() + "-result");
 				}
-				//IJ.log("ST.");
-				if(imageAndAnalysisDetails.stOn){
-					SoftTissueAnalysis softTissueAnalysis = new SoftTissueAnalysis((SelectSoftROI) softRoi);
-					results = resultsWriter.printSoftTissueResults(results,softTissueAnalysis);
-					if(makeImage && resultImage != null){
-						//IJ.log("Adding soft tissues");
-						resultImage = ResultsImage.addSoftTissueSieve(resultImage,softRoi.softSieve);
-						//System.out.println("ST image "+resultImage.getWidth()+" height "+resultImage.getHeight());
+				// IJ.log("ST.");
+				if (imageAndAnalysisDetails.stOn) {
+					final SoftTissueAnalysis softTissueAnalysis = new SoftTissueAnalysis((SelectSoftROI) softRoi);
+					results = resultsWriter.printSoftTissueResults(results, softTissueAnalysis);
+					if (makeImage && resultImage != null) {
+						// IJ.log("Adding soft tissues");
+						resultImage = ResultsImage.addSoftTissueSieve(resultImage, softRoi.softSieve);
+						// System.out.println("ST image
+						// "+resultImage.getWidth()+" height
+						// "+resultImage.getHeight());
 					}
 				}
-				//IJ.log("cON.");
-				if (imageAndAnalysisDetails.cOn){
-					//IJ.log("Adding cortical");
-					CorticalAnalysis cortAnalysis =new CorticalAnalysis((SelectROI) roi);
-					results = resultsWriter.printCorticalResults(results,cortAnalysis);
-					if(makeImage && resultImage != null){
-						resultImage = ResultsImage.addBoneSieve(resultImage,roi.sieve,roi.scaledImage,roi.details.marrowThreshold,cortAnalysis.cortexSieve);
-						//System.out.println("cON image "+resultImage.getWidth()+" height "+resultImage.getHeight());
+				// IJ.log("cON.");
+				if (imageAndAnalysisDetails.cOn) {
+					// IJ.log("Adding cortical");
+					final CorticalAnalysis cortAnalysis = new CorticalAnalysis((SelectROI) roi);
+					results = resultsWriter.printCorticalResults(results, cortAnalysis);
+					if (makeImage && resultImage != null) {
+						resultImage = ResultsImage.addBoneSieve(resultImage, roi.sieve, roi.scaledImage,
+								roi.details.marrowThreshold, cortAnalysis.cortexSieve);
+						// System.out.println("cON image
+						// "+resultImage.getWidth()+" height
+						// "+resultImage.getHeight());
 					}
 
 				}
-				//IJ.log("mON.");
-				if (imageAndAnalysisDetails.mOn){
-					//IJ.log("Adding mass dist");
-					MassDistribution massDistribution =new MassDistribution((SelectROI) roi,imageAndAnalysisDetails,determineAlfa);
-					results = resultsWriter.printMassDistributionResults(results,massDistribution,imageAndAnalysisDetails);
-					//System.out.println("mON image "+resultImage.getWidth()+" height "+resultImage.getHeight());
+				// IJ.log("mON.");
+				if (imageAndAnalysisDetails.mOn) {
+					// IJ.log("Adding mass dist");
+					final MassDistribution massDistribution = new MassDistribution((SelectROI) roi,
+							imageAndAnalysisDetails, determineAlfa);
+					results = resultsWriter.printMassDistributionResults(results, massDistribution,
+							imageAndAnalysisDetails);
+					// System.out.println("mON image "+resultImage.getWidth()+"
+					// height "+resultImage.getHeight());
 				}
-				//IJ.log("conON.");
-				if (imageAndAnalysisDetails.conOn){
-					//IJ.log("Adding concentric");
-					ConcentricRingAnalysis concentricRingAnalysis =new ConcentricRingAnalysis((SelectROI) roi,imageAndAnalysisDetails,determineAlfa);
-					results = resultsWriter.printConcentricRingResults(results,concentricRingAnalysis,imageAndAnalysisDetails);
-					if(!imageAndAnalysisDetails.dOn && makeImage && resultImage != null){
-						resultImage = ResultsImage.addPeriRadii(resultImage,concentricRingAnalysis.boneCenter, determineAlfa.pindColor,concentricRingAnalysis.Ru,concentricRingAnalysis.Theta);
-						resultImage = ResultsImage.addMarrowCenter(resultImage,determineAlfa.alfa/Math.PI*180.0,concentricRingAnalysis.boneCenter);
-						//System.out.println("conON image "+resultImage.getWidth()+" height "+resultImage.getHeight());
+				// IJ.log("conON.");
+				if (imageAndAnalysisDetails.conOn) {
+					// IJ.log("Adding concentric");
+					final ConcentricRingAnalysis concentricRingAnalysis = new ConcentricRingAnalysis((SelectROI) roi,
+							imageAndAnalysisDetails, determineAlfa);
+					results = resultsWriter.printConcentricRingResults(results, concentricRingAnalysis,
+							imageAndAnalysisDetails);
+					if (!imageAndAnalysisDetails.dOn && makeImage && resultImage != null) {
+						resultImage = ResultsImage.addPeriRadii(resultImage, concentricRingAnalysis.boneCenter,
+								determineAlfa.pindColor, concentricRingAnalysis.Ru, concentricRingAnalysis.Theta);
+						resultImage = ResultsImage.addMarrowCenter(resultImage, determineAlfa.alfa / Math.PI * 180.0,
+								concentricRingAnalysis.boneCenter);
+						// System.out.println("conON image
+						// "+resultImage.getWidth()+" height
+						// "+resultImage.getHeight());
 					}
 				}
 
-				//IJ.log("dON.");
-				if (imageAndAnalysisDetails.dOn){
-					//IJ.log("Adding distribution");
-					DistributionAnalysis DistributionAnalysis = new DistributionAnalysis((SelectROI) roi,imageAndAnalysisDetails,determineAlfa);
-					results = resultsWriter.printDistributionResults(results,DistributionAnalysis,imageAndAnalysisDetails);
-					if (makeImage && resultImage != null){
-						resultImage = ResultsImage.addRadii(resultImage,determineAlfa.alfa/Math.PI*180.0,DistributionAnalysis.marrowCenter, determineAlfa.pindColor,DistributionAnalysis.R,DistributionAnalysis.R2,DistributionAnalysis.Theta);
-						resultImage = ResultsImage.addMarrowCenter(resultImage,determineAlfa.alfa/Math.PI*180.0,DistributionAnalysis.marrowCenter);
-						//System.out.println("dON image "+resultImage.getWidth()+" height "+resultImage.getHeight());
+				// IJ.log("dON.");
+				if (imageAndAnalysisDetails.dOn) {
+					// IJ.log("Adding distribution");
+					final DistributionAnalysis DistributionAnalysis = new DistributionAnalysis((SelectROI) roi,
+							imageAndAnalysisDetails, determineAlfa);
+					results = resultsWriter.printDistributionResults(results, DistributionAnalysis,
+							imageAndAnalysisDetails);
+					if (makeImage && resultImage != null) {
+						resultImage = ResultsImage.addRadii(resultImage, determineAlfa.alfa / Math.PI * 180.0,
+								DistributionAnalysis.marrowCenter, determineAlfa.pindColor, DistributionAnalysis.R,
+								DistributionAnalysis.R2, DistributionAnalysis.Theta);
+						resultImage = ResultsImage.addMarrowCenter(resultImage, determineAlfa.alfa / Math.PI * 180.0,
+								DistributionAnalysis.marrowCenter);
+						// System.out.println("dON image
+						// "+resultImage.getWidth()+" height
+						// "+resultImage.getHeight());
 					}
 				}
 
-				//IJ.log("rotate.");
-				//IJ.log("Ready to rotate image "+(determineAlfa.alfa/Math.PI*180.0));
-				if ((imageAndAnalysisDetails.dOn || imageAndAnalysisDetails.conOn) && makeImage && resultImage != null){
-					//IJ.log("Adding rotation");
-					resultImage = ResultsImage.addRotate(resultImage,determineAlfa.alfa/Math.PI*180.0);
-					//System.out.println("rotate image "+resultImage.getWidth()+" height "+resultImage.getHeight()+" rotated "+(determineAlfa.alfa/Math.PI*180.0));
+				// IJ.log("rotate.");
+				// IJ.log("Ready to rotate image
+				// "+(determineAlfa.alfa/Math.PI*180.0));
+				if ((imageAndAnalysisDetails.dOn || imageAndAnalysisDetails.conOn) && makeImage
+						&& resultImage != null) {
+					// IJ.log("Adding rotation");
+					resultImage = ResultsImage.addRotate(resultImage, determineAlfa.alfa / Math.PI * 180.0);
+					// System.out.println("rotate image
+					// "+resultImage.getWidth()+" height
+					// "+resultImage.getHeight()+" rotated
+					// "+(determineAlfa.alfa/Math.PI*180.0));
 				}
 
-				//IJ.log("scale. "+resultImage.getWidth()+" height "+resultImage.getHeight());
-				if (!imageAndAnalysisDetails.suppressImages && resultImage!= null){
-					resultImage = ResultsImage.addScale(resultImage,roi.pixelSpacing);	//Add scale after rotating
-					//IJ.log("Image done");
-					//System.out.println("Scale done "+resultImage.getWidth()+" height "+resultImage.getHeight());
+				// IJ.log("scale. "+resultImage.getWidth()+" height
+				// "+resultImage.getHeight());
+				if (!imageAndAnalysisDetails.suppressImages && resultImage != null) {
+					resultImage = ResultsImage.addScale(resultImage, roi.pixelSpacing); // Add
+																						// scale
+																						// after
+																						// rotating
+					// IJ.log("Image done");
+					// System.out.println("Scale done "+resultImage.getWidth()+"
+					// height "+resultImage.getHeight());
 					resultImage.show();
 				}
-				//IJ.log("saveImage.");
-				if (imageAndAnalysisDetails.saveImageOnDisk && resultImage!= null){
-					if (imageAndAnalysisDetails.suppressImages){
-						resultImage = ResultsImage.addScale(resultImage,roi.pixelSpacing);	//Add scale after rotating
-						//System.out.println("Scale surpress done "+resultImage.getWidth()+" height "+resultImage.getHeight());
+				// IJ.log("saveImage.");
+				if (imageAndAnalysisDetails.saveImageOnDisk && resultImage != null) {
+					if (imageAndAnalysisDetails.suppressImages) {
+						resultImage = ResultsImage.addScale(resultImage, roi.pixelSpacing); // Add
+																							// scale
+																							// after
+																							// rotating
+						// System.out.println("Scale surpress done
+						// "+resultImage.getWidth()+" height
+						// "+resultImage.getHeight());
 					}
-					//System.out.println("Creating fileSaver");
-					FileSaver fSaver = new FileSaver(resultImage);
-					//System.out.println("Saving");
-					fSaver.saveAsPng(imageSavePath+imageName+".png");
-					//System.out.println("Saving done");
+					// System.out.println("Creating fileSaver");
+					final FileSaver fSaver = new FileSaver(resultImage);
+					// System.out.println("Saving");
+					fSaver.saveAsPng(imageSavePath + imageName + ".png");
+					// System.out.println("Saving done");
 				}
-				//IJ.log("saveSuccessful.");
+				// IJ.log("saveSuccessful.");
 				textPanel.appendLine(results);
 				textPanel.updateDisplay();
-			}else{
+			} else {
 				IJ.log("No analysis was selected.");
 			}
 		}
 		UsageReporter.reportEvent(this).send();
 	}
 
-	public static String getInfoProperty(String properties,String propertyToGet){
-		String toTokenize = properties;
-		StringTokenizer st = new StringTokenizer(toTokenize,"\n");
+	public static String getInfoProperty(final String properties, final String propertyToGet) {
+		final String toTokenize = properties;
+		final StringTokenizer st = new StringTokenizer(toTokenize, "\n");
 		String currentToken = null;
-		while (st.hasMoreTokens() ) {
+		while (st.hasMoreTokens()) {
 			currentToken = st.nextToken();
-			if (currentToken.indexOf(propertyToGet) != -1){break;}
+			if (currentToken.indexOf(propertyToGet) != -1) {
+				break;
+			}
 		}
-		if (currentToken.indexOf(propertyToGet) != -1){
-			StringTokenizer st2 = new StringTokenizer(currentToken,":");
+		if (currentToken.indexOf(propertyToGet) != -1) {
+			final StringTokenizer st2 = new StringTokenizer(currentToken, ":");
 			String token2 = null;
-			while (st2.hasMoreTokens()){
+			while (st2.hasMoreTokens()) {
 				token2 = st2.nextToken();
 			}
 			return token2.trim();

@@ -20,260 +20,289 @@
 */
 
 package org.doube.bonej.pqct.utils;
-import org.doube.bonej.pqct.io.*;
-import org.doube.bonej.pqct.analysis.*;
-import org.doube.bonej.pqct.*;
-import ij.text.TextPanel;
-import ij.ImagePlus;
 
-public class ResultsWriter{
+import org.doube.bonej.pqct.Distribution_Analysis;
+import org.doube.bonej.pqct.analysis.ConcentricRingAnalysis;
+import org.doube.bonej.pqct.analysis.CorticalAnalysis;
+import org.doube.bonej.pqct.analysis.DetermineAlfa;
+import org.doube.bonej.pqct.analysis.DistributionAnalysis;
+import org.doube.bonej.pqct.analysis.MassDistribution;
+import org.doube.bonej.pqct.analysis.SoftTissueAnalysis;
+import org.doube.bonej.pqct.io.ImageAndAnalysisDetails;
+
+import ij.ImagePlus;
+import ij.text.TextPanel;
+
+public class ResultsWriter {
 	public String imageInfo;
 	public boolean alphaOn;
-	public ResultsWriter(String imageInfo, boolean alphaOn){
+
+	public ResultsWriter(final String imageInfo, final boolean alphaOn) {
 		this.imageInfo = imageInfo;
 		this.alphaOn = alphaOn;
 	}
-	
-	public void writeHeader(TextPanel textPanel,ImageAndAnalysisDetails imageAndAnalysisDetails){
-		String[] propertyNames = {"File Name","Patient's Name","Patient ID","Patient's Birth Date","Acquisition Date","Pixel Spacing","Object Length"};
-		String[] parameterNames = {"Air Threshold","Fat Threshold","Muscle Threshold","Marrow Threshold","Soft Threshold","Rotation Threshold","Area Threshold","BMD Threshold","Scaling Coefficient","Scaling Constant"};
-		String[] dHeadings = {"Manual Rotation","Flip Distribution","Guess right","Guess larger"
-		,"Stacked bones","Invert guess","Allow Cleaving","Prevent PVE peeling","Roi choice","Rotation choice","Flip Horizontal","Flip Vertical"};
-		
+
+	public void writeHeader(final TextPanel textPanel, final ImageAndAnalysisDetails imageAndAnalysisDetails) {
+		final String[] propertyNames = { "File Name", "Patient's Name", "Patient ID", "Patient's Birth Date",
+				"Acquisition Date", "Pixel Spacing", "Object Length" };
+		final String[] parameterNames = { "Air Threshold", "Fat Threshold", "Muscle Threshold", "Marrow Threshold",
+				"Soft Threshold", "Rotation Threshold", "Area Threshold", "BMD Threshold", "Scaling Coefficient",
+				"Scaling Constant" };
+		final String[] dHeadings = { "Manual Rotation", "Flip Distribution", "Guess right", "Guess larger",
+				"Stacked bones", "Invert guess", "Allow Cleaving", "Prevent PVE peeling", "Roi choice",
+				"Rotation choice", "Flip Horizontal", "Flip Vertical" };
+
 		String headings = "";
-		for (int i = 0;i<propertyNames.length;++i){
-			headings+=propertyNames[i]+"\t";
+		for (int i = 0; i < propertyNames.length; ++i) {
+			headings += propertyNames[i] + "\t";
 		}
-		for (int i = 0;i<parameterNames.length;++i){
-			headings+=parameterNames[i]+"\t";
+		for (int i = 0; i < parameterNames.length; ++i) {
+			headings += parameterNames[i] + "\t";
 		}
-		for (int i = 0;i<dHeadings.length;++i){
-				headings+=dHeadings[i]+"\t";
+		for (int i = 0; i < dHeadings.length; ++i) {
+			headings += dHeadings[i] + "\t";
 		}
-		if(alphaOn){
-			String[] rHeadings = {"Alpha [deg]","Rotation correction [deg]","Distance between bones[mm]"};	
-			for (int i = 0;i<rHeadings.length;++i){
-				headings+=rHeadings[i]+"\t";
+		if (alphaOn) {
+			final String[] rHeadings = { "Alpha [deg]", "Rotation correction [deg]", "Distance between bones[mm]" };
+			for (int i = 0; i < rHeadings.length; ++i) {
+				headings += rHeadings[i] + "\t";
 			}
 		}
-		
-		if(imageAndAnalysisDetails.stOn){
-			String[] coHeadings = {"MuD [mg/cm3]","MuA [cm2]","LeanMuD [mg/cm3]","LeanMuA [cm2]","IntraFatD [mg/cm3]","IntraFatA [cm2]","FatD [mg/cm3]","FatA [cm2]","SubCutFatDMedian [mg/cm3]","SubCutFatD [mg/cm3]","SubCutFatA [cm2]","MedD [mg/cm3]","MedA [cm2]","BoneD [mg/cm3]","BoneA [cm2]","PeeledD [mg/cm3]","PeeledA [cm2]","LimbD [mg/cm3]","LimbA [cm2]","Density weighted fat percentage [%]"};
-			for (int i = 0;i<coHeadings.length;++i){
-				headings+=coHeadings[i]+"\t";
+
+		if (imageAndAnalysisDetails.stOn) {
+			final String[] coHeadings = { "MuD [mg/cm3]", "MuA [cm2]", "LeanMuD [mg/cm3]", "LeanMuA [cm2]",
+					"IntraFatD [mg/cm3]", "IntraFatA [cm2]", "FatD [mg/cm3]", "FatA [cm2]", "SubCutFatDMedian [mg/cm3]",
+					"SubCutFatD [mg/cm3]", "SubCutFatA [cm2]", "MedD [mg/cm3]", "MedA [cm2]", "BoneD [mg/cm3]",
+					"BoneA [cm2]", "PeeledD [mg/cm3]", "PeeledA [cm2]", "LimbD [mg/cm3]", "LimbA [cm2]",
+					"Density weighted fat percentage [%]" };
+			for (int i = 0; i < coHeadings.length; ++i) {
+				headings += coHeadings[i] + "\t";
 			}
 		}
-		
-		if(imageAndAnalysisDetails.cOn){
-			String[] coHeadings = {"MaMassD [g/cm3]","StratecMaMassD [g/cm3]","MaD [mg/cm3]","MaA [mm2]","CoD [mg/cm3]","CoA [mm2]","Stratec CoD [mg/cm3]","Stratec CoA [mm2]",
-				"SSI [mm3]","SSImax [mm3]","SSImin [mm3]",
-				"IPo [mm4]","Imax [mm4]","Imin [mm4]",
-				"dwIPo [mg/cm]","dwImax [mg/cm]","dwImin [mg/cm]",
-				"ToD [mg/cm3]","ToA[mm2]","MeA [mm2]","BSId[g/cm4]"};
-			for (int i = 0;i<coHeadings.length;++i){
-				headings+=coHeadings[i]+"\t";
+
+		if (imageAndAnalysisDetails.cOn) {
+			final String[] coHeadings = { "MaMassD [g/cm3]", "StratecMaMassD [g/cm3]", "MaD [mg/cm3]", "MaA [mm2]",
+					"CoD [mg/cm3]", "CoA [mm2]", "Stratec CoD [mg/cm3]", "Stratec CoA [mm2]", "SSI [mm3]",
+					"SSImax [mm3]", "SSImin [mm3]", "IPo [mm4]", "Imax [mm4]", "Imin [mm4]", "dwIPo [mg/cm]",
+					"dwImax [mg/cm]", "dwImin [mg/cm]", "ToD [mg/cm3]", "ToA[mm2]", "MeA [mm2]", "BSId[g/cm4]" };
+			for (int i = 0; i < coHeadings.length; ++i) {
+				headings += coHeadings[i] + "\t";
 			}
 		}
-		if(imageAndAnalysisDetails.mOn){
-			for (int i = 0;i<((int) 360/imageAndAnalysisDetails.sectorWidth);++i){
-				headings+=i*imageAndAnalysisDetails.sectorWidth+"?- "+((i+1)*imageAndAnalysisDetails.sectorWidth)+"?mineral mass [mg]\t";
+		if (imageAndAnalysisDetails.mOn) {
+			for (int i = 0; i < (360 / imageAndAnalysisDetails.sectorWidth); ++i) {
+				headings += i * imageAndAnalysisDetails.sectorWidth + "?- "
+						+ ((i + 1) * imageAndAnalysisDetails.sectorWidth) + "?mineral mass [mg]\t";
 			}
 		}
-		
-		if(imageAndAnalysisDetails.conOn){
-			for (int i = 0;i<((int) 360/imageAndAnalysisDetails.concentricSector);++i){
-				headings+=i*imageAndAnalysisDetails.concentricSector+"?- "+((i+1)*imageAndAnalysisDetails.concentricSector)+"?concentric analysis pericortical radius [mm]\t";
+
+		if (imageAndAnalysisDetails.conOn) {
+			for (int i = 0; i < (360 / imageAndAnalysisDetails.concentricSector); ++i) {
+				headings += i * imageAndAnalysisDetails.concentricSector + "?- "
+						+ ((i + 1) * imageAndAnalysisDetails.concentricSector)
+						+ "?concentric analysis pericortical radius [mm]\t";
 			}
-			for (int j = 0;j<imageAndAnalysisDetails.concentricDivisions;++j){
-				for (int i = 0;i<((int) 360/imageAndAnalysisDetails.concentricSector);++i){
-					headings+="Division "+(j+1)+" sector "+i*imageAndAnalysisDetails.concentricSector+"?- "+((i+1)*imageAndAnalysisDetails.concentricSector)+"?vBMD [mg/cm3]\t";
+			for (int j = 0; j < imageAndAnalysisDetails.concentricDivisions; ++j) {
+				for (int i = 0; i < (360 / imageAndAnalysisDetails.concentricSector); ++i) {
+					headings += "Division " + (j + 1) + " sector " + i * imageAndAnalysisDetails.concentricSector
+							+ "?- " + ((i + 1) * imageAndAnalysisDetails.concentricSector) + "?vBMD [mg/cm3]\t";
 				}
 			}
 		}
-		
-		if(imageAndAnalysisDetails.dOn){
-			headings+="Peeled mean vBMD [mg/cm3]\t";
-			//Radial distribution
-			for (int i =0; i < (int) imageAndAnalysisDetails.divisions; ++i){
-				headings+= "Radial division "+i+" vBMD [mg/cm3]\t";
+
+		if (imageAndAnalysisDetails.dOn) {
+			headings += "Peeled mean vBMD [mg/cm3]\t";
+			// Radial distribution
+			for (int i = 0; i < imageAndAnalysisDetails.divisions; ++i) {
+				headings += "Radial division " + i + " vBMD [mg/cm3]\t";
 			}
-			//Polar distribution
-			for (int i = 0;i<((int) 360/imageAndAnalysisDetails.sectorWidth);++i){
-				headings+= "Polar sector "+i+" vBMD [mg/cm3]\t";
+			// Polar distribution
+			for (int i = 0; i < (360 / imageAndAnalysisDetails.sectorWidth); ++i) {
+				headings += "Polar sector " + i + " vBMD [mg/cm3]\t";
 			}
-			
-			for (int i = 0;i<((int) 360/imageAndAnalysisDetails.sectorWidth);++i){
-				headings+=i*imageAndAnalysisDetails.sectorWidth+"?- "+((i+1)*imageAndAnalysisDetails.sectorWidth)+"?endocortical radius [mm]\t";
+
+			for (int i = 0; i < (360 / imageAndAnalysisDetails.sectorWidth); ++i) {
+				headings += i * imageAndAnalysisDetails.sectorWidth + "?- "
+						+ ((i + 1) * imageAndAnalysisDetails.sectorWidth) + "?endocortical radius [mm]\t";
 			}
-			for (int i = 0;i<((int) 360/imageAndAnalysisDetails.sectorWidth);++i){
-				headings+=i*imageAndAnalysisDetails.sectorWidth+"?- "+((i+1)*imageAndAnalysisDetails.sectorWidth)+"?pericortical radius [mm]\t";
+			for (int i = 0; i < (360 / imageAndAnalysisDetails.sectorWidth); ++i) {
+				headings += i * imageAndAnalysisDetails.sectorWidth + "?- "
+						+ ((i + 1) * imageAndAnalysisDetails.sectorWidth) + "?pericortical radius [mm]\t";
 			}
-			//Cortex BMD values			
-			for (int i = 0;i<((int) 360/imageAndAnalysisDetails.sectorWidth);++i){
-				headings+=i*imageAndAnalysisDetails.sectorWidth+"?- "+((i+1)*imageAndAnalysisDetails.sectorWidth)+"?endocortical vBMD [mg/cm3]\t";
+			// Cortex BMD values
+			for (int i = 0; i < (360 / imageAndAnalysisDetails.sectorWidth); ++i) {
+				headings += i * imageAndAnalysisDetails.sectorWidth + "?- "
+						+ ((i + 1) * imageAndAnalysisDetails.sectorWidth) + "?endocortical vBMD [mg/cm3]\t";
 			}
-			for (int i = 0;i<((int) 360/imageAndAnalysisDetails.sectorWidth);++i){
-				headings+=i*imageAndAnalysisDetails.sectorWidth+"?- "+((i+1)*imageAndAnalysisDetails.sectorWidth)+"?midcortical vBMD [mg/cm3]\t";
+			for (int i = 0; i < (360 / imageAndAnalysisDetails.sectorWidth); ++i) {
+				headings += i * imageAndAnalysisDetails.sectorWidth + "?- "
+						+ ((i + 1) * imageAndAnalysisDetails.sectorWidth) + "?midcortical vBMD [mg/cm3]\t";
 			}
-			for (int i = 0;i<((int) 360/imageAndAnalysisDetails.sectorWidth);++i){
-				headings+=i*imageAndAnalysisDetails.sectorWidth+"?- "+((i+1)*imageAndAnalysisDetails.sectorWidth)+"?pericortical vBMD [mg/cm3]\t";
+			for (int i = 0; i < (360 / imageAndAnalysisDetails.sectorWidth); ++i) {
+				headings += i * imageAndAnalysisDetails.sectorWidth + "?- "
+						+ ((i + 1) * imageAndAnalysisDetails.sectorWidth) + "?pericortical vBMD [mg/cm3]\t";
 			}
 
 		}
 		textPanel.setColumnHeadings(headings);
 	}
-	
-	public String printResults(String results,ImageAndAnalysisDetails imageAndAnalysisDetails, ImagePlus imp){
-		String[] propertyNames = {"File Name","Patient's Name","Patient ID","Patient's Birth Date","Acquisition Date","Pixel Spacing","ObjLen"};
-		String[] parameters = {Double.toString(imageAndAnalysisDetails.airThreshold)
-								,Double.toString(imageAndAnalysisDetails.fatThreshold),Double.toString(imageAndAnalysisDetails.muscleThreshold)
-								,Double.toString(imageAndAnalysisDetails.marrowThreshold)
-								,Double.toString(imageAndAnalysisDetails.softThreshold),Double.toString(imageAndAnalysisDetails.rotationThreshold)
-								,Double.toString(imageAndAnalysisDetails.areaThreshold),Double.toString(imageAndAnalysisDetails.BMDthreshold)
-								,Double.toString(imageAndAnalysisDetails.scalingFactor),Double.toString(imageAndAnalysisDetails.constant)};
 
-		if (imp != null){
-			if (Distribution_Analysis.getInfoProperty(imageInfo,"File Name")!= null){
-				results+=Distribution_Analysis.getInfoProperty(imageInfo,"File Path");
-				results+=Distribution_Analysis.getInfoProperty(imageInfo,"File Name")+"\t";
-			}else{
-				if(imp.getImageStackSize() == 1){
-					results+=Distribution_Analysis.getInfoProperty(imageInfo,"Title")+"\t";
-				}else{
-					results+=imageInfo.substring(0,imageInfo.indexOf("\n"))+"\t";
+	public String printResults(String results, final ImageAndAnalysisDetails imageAndAnalysisDetails,
+			final ImagePlus imp) {
+		final String[] propertyNames = { "File Name", "Patient's Name", "Patient ID", "Patient's Birth Date",
+				"Acquisition Date", "Pixel Spacing", "ObjLen" };
+		final String[] parameters = { Double.toString(imageAndAnalysisDetails.airThreshold),
+				Double.toString(imageAndAnalysisDetails.fatThreshold),
+				Double.toString(imageAndAnalysisDetails.muscleThreshold),
+				Double.toString(imageAndAnalysisDetails.marrowThreshold),
+				Double.toString(imageAndAnalysisDetails.softThreshold),
+				Double.toString(imageAndAnalysisDetails.rotationThreshold),
+				Double.toString(imageAndAnalysisDetails.areaThreshold),
+				Double.toString(imageAndAnalysisDetails.BMDthreshold),
+				Double.toString(imageAndAnalysisDetails.scalingFactor),
+				Double.toString(imageAndAnalysisDetails.constant) };
+
+		if (imp != null) {
+			if (Distribution_Analysis.getInfoProperty(imageInfo, "File Name") != null) {
+				results += Distribution_Analysis.getInfoProperty(imageInfo, "File Path");
+				results += Distribution_Analysis.getInfoProperty(imageInfo, "File Name") + "\t";
+			} else {
+				if (imp.getImageStackSize() == 1) {
+					results += Distribution_Analysis.getInfoProperty(imageInfo, "Title") + "\t";
+				} else {
+					results += imageInfo.substring(0, imageInfo.indexOf("\n")) + "\t";
 				}
 			}
-			for (int i = 1;i<propertyNames.length;++i){
-				results+=Distribution_Analysis.getInfoProperty(imageInfo,propertyNames[i])+"\t";
+			for (int i = 1; i < propertyNames.length; ++i) {
+				results += Distribution_Analysis.getInfoProperty(imageInfo, propertyNames[i]) + "\t";
 			}
 		}
-		
-		for (int i = 0;i<parameters.length;++i){
-			results+=parameters[i]+"\t";
+
+		for (int i = 0; i < parameters.length; ++i) {
+			results += parameters[i] + "\t";
 		}
 
-		results += Boolean.toString(imageAndAnalysisDetails.manualRotation)+"\t";
-		results += Boolean.toString(imageAndAnalysisDetails.flipDistribution)+"\t";
-		results += Boolean.toString(imageAndAnalysisDetails.guessFlip)+"\t";
-		results += Boolean.toString(imageAndAnalysisDetails.guessLarger)+"\t";
-		results += Boolean.toString(imageAndAnalysisDetails.stacked)+"\t";
-		results += Boolean.toString(imageAndAnalysisDetails.invertGuess)+"\t";
-		results += Boolean.toString(imageAndAnalysisDetails.allowCleaving)+"\t";
-		results += Boolean.toString(imageAndAnalysisDetails.preventPeeling)+"\t";
-		results += imageAndAnalysisDetails.roiChoice+"\t";
-		results += imageAndAnalysisDetails.rotationChoice+"\t";
-		results += Boolean.toString(imageAndAnalysisDetails.flipHorizontal)+"\t";
-		results += Boolean.toString(imageAndAnalysisDetails.flipVertical)+"\t";
+		results += Boolean.toString(imageAndAnalysisDetails.manualRotation) + "\t";
+		results += Boolean.toString(imageAndAnalysisDetails.flipDistribution) + "\t";
+		results += Boolean.toString(imageAndAnalysisDetails.guessFlip) + "\t";
+		results += Boolean.toString(imageAndAnalysisDetails.guessLarger) + "\t";
+		results += Boolean.toString(imageAndAnalysisDetails.stacked) + "\t";
+		results += Boolean.toString(imageAndAnalysisDetails.invertGuess) + "\t";
+		results += Boolean.toString(imageAndAnalysisDetails.allowCleaving) + "\t";
+		results += Boolean.toString(imageAndAnalysisDetails.preventPeeling) + "\t";
+		results += imageAndAnalysisDetails.roiChoice + "\t";
+		results += imageAndAnalysisDetails.rotationChoice + "\t";
+		results += Boolean.toString(imageAndAnalysisDetails.flipHorizontal) + "\t";
+		results += Boolean.toString(imageAndAnalysisDetails.flipVertical) + "\t";
 		return results;
 	}
-	
-	public String printAlfa(String results,DetermineAlfa determineAlfa){
-		results += Double.toString(determineAlfa.alfa*180/Math.PI)+"\t";
-		results += Double.toString(determineAlfa.rotationCorrection)+"\t";
-		results += Double.toString(determineAlfa.distanceBetweenBones)+"\t";
+
+	public String printAlfa(String results, final DetermineAlfa determineAlfa) {
+		results += Double.toString(determineAlfa.alfa * 180 / Math.PI) + "\t";
+		results += Double.toString(determineAlfa.rotationCorrection) + "\t";
+		results += Double.toString(determineAlfa.distanceBetweenBones) + "\t";
 		return results;
 	}
-	
-	public String printSoftTissueResults(String results,SoftTissueAnalysis softTissueAnalysis){
-		results+=softTissueAnalysis.TotalMuD+"\t";
-		results+=softTissueAnalysis.TotalMuA+"\t";
-		results+=softTissueAnalysis.MuD+"\t";
-		results+=softTissueAnalysis.MuA+"\t";
-		results+=softTissueAnalysis.IntraMuFatD+"\t";
-		results+=softTissueAnalysis.IntraMuFatA+"\t";
-		results+=softTissueAnalysis.FatD+"\t";
-		results+=softTissueAnalysis.FatA+"\t";
-		results+=softTissueAnalysis.SubCutFatDMedian+"\t";
-		results+=softTissueAnalysis.SubCutFatD+"\t";
-		results+=softTissueAnalysis.SubCutFatA+"\t";
-		
-		results+=softTissueAnalysis.MeD+"\t";
-		results+=softTissueAnalysis.MeA+"\t";
-		results+=softTissueAnalysis.BoneD+"\t";
-		results+=softTissueAnalysis.BoneA+"\t";
-		results+=softTissueAnalysis.PeeledD+"\t";
-		results+=softTissueAnalysis.PeeledA+"\t";
-		
-		results+=softTissueAnalysis.LimbD+"\t";
-		results+=softTissueAnalysis.LimbA+"\t";
-		results+=softTissueAnalysis.FatPercentage+"\t";
+
+	public String printSoftTissueResults(String results, final SoftTissueAnalysis softTissueAnalysis) {
+		results += softTissueAnalysis.TotalMuD + "\t";
+		results += softTissueAnalysis.TotalMuA + "\t";
+		results += softTissueAnalysis.MuD + "\t";
+		results += softTissueAnalysis.MuA + "\t";
+		results += softTissueAnalysis.IntraMuFatD + "\t";
+		results += softTissueAnalysis.IntraMuFatA + "\t";
+		results += softTissueAnalysis.FatD + "\t";
+		results += softTissueAnalysis.FatA + "\t";
+		results += softTissueAnalysis.SubCutFatDMedian + "\t";
+		results += softTissueAnalysis.SubCutFatD + "\t";
+		results += softTissueAnalysis.SubCutFatA + "\t";
+
+		results += softTissueAnalysis.MeD + "\t";
+		results += softTissueAnalysis.MeA + "\t";
+		results += softTissueAnalysis.BoneD + "\t";
+		results += softTissueAnalysis.BoneA + "\t";
+		results += softTissueAnalysis.PeeledD + "\t";
+		results += softTissueAnalysis.PeeledA + "\t";
+
+		results += softTissueAnalysis.LimbD + "\t";
+		results += softTissueAnalysis.LimbA + "\t";
+		results += softTissueAnalysis.FatPercentage + "\t";
 		return results;
 	}
-	
-	public String printCorticalResults(String results,CorticalAnalysis cortAnalysis){
-		results+=cortAnalysis.MaMassD+"\t";
-		results+=cortAnalysis.StratecMaMassD+"\t";
-		results+=cortAnalysis.MaD+"\t";
-		results+=cortAnalysis.MaA+"\t";
-		results+=cortAnalysis.BMD+"\t";
-		results+=cortAnalysis.AREA+"\t";
-		results+=cortAnalysis.CoD+"\t";
-		results+=cortAnalysis.CoA+"\t";
-		results+=cortAnalysis.SSI+"\t";
-		results+=cortAnalysis.SSIMax+"\t";
-		results+=cortAnalysis.SSIMin+"\t";
-		results+=cortAnalysis.IPo+"\t";
-	    results+=cortAnalysis.IMax+"\t";
-		results+=cortAnalysis.IMin+"\t";
-		results+=cortAnalysis.dwIPo+"\t";
-		results+=cortAnalysis.dwIMax+"\t";
-		results+=cortAnalysis.dwIMin+"\t"; 
-		results+=cortAnalysis.ToD+"\t";
-		results+=cortAnalysis.ToA+"\t";
-		results+=cortAnalysis.MeA+"\t";
-		results+=cortAnalysis.BSId+"\t";
+
+	public String printCorticalResults(String results, final CorticalAnalysis cortAnalysis) {
+		results += cortAnalysis.MaMassD + "\t";
+		results += cortAnalysis.StratecMaMassD + "\t";
+		results += cortAnalysis.MaD + "\t";
+		results += cortAnalysis.MaA + "\t";
+		results += cortAnalysis.BMD + "\t";
+		results += cortAnalysis.AREA + "\t";
+		results += cortAnalysis.CoD + "\t";
+		results += cortAnalysis.CoA + "\t";
+		results += cortAnalysis.SSI + "\t";
+		results += cortAnalysis.SSIMax + "\t";
+		results += cortAnalysis.SSIMin + "\t";
+		results += cortAnalysis.IPo + "\t";
+		results += cortAnalysis.IMax + "\t";
+		results += cortAnalysis.IMin + "\t";
+		results += cortAnalysis.dwIPo + "\t";
+		results += cortAnalysis.dwIMax + "\t";
+		results += cortAnalysis.dwIMin + "\t";
+		results += cortAnalysis.ToD + "\t";
+		results += cortAnalysis.ToA + "\t";
+		results += cortAnalysis.MeA + "\t";
+		results += cortAnalysis.BSId + "\t";
 		return results;
 	}
-		
-	public String printMassDistributionResults(String results,MassDistribution massDistribution,ImageAndAnalysisDetails imageAndAnalysisDetails){
-		for (int pp = 0;pp<((int) 360/imageAndAnalysisDetails.sectorWidth);pp++){
-			results += massDistribution.BMCs[pp]+"\t";
+
+	public String printMassDistributionResults(String results, final MassDistribution massDistribution,
+			final ImageAndAnalysisDetails imageAndAnalysisDetails) {
+		for (int pp = 0; pp < (360 / imageAndAnalysisDetails.sectorWidth); pp++) {
+			results += massDistribution.BMCs[pp] + "\t";
 		}
 		return results;
-	}		
-	
-	
-	public String printConcentricRingResults(String results,ConcentricRingAnalysis concentricRingAnalysis,ImageAndAnalysisDetails imageAndAnalysisDetails){
-		for (int i = 0;i<((int) 360/imageAndAnalysisDetails.concentricSector);++i){
-			results += concentricRingAnalysis.pericorticalRadii[i]+"\t";
+	}
+
+	public String printConcentricRingResults(String results, final ConcentricRingAnalysis concentricRingAnalysis,
+			final ImageAndAnalysisDetails imageAndAnalysisDetails) {
+		for (int i = 0; i < (360 / imageAndAnalysisDetails.concentricSector); ++i) {
+			results += concentricRingAnalysis.pericorticalRadii[i] + "\t";
 		}
-		for (int j = 0;j<imageAndAnalysisDetails.concentricDivisions;++j){
-			for (int i = 0;i<((int) 360/imageAndAnalysisDetails.concentricSector);++i){
-				results += concentricRingAnalysis.BMDs.get(j)[i]+"\t";
+		for (int j = 0; j < imageAndAnalysisDetails.concentricDivisions; ++j) {
+			for (int i = 0; i < (360 / imageAndAnalysisDetails.concentricSector); ++i) {
+				results += concentricRingAnalysis.BMDs.get(j)[i] + "\t";
 			}
 		}
 		return results;
 	}
-	
 
-	
-	public String printDistributionResults(String results,DistributionAnalysis DistributionAnalysis,ImageAndAnalysisDetails imageAndAnalysisDetails){
-		results+= DistributionAnalysis.peeledBMD+"\t";
-		//Radial distribution
-		for (int i =0; i < (int) imageAndAnalysisDetails.divisions; ++i){
-			results+= DistributionAnalysis.radialDistribution[i]+"\t";
+	public String printDistributionResults(String results, final DistributionAnalysis DistributionAnalysis,
+			final ImageAndAnalysisDetails imageAndAnalysisDetails) {
+		results += DistributionAnalysis.peeledBMD + "\t";
+		// Radial distribution
+		for (int i = 0; i < imageAndAnalysisDetails.divisions; ++i) {
+			results += DistributionAnalysis.radialDistribution[i] + "\t";
 		}
-		//Polar distribution
-		for (int i = 0;i<((int) 360/imageAndAnalysisDetails.sectorWidth);++i){
-			results+= DistributionAnalysis.polarDistribution[i]+"\t";
+		// Polar distribution
+		for (int i = 0; i < (360 / imageAndAnalysisDetails.sectorWidth); ++i) {
+			results += DistributionAnalysis.polarDistribution[i] + "\t";
 		}
-		
-		
-		for (int pp = 0;pp<((int) 360/imageAndAnalysisDetails.sectorWidth);++pp){
-			results += DistributionAnalysis.endocorticalRadii[pp]+"\t";
+
+		for (int pp = 0; pp < (360 / imageAndAnalysisDetails.sectorWidth); ++pp) {
+			results += DistributionAnalysis.endocorticalRadii[pp] + "\t";
 		}
-		for (int pp = 0;pp<((int) 360/imageAndAnalysisDetails.sectorWidth);++pp){
-			results += DistributionAnalysis.pericorticalRadii[pp]+"\t";
+		for (int pp = 0; pp < (360 / imageAndAnalysisDetails.sectorWidth); ++pp) {
+			results += DistributionAnalysis.pericorticalRadii[pp] + "\t";
 		}
-		//Cortex BMD values			
-		for (int pp = 0;pp<((int) 360/imageAndAnalysisDetails.sectorWidth);++pp){
-			results += DistributionAnalysis.endoCorticalBMDs[pp]+"\t";
+		// Cortex BMD values
+		for (int pp = 0; pp < (360 / imageAndAnalysisDetails.sectorWidth); ++pp) {
+			results += DistributionAnalysis.endoCorticalBMDs[pp] + "\t";
 		}
-		for (int pp = 0;pp<((int) 360/imageAndAnalysisDetails.sectorWidth);++pp){
-			results += DistributionAnalysis.midCorticalBMDs[pp]+"\t";
+		for (int pp = 0; pp < (360 / imageAndAnalysisDetails.sectorWidth); ++pp) {
+			results += DistributionAnalysis.midCorticalBMDs[pp] + "\t";
 		}
-		for (int pp = 0;pp<((int) 360/imageAndAnalysisDetails.sectorWidth);++pp){
-			results += DistributionAnalysis.periCorticalBMDs[pp]+"\t";
+		for (int pp = 0; pp < (360 / imageAndAnalysisDetails.sectorWidth); ++pp) {
+			results += DistributionAnalysis.periCorticalBMDs[pp] + "\t";
 		}
 		return results;
 	}

@@ -19,32 +19,31 @@
 */
 
 package org.doube.bonej.pqct.selectroi;
-public class Coordinate{
+
+public class Coordinate {
 	public double ii;
 	public double jj;
-	/*Constructors*/
-	public Coordinate(){
-		this(-1,-1);
+
+	/* Constructors */
+	public Coordinate() {
+		this(-1, -1);
 	}
-	
-	public Coordinate(double ii,double jj){
+
+	public Coordinate(final double ii, final double jj) {
 		this.ii = ii;
 		this.jj = jj;
 	}
-	
-	public Coordinate subtract(Coordinate a){
-		return new Coordinate(this.ii-a.ii,this.jj-a.jj);
-	}
-	
 
-	
-	public double maxVal(){
-		return max(Math.abs(ii),Math.abs(jj));
+	public Coordinate subtract(final Coordinate a) {
+		return new Coordinate(this.ii - a.ii, this.jj - a.jj);
 	}
-	
-	private double max(double a,double b){
-		return a >= b ? a:b;
+
+	public double maxVal() {
+		return max(Math.abs(ii), Math.abs(jj));
 	}
-	
-	
+
+	private double max(final double a, final double b) {
+		return a >= b ? a : b;
+	}
+
 }
