@@ -301,7 +301,7 @@ public class LiveWirePlugin implements PlugIn, MouseListener, MouseMotionListene
 	/**Invoked when a key has been pressed.*/
 	public void 	keyPressed(KeyEvent e){
 		/**Shut down the plug-in*/
-		if (e.getExtendedKeyCode() == KeyEvent.getExtendedKeyCodeForChar(KeyEvent.VK_Q) || e.getKeyChar() == 'q'){
+		if (e.getKeyCode() == KeyEvent.VK_Q || e.getKeyChar() == 'q'){
 			/**Remove listeners*/
 			canvas.removeMouseListener(this);
 			canvas.removeMouseMotionListener(this);
