@@ -1,23 +1,17 @@
 package org.doube.bonej;
 
-import java.awt.Checkbox;
+import ij.*;
+import ij.gui.GenericDialog;
+import ij.macro.Interpreter;
+import ij.plugin.PlugIn;
+import ij.plugin.frame.RoiManager;
+import ij.process.*;
 
 import org.doube.util.ImageCheck;
 import org.doube.util.ResultInserter;
 import org.doube.util.RoiMan;
 import org.doube.util.StackStats;
 import org.doube.util.UsageReporter;
-
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.Prefs;
-import ij.gui.GenericDialog;
-import ij.macro.Interpreter;
-import ij.plugin.PlugIn;
-import ij.plugin.frame.RoiManager;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
 
 /* Bob Dougherty 8/10/2007
  Perform all of the steps for the local thickness calculation
@@ -54,108 +48,87 @@ import ij.process.ImageProcessor;
 
  */
 /**
- * @see
- * 		<p>
+ * @see <p>
  *      Hildebrand T, Rüegsegger P (1997) A new method for the model-independent
  *      assessment of thickness in three-dimensional images. J Microsc 185:
- *      67-75.
- *      <a href="http://dx.doi.org/10.1046/j.1365-2818.1997.1340694.x">doi
+ *      67-75. <a
+ *      href="http://dx.doi.org/10.1046/j.1365-2818.1997.1340694.x">doi
  *      :10.1046/j.1365-2818.1997.1340694.x</a>
  *      </p>
- *
+ * 
  *      <p>
  *      Saito T, Toriwaki J (1994) New algorithms for euclidean distance
  *      transformation of an n-dimensional digitized picture with applications.
- *      Pattern Recognit 27: 1551-1565.
- *      <a href="http://dx.doi.org/10.1016/0031-3203(94)90133-3" >doi:10.1016/
- *      0031-3203(94)90133-3</a>
+ *      Pattern Recognit 27: 1551-1565. <a
+ *      href="http://dx.doi.org/10.1016/0031-3203(94)90133-3"
+ *      >doi:10.1016/0031-3203(94)90133-3</a>
  *      </p>
- *
+ * 
  * @author Bob Dougherty
  * @author Michael Doube (refactoring for BoneJ)
- * @author Richard Domander (refactoring for BoneJ)
- *
+ * 
  */
 public class Thickness implements PlugIn {
-	private static final String THICKNESS_PREFERENCE_KEY = "bonej.localThickness.doThickness";
-	private static final String SPACING_PREFERENCE_KEY = "bonej.localThickness.doSpacing";
-	private static final String GRAPHIC_PREFERENCE_KEY = "bonej.localThickness.doGraphic";
-	private static final String ROI_PREFERENCE_KEY = "bonej.localThickness.doRoi";
-	private static final String MASK_PREFERENCE_KEY = "bonej.localThickness.doMask";
-
-	private static final boolean THICKNESS_DEFAULT = true;
-	private static final boolean SPACING_DEFAULT = false;
-	private static final boolean GRAPHIC_DEFAULT = true;
-	private static final boolean ROI_DEFAULT = false;
-	private static final boolean MASK_DEFAULT = true;
-
+	// public static final int THRESHOLD = 128;
 	private float[][] sNew;
-	private GenericDialog setupDialog = null;
-	private RoiManager roiManager = null;
-	private boolean doThickness = THICKNESS_DEFAULT;
-	private boolean doSpacing = SPACING_DEFAULT;
-	private boolean doGraphic = GRAPHIC_DEFAULT;
-	private boolean doRoi = ROI_DEFAULT;
-	private boolean doMask = MASK_DEFAULT;
 
-	public void run(final String arg) {
-		if (!ImageCheck.checkEnvironment()) {
+	public void run(String arg) {
+		ImageCheck ic = new ImageCheck();
+		if (!ImageCheck.checkEnvironment())
 			return;
-		}
-
-		final ImagePlus imp = IJ.getImage();
-		if (!ImageCheck.isBinary(imp)) {
+		ImagePlus imp = IJ.getImage();
+		if (!ic.isBinary(imp)) {
 			IJ.error("8-bit binary (black and white only) image required.");
 			return;
 		}
 
-		if (!ImageCheck.isVoxelIsotropic(imp, 1E-3)) {
-			final boolean cancel = !IJ.showMessageWithCancel("Anisotropic voxels",
+		if (!ic.isVoxelIsotropic(imp, 1E-3)) {
+			if (IJ.showMessageWithCancel(
+					"Anisotropic voxels",
 					"This image contains anisotropic voxels, which will\n"
 							+ "result in incorrect thickness calculation.\n\n"
-							+ "Consider rescaling your data so that voxels are isotropic\n" + "(Image > Scale...).\n\n"
-							+ "Continue anyway?");
-			if (cancel) {
+							+ "Consider rescaling your data so that voxels are isotropic\n"
+							+ "(Image > Scale...).\n\n" + "Continue anyway?")) {
+			} else
 				return;
-			}
+
 		}
-
-		roiManager = RoiManager.getInstance();
-
-		loadSettings();
-		createSetupDialog();
-		setupDialog.showDialog();
-		if (setupDialog.wasCanceled()) {
+		GenericDialog gd = new GenericDialog("Options");
+		gd.addCheckbox("Thickness", true);
+		gd.addCheckbox("Spacing", false);
+		gd.addCheckbox("Graphic Result", true);
+		gd.addCheckbox("Use_ROI_Manager", false);
+		gd.addCheckbox("Mask thickness map", true);
+		gd.addHelp("http://bonej.org/thickness");
+		gd.showDialog();
+		if (gd.wasCanceled()) {
 			return;
 		}
-		getProcessingSettingsFromDialog();
+		boolean doThickness = gd.getNextBoolean();
+		boolean doSpacing = gd.getNextBoolean();
+		boolean doGraphic = gd.getNextBoolean();
+		boolean doRoi = gd.getNextBoolean();
+		boolean doMask = gd.getNextBoolean();
 
-		if (!doThickness && !doSpacing) {
-			IJ.error("Nothing to process, exiting plugin.");
-			return;
-		}
+		long startTime = System.currentTimeMillis();
+		String title = stripExtension(imp.getTitle());
 
-		saveSettings();
-
-		final long startTime = System.currentTimeMillis();
-		final String title = stripExtension(imp.getTitle());
-
+		RoiManager roiMan = RoiManager.getInstance();
 		// calculate trabecular thickness (Tb.Th)
 		if (doThickness) {
-			final boolean inverse = false;
-			ImagePlus impLTC;
-			if (doRoi && roiManager != null) {
-				final ImageStack stack = RoiMan.cropStack(roiManager, imp.getStack(), true, 0, 1);
-				final ImagePlus crop = new ImagePlus(imp.getTitle(), stack);
+			boolean inverse = false;
+			ImagePlus impLTC = new ImagePlus();
+			if (doRoi && roiMan != null) {
+				ImageStack stack = RoiMan.cropStack(roiMan, imp.getStack(),
+						true, 0, 1);
+				ImagePlus crop = new ImagePlus(imp.getTitle(), stack);
 				crop.setCalibration(imp.getCalibration());
 				impLTC = getLocalThickness(crop, inverse, doMask);
-			} else {
+			} else
 				impLTC = getLocalThickness(imp, inverse, doMask);
-			}
 			impLTC.setTitle(title + "_Tb.Th");
 			impLTC.setCalibration(imp.getCalibration());
-			backgroundToNaN(impLTC, 0x00);
-			final double[] stats = StackStats.meanStdDev(impLTC);
+			double[] stats = StackStats.meanStdDev(impLTC);
 			insertResults(imp, stats, inverse);
 			if (doGraphic && !Interpreter.isBatchMode()) {
 				impLTC.show();
@@ -165,21 +138,20 @@ public class Thickness implements PlugIn {
 			}
 		}
 		if (doSpacing) {
-			final boolean inverse = true;
-			ImagePlus impLTCi;
-			if (doRoi && roiManager != null) {
-				final ImageStack stack = RoiMan.cropStack(roiManager, imp.getStack(), true, 255, 1);
-				final ImagePlus crop = new ImagePlus(imp.getTitle(), stack);
+			boolean inverse = true;
+			ImagePlus impLTCi = new ImagePlus();
+			if (doRoi && roiMan != null) {
+				ImageStack stack = RoiMan.cropStack(roiMan, imp.getStack(),
+						true, 255, 1);
+				ImagePlus crop = new ImagePlus(imp.getTitle(), stack);
 				crop.setCalibration(imp.getCalibration());
 				impLTCi = getLocalThickness(crop, inverse, doMask);
-			} else {
+			} else
 				impLTCi = getLocalThickness(imp, inverse, doMask);
-			}
 			// check marrow cavity size (i.e. trabcular separation, Tb.Sp)
 			impLTCi.setTitle(title + "_Tb.Sp");
 			impLTCi.setCalibration(imp.getCalibration());
-			backgroundToNaN(impLTCi, 0x00);
-			final double[] stats = StackStats.meanStdDev(impLTCi);
+			double[] stats = StackStats.meanStdDev(impLTCi);
 			insertResults(imp, stats, inverse);
 			if (doGraphic && !Interpreter.isBatchMode()) {
 				impLTCi.show();
@@ -190,60 +162,21 @@ public class Thickness implements PlugIn {
 		}
 		IJ.showProgress(1.0);
 		IJ.showStatus("Done");
-		final double duration = ((double) System.currentTimeMillis() - (double) startTime) / 1000;
+		double duration = ((double) System.currentTimeMillis() - (double) startTime)
+				/ (double) 1000;
 		IJ.log("Duration = " + IJ.d2s(duration, 3) + " s");
 		UsageReporter.reportEvent(this).send();
+		return;
 	}
 
 	// Modified from ImageJ code by Wayne Rasband
 	String stripExtension(String name) {
 		if (name != null) {
-			final int dotIndex = name.lastIndexOf(".");
+			int dotIndex = name.lastIndexOf(".");
 			if (dotIndex >= 0)
 				name = name.substring(0, dotIndex);
 		}
 		return name;
-	}
-
-	private void createSetupDialog() {
-		setupDialog = new GenericDialog("Plugin options");
-		setupDialog.addCheckbox("Thickness", doThickness);
-		setupDialog.addCheckbox("Spacing", doSpacing);
-		setupDialog.addCheckbox("Graphic Result", doGraphic);
-
-		setupDialog.addCheckbox("Crop using ROI Manager", doRoi);
-		if (roiManager == null) {
-			final Checkbox cropCheckbox = (Checkbox) setupDialog.getCheckboxes().elementAt(3);
-			cropCheckbox.setState(false);
-			cropCheckbox.setEnabled(false);
-		}
-
-		setupDialog.addCheckbox("Mask thickness map", doMask);
-		setupDialog.addHelp("http://bonej.org/thickness");
-	}
-
-	private void getProcessingSettingsFromDialog() {
-		doThickness = setupDialog.getNextBoolean();
-		doSpacing = setupDialog.getNextBoolean();
-		doGraphic = setupDialog.getNextBoolean();
-		doRoi = setupDialog.getNextBoolean();
-		doMask = setupDialog.getNextBoolean();
-	}
-
-	private void loadSettings() {
-		doThickness = Prefs.get(THICKNESS_PREFERENCE_KEY, THICKNESS_DEFAULT);
-		doSpacing = Prefs.get(SPACING_PREFERENCE_KEY, SPACING_DEFAULT);
-		doGraphic = Prefs.get(GRAPHIC_PREFERENCE_KEY, GRAPHIC_DEFAULT);
-		doRoi = Prefs.get(ROI_PREFERENCE_KEY, ROI_DEFAULT);
-		doMask = Prefs.get(MASK_PREFERENCE_KEY, MASK_DEFAULT);
-	}
-
-	private void saveSettings() {
-		Prefs.set(THICKNESS_PREFERENCE_KEY, doThickness);
-		Prefs.set(SPACING_PREFERENCE_KEY, doSpacing);
-		Prefs.set(GRAPHIC_PREFERENCE_KEY, doGraphic);
-		Prefs.set(ROI_PREFERENCE_KEY, doRoi);
-		Prefs.set(MASK_PREFERENCE_KEY, doMask);
 	}
 
 	/**
@@ -251,7 +184,7 @@ public class Thickness implements PlugIn {
 	 * Saito-Toriwaki algorithm for Euclidian Distance Transformation. Direct
 	 * application of Algorithm 1. Bob Dougherty 8/8/2006
 	 * </p>
-	 *
+	 * 
 	 * <ul>
 	 * <li>Version S1A: lower memory usage.</li>
 	 * <li>Version S1A.1 A fixed indexing bug for 666-bin data set</li>
@@ -262,54 +195,55 @@ public class Thickness implements PlugIn {
 	 * Fixed inverse behavior in y and z directions.</li>
 	 * <li>Version D July 30, 2007. Multithread processing for step 2.</li>
 	 * </ul>
-	 *
+	 * 
 	 * <p>
 	 * This version assumes the input stack is already in memory, 8-bit, and
 	 * outputs to a new 32-bit stack. Versions that are more stingy with memory
 	 * may be forthcoming.
 	 * </p>
-	 *
+	 * 
 	 * @param imp
 	 *            8-bit (binary) ImagePlus
-	 *
+	 * 
 	 */
-	private float[][] geometryToDistanceMap(final ImagePlus imp, final boolean inv) {
+	private float[][] geometryToDistanceMap(ImagePlus imp, boolean inv) {
 		final int w = imp.getWidth();
 		final int h = imp.getHeight();
 		final int d = imp.getStackSize();
-		final int nThreads = Runtime.getRuntime().availableProcessors();
+		int nThreads = Runtime.getRuntime().availableProcessors();
 
 		// Create references to input data
-		final ImageStack stack = imp.getStack();
-		final byte[][] data = new byte[d][];
+		ImageStack stack = imp.getStack();
+		byte[][] data = new byte[d][];
 		for (int k = 0; k < d; k++)
 			data[k] = (byte[]) stack.getPixels(k + 1);
 
 		// Create 32 bit floating point stack for output, s. Will also use it
 		// for g in Transformation 1.
-		final float[][] s = new float[d][];
+		float[][] s = new float[d][];
 		for (int k = 0; k < d; k++) {
-			final ImageProcessor ipk = new FloatProcessor(w, h);
+			ImageProcessor ipk = new FloatProcessor(w, h);
 			s[k] = (float[]) ipk.getPixels();
 		}
 		float[] sk;
 		// Transformation 1. Use s to store g.
 		IJ.showStatus("EDT transformation 1/3");
-		final Step1Thread[] s1t = new Step1Thread[nThreads];
+		Step1Thread[] s1t = new Step1Thread[nThreads];
 		for (int thread = 0; thread < nThreads; thread++) {
-			s1t[thread] = new Step1Thread(thread, nThreads, w, h, d, inv, s, data);
+			s1t[thread] = new Step1Thread(thread, nThreads, w, h, d, inv, s,
+					data);
 			s1t[thread].start();
 		}
 		try {
 			for (int thread = 0; thread < nThreads; thread++) {
 				s1t[thread].join();
 			}
-		} catch (final InterruptedException ie) {
+		} catch (InterruptedException ie) {
 			IJ.error("A thread was interrupted in step 1 .");
 		}
 		// Transformation 2. g (in s) -> h (in s)
 		IJ.showStatus("EDT transformation 2/3");
-		final Step2Thread[] s2t = new Step2Thread[nThreads];
+		Step2Thread[] s2t = new Step2Thread[nThreads];
 		for (int thread = 0; thread < nThreads; thread++) {
 			s2t[thread] = new Step2Thread(thread, nThreads, w, h, d, s);
 			s2t[thread].start();
@@ -318,21 +252,22 @@ public class Thickness implements PlugIn {
 			for (int thread = 0; thread < nThreads; thread++) {
 				s2t[thread].join();
 			}
-		} catch (final InterruptedException ie) {
+		} catch (InterruptedException ie) {
 			IJ.error("A thread was interrupted in step 2 .");
 		}
 		// Transformation 3. h (in s) -> s
 		IJ.showStatus("EDT transformation 3/3");
-		final Step3Thread[] s3t = new Step3Thread[nThreads];
+		Step3Thread[] s3t = new Step3Thread[nThreads];
 		for (int thread = 0; thread < nThreads; thread++) {
-			s3t[thread] = new Step3Thread(thread, nThreads, w, h, d, inv, s, data);
+			s3t[thread] = new Step3Thread(thread, nThreads, w, h, d, inv, s,
+					data);
 			s3t[thread].start();
 		}
 		try {
 			for (int thread = 0; thread < nThreads; thread++) {
 				s3t[thread].join();
 			}
-		} catch (final InterruptedException ie) {
+		} catch (InterruptedException ie) {
 			IJ.error("A thread was interrupted in step 3 .");
 		}
 		// Find the largest distance for scaling
@@ -358,13 +293,13 @@ public class Thickness implements PlugIn {
 	}
 
 	class Step1Thread extends Thread {
-		int thread, nThreads, w, h, d;
+		int thread, nThreads, w, h, d, thresh;
 		float[][] s;
 		byte[][] data;
 		boolean inv;
 
-		public Step1Thread(final int thread, final int nThreads, final int w, final int h, final int d,
-				final boolean inv, final float[][] s, final byte[][] data) {
+		public Step1Thread(int thread, int nThreads, int w, int h, int d,
+				boolean inv, float[][] s, byte[][] data) {
 			this.thread = thread;
 			this.nThreads = nThreads;
 			this.w = w;
@@ -375,7 +310,6 @@ public class Thickness implements PlugIn {
 			this.s = s;
 		}
 
-		@Override
 		public void run() {
 			final int width = this.w;
 			final int height = this.h;
@@ -387,8 +321,8 @@ public class Thickness implements PlugIn {
 				n = height;
 			if (depth > n)
 				n = depth;
-			final int noResult = 3 * (n + 1) * (n + 1);
-			final boolean[] background = new boolean[n];
+			int noResult = 3 * (n + 1) * (n + 1);
+			boolean[] background = new boolean[n];
 			int test, min;
 			for (int k = thread; k < depth; k += nThreads) {
 				IJ.showProgress(k / (1. * depth));
@@ -429,8 +363,8 @@ public class Thickness implements PlugIn {
 		int thread, nThreads, w, h, d;
 		float[][] s;
 
-		public Step2Thread(final int thread, final int nThreads, final int w, final int h, final int d,
-				final float[][] s) {
+		public Step2Thread(int thread, int nThreads, int w, int h, int d,
+				float[][] s) {
 			this.thread = thread;
 			this.nThreads = nThreads;
 			this.w = w;
@@ -439,7 +373,6 @@ public class Thickness implements PlugIn {
 			this.s = s;
 		}
 
-		@Override
 		public void run() {
 			final int width = this.w;
 			final int height = this.h;
@@ -450,9 +383,9 @@ public class Thickness implements PlugIn {
 				n = height;
 			if (depth > n)
 				n = depth;
-			final int noResult = 3 * (n + 1) * (n + 1);
-			final int[] tempInt = new int[n];
-			final int[] tempS = new int[n];
+			int noResult = 3 * (n + 1) * (n + 1);
+			int[] tempInt = new int[n];
+			int[] tempS = new int[n];
 			boolean nonempty;
 			int test, min, delta;
 			for (int k = thread; k < depth; k += nThreads) {
@@ -491,8 +424,8 @@ public class Thickness implements PlugIn {
 		byte[][] data;
 		boolean inv;
 
-		public Step3Thread(final int thread, final int nThreads, final int w, final int h, final int d,
-				final boolean inv, final float[][] s, final byte[][] data) {
+		public Step3Thread(int thread, int nThreads, int w, int h, int d,
+				boolean inv, float[][] s, byte[][] data) {
 			this.thread = thread;
 			this.nThreads = nThreads;
 			this.w = w;
@@ -503,7 +436,6 @@ public class Thickness implements PlugIn {
 			this.inv = inv;
 		}
 
-		@Override
 		public void run() {
 			final int width = this.w;
 			final int height = this.h;
@@ -517,9 +449,9 @@ public class Thickness implements PlugIn {
 				n = height;
 			if (depth > n)
 				n = depth;
-			final int noResult = 3 * (n + 1) * (n + 1);
-			final int[] tempInt = new int[n];
-			final int[] tempS = new int[n];
+			int noResult = 3 * (n + 1) * (n + 1);
+			int[] tempInt = new int[n];
+			int[] tempS = new int[n];
 			boolean nonempty;
 			int test, min, delta;
 			for (int j = thread; j < height; j += nThreads) {
@@ -586,7 +518,7 @@ public class Thickness implements PlugIn {
 	 * assiged a VERY_SMALL_VALUE. This is used for subsequent processing by
 	 * other plugins to find the local thickness. Bob Dougherty August 10, 2006
 	 * </p>
-	 *
+	 * 
 	 * <ul>
 	 * <li>Version 1: August 10-11, 2006. Subtracts 0.5 from the distances.</li>
 	 * <li>Version 1.01: September 6, 2006. Corrected some typos in the
@@ -600,17 +532,17 @@ public class Thickness implements PlugIn {
 	 * Should be much more accurate.</li>
 	 * <li>Version 3.1 Oct. 1, 2006. Faster scanning of search points.</li>
 	 * </ul>
-	 *
+	 * 
 	 * @param imp
 	 *            3D Distance map (32-bit stack)
 	 */
-	private void distanceMaptoDistanceRidge(final ImagePlus imp, final float[][] s) {
+	private void distanceMaptoDistanceRidge(ImagePlus imp, float[][] s) {
 		final int w = imp.getWidth();
 		final int h = imp.getHeight();
 		final int d = imp.getStackSize();
 		sNew = new float[d][];
 		for (int k = 0; k < d; k++) {
-			final ImageProcessor ipk = new FloatProcessor(w, h);
+			ImageProcessor ipk = new FloatProcessor(w, h);
 			sNew[k] = (float[]) ipk.getPixels();
 		}
 
@@ -634,8 +566,8 @@ public class Thickness implements PlugIn {
 				}
 			}
 		}
-		final int rSqMax = (int) (distMax * distMax + 0.5f) + 1;
-		final boolean[] occurs = new boolean[rSqMax];
+		int rSqMax = (int) (distMax * distMax + 0.5f) + 1;
+		boolean[] occurs = new boolean[rSqMax];
 		for (int i = 0; i < rSqMax; i++)
 			occurs[i] = false;
 		for (int k = 0; k < d; k++) {
@@ -654,8 +586,8 @@ public class Thickness implements PlugIn {
 				numRadii++;
 		}
 		// Make an index of the distance-squared values
-		final int[] distSqIndex = new int[rSqMax];
-		final int[] distSqValues = new int[numRadii];
+		int[] distSqIndex = new int[rSqMax];
+		int[] distSqValues = new int[numRadii];
 		int indDS = 0;
 		for (int i = 0; i < rSqMax; i++) {
 			if (occurs[i]) {
@@ -671,10 +603,11 @@ public class Thickness implements PlugIn {
 		 * point required to cover the ball of the test point.
 		 */
 		IJ.showStatus("Distance Ridge: creating search templates");
-		final int[][] rSqTemplate = createTemplate(distSqValues);
+		int[][] rSqTemplate = createTemplate(distSqValues);
 		int numCompZ, numCompY, numCompX, numComp;
 		for (int k = 0; k < d; k++) {
-			IJ.showStatus("Distance Ridge: processing slice " + (k + 1) + "/" + d);
+			IJ.showStatus("Distance Ridge: processing slice " + (k + 1) + "/"
+					+ d);
 			// IJ.showProgress(k/(1.*d));
 			sk = s[k];
 			skNew = sNew[k];
@@ -712,32 +645,37 @@ public class Thickness implements PlugIn {
 												} else {
 													numCompX = 1;
 												}
-												numComp = numCompX + numCompY + numCompZ;
+												numComp = numCompX + numCompY
+														+ numCompZ;
 												if (numComp > 0) {
-													final float sk1i1wj1 = sk1[i1 + wj1];
-													sk1Sq = (int) (sk1i1wj1 * sk1i1wj1 + 0.5f);
+													final float sk1i1wj1 = sk1[i1
+															+ wj1];
+													sk1Sq = (int) (sk1i1wj1
+															* sk1i1wj1 + 0.5f);
 													if (sk1Sq >= rSqTemplate[numComp - 1][sk0SqInd])
 														notRidgePoint = true;
 												}
-											} // if in grid for i1
+											}// if in grid for i1
 											if (notRidgePoint)
 												break;
-										} // dx
-									} // if in grid for j1
+										}// dx
+									}// if in grid for j1
 									if (notRidgePoint)
 										break;
-								} // dy
-							} // if in grid for k1
+								}// dy
+							}// if in grid for k1
 							if (notRidgePoint)
 								break;
-						} // dz
+						}// dz
 						if (!notRidgePoint)
 							skNew[ind] = sk[ind];
-					} // if not in background
-				} // i
-			} // j
-		} // k
+					}// if not in background
+				}// i
+			}// j
+		}// k
 		IJ.showStatus("Distance Ridge complete");
+		// replace work array s with result of the method, sNew
+		s = sNew;
 	}
 
 	/*
@@ -750,8 +688,8 @@ public class Thickness implements PlugIn {
 	 * the time for the calculation using this array would increase (and more
 	 * code would be needed).
 	 */
-	int[][] createTemplate(final int[] distSqValues) {
-		final int[][] t = new int[3][];
+	int[][] createTemplate(int[] distSqValues) {
+		int[][] t = new int[3][];
 		t[0] = scanCube(1, 0, 0, distSqValues);
 		t[1] = scanCube(1, 1, 0, distSqValues);
 		t[2] = scanCube(1, 1, 1, distSqValues);
@@ -763,17 +701,17 @@ public class Thickness implements PlugIn {
 	 * of radius r1 centered at (dx,dy,dz) includes a "ball" of radius r
 	 * centered at the origin. "Ball" refers to a 3D integer grid.
 	 */
-	int[] scanCube(final int dx, final int dy, final int dz, final int[] distSqValues) {
+	int[] scanCube(int dx, int dy, int dz, int[] distSqValues) {
 		final int numRadii = distSqValues.length;
-		final int[] r1Sq = new int[numRadii];
+		int[] r1Sq = new int[numRadii];
 		if ((dx == 0) && (dy == 0) && (dz == 0)) {
 			for (int rSq = 0; rSq < numRadii; rSq++) {
 				r1Sq[rSq] = Integer.MAX_VALUE;
 			}
 		} else {
-			final int dxAbs = -Math.abs(dx);
-			final int dyAbs = -Math.abs(dy);
-			final int dzAbs = -Math.abs(dz);
+			final int dxAbs = -(int) Math.abs(dx);
+			final int dyAbs = -(int) Math.abs(dy);
+			final int dzAbs = -(int) Math.abs(dz);
 			for (int rSqInd = 0; rSqInd < numRadii; rSqInd++) {
 				final int rSq = distSqValues[rSqInd];
 				int max = 0;
@@ -789,7 +727,8 @@ public class Thickness implements PlugIn {
 						scankj = scank + j * j;
 						if (scankj <= rSq) {
 							iPlus = ((int) Math.sqrt(rSq - scankj)) - dxAbs;
-							dkji = dk + (j - dyAbs) * (j - dyAbs) + iPlus * iPlus;
+							dkji = dk + (j - dyAbs) * (j - dyAbs) + iPlus
+									* iPlus;
 							if (dkji > max)
 								max = dkji;
 						}
@@ -819,16 +758,16 @@ public class Thickness implements PlugIn {
 	 * <li>Version 3.1 Multiplies the output by 2 to conform with the definition
 	 * of local thickness</li>
 	 * </ul>
-	 *
+	 * 
 	 * @param imp
 	 */
-	private void distanceRidgetoLocalThickness(final ImagePlus imp, final float[][] s) {
+	private void distanceRidgetoLocalThickness(ImagePlus imp, float[][] s) {
 		final int w = imp.getWidth();
 		final int h = imp.getHeight();
 		final int d = imp.getStackSize();
 		float[] sk;
 		// Count the distance ridge points on each slice
-		final int[] nRidge = new int[d];
+		int[] nRidge = new int[d];
 		int ind, nr, iR;
 		IJ.showStatus("Local Thickness: scanning stack ");
 		for (int k = 0; k < d; k++) {
@@ -844,9 +783,9 @@ public class Thickness implements PlugIn {
 			}
 			nRidge[k] = nr;
 		}
-		final int[][] iRidge = new int[d][];
-		final int[][] jRidge = new int[d][];
-		final float[][] rRidge = new float[d][];
+		int[][] iRidge = new int[d][];
+		int[][] jRidge = new int[d][];
+		float[][] rRidge = new float[d][];
 		// Pull out the distance ridge points
 		int[] iRidgeK, jRidgeK;
 		float[] rRidgeK;
@@ -866,6 +805,7 @@ public class Thickness implements PlugIn {
 				for (int i = 0; i < w; i++) {
 					ind = i + wj;
 					if (sk[ind] > 0) {
+						;
 						iRidgeK[iR] = i;
 						jRidgeK[iR] = j;
 						rRidgeK[iR++] = sk[ind];
@@ -876,21 +816,22 @@ public class Thickness implements PlugIn {
 				}
 			}
 		}
-		final int nThreads = Runtime.getRuntime().availableProcessors();
+		int nThreads = Runtime.getRuntime().availableProcessors();
 		final Object[] resources = new Object[d];// For synchronization
 		for (int k = 0; k < d; k++) {
 			resources[k] = new Object();
 		}
-		final LTThread[] ltt = new LTThread[nThreads];
+		LTThread[] ltt = new LTThread[nThreads];
 		for (int thread = 0; thread < nThreads; thread++) {
-			ltt[thread] = new LTThread(thread, nThreads, w, h, d, nRidge, s, iRidge, jRidge, rRidge, resources);
+			ltt[thread] = new LTThread(thread, nThreads, w, h, d, nRidge, s,
+					iRidge, jRidge, rRidge, resources);
 			ltt[thread].start();
 		}
 		try {
 			for (int thread = 0; thread < nThreads; thread++) {
 				ltt[thread].join();
 			}
-		} catch (final InterruptedException ie) {
+		} catch (InterruptedException ie) {
 			IJ.error("A thread was interrupted .");
 		}
 
@@ -907,19 +848,20 @@ public class Thickness implements PlugIn {
 			}
 		}
 		IJ.showStatus("Local Thickness complete");
+		return;
 	}
 
 	class LTThread extends Thread {
-		int thread, nThreads, w, h, d;
+		int thread, nThreads, w, h, d, nR;
 		float[][] s;
 		int[] nRidge;
 		int[][] iRidge, jRidge;
 		float[][] rRidge;
 		Object[] resources;
 
-		public LTThread(final int thread, final int nThreads, final int w, final int h, final int d, final int[] nRidge,
-				final float[][] s, final int[][] iRidge, final int[][] jRidge, final float[][] rRidge,
-				final Object[] resources) {
+		public LTThread(int thread, int nThreads, int w, int h, int d,
+				int[] nRidge, float[][] s, int[][] iRidge, int[][] jRidge,
+				float[][] rRidge, Object[] resources) {
 			this.thread = thread;
 			this.nThreads = nThreads;
 			this.w = w;
@@ -933,7 +875,6 @@ public class Thickness implements PlugIn {
 			this.resources = resources;
 		}
 
-		@Override
 		public void run() {
 			final int width = this.w;
 			final int height = this.h;
@@ -949,7 +890,8 @@ public class Thickness implements PlugIn {
 			float r1SquaredK, r1SquaredJK, r1Squared, s1;
 			int rSquared;
 			for (int k = thread; k < depth; k += nThreads) {
-				IJ.showStatus("Local Thickness: processing slice " + (k + 1) + "/" + depth);
+				IJ.showStatus("Local Thickness: processing slice " + (k + 1)
+						+ "/" + depth);
 				final int nR = nRidge[k];
 				final int[] iRidgeK = iRidge[k];
 				final int[] jRidgeK = jRidge[k];
@@ -988,7 +930,8 @@ public class Thickness implements PlugIn {
 							r1SquaredJK = r1SquaredK + (j1 - j) * (j1 - j);
 							if (r1SquaredJK <= rSquared) {
 								for (int i1 = iStart; i1 <= iStop; i1++) {
-									r1Squared = r1SquaredJK + (i1 - i) * (i1 - i);
+									r1Squared = r1SquaredJK + (i1 - i)
+											* (i1 - i);
 									if (r1Squared <= rSquared) {
 										final int ind1 = i1 + widthJ1;
 										s1 = sk1[ind1];
@@ -1008,13 +951,13 @@ public class Thickness implements PlugIn {
 												}
 											}
 										}
-									} // if within sphere of DR point
-								} // i1
-							} // if k and j components within sphere of DR point
-						} // j1
-					} // k1
-				} // iR
-			} // k
+									}// if within sphere of DR point
+								}// i1
+							}// if k and j components within sphere of DR point
+						}// j1
+					}// k1
+				}// iR
+			}// k
 		}// run
 	}// LTThread
 
@@ -1022,7 +965,7 @@ public class Thickness implements PlugIn {
 	 * <p>
 	 * LocalThicknesstoCleanedUpLocalThickness
 	 * </p>
-	 *
+	 * 
 	 * <p>
 	 * Input: 3D Local Thickness map (32-bit stack)
 	 * </p>
@@ -1033,23 +976,24 @@ public class Thickness implements PlugIn {
 	 * neighbors that do not border background points. Bob Dougherty August 1,
 	 * 2007
 	 * </p>
-	 *
+	 * 
 	 * <ul>
 	 * <li>August 10. Version 3 This version also multiplies the local thickness
 	 * by 2 to conform with the official definition of local thickness.</li>
 	 * </ul>
-	 *
+	 * 
 	 */
-	private ImagePlus localThicknesstoCleanedUpLocalThickness(final ImagePlus imp, final float[][] s) {
+	private ImagePlus localThicknesstoCleanedUpLocalThickness(ImagePlus imp,
+			float[][] s) {
 		final int w = imp.getWidth();
 		final int h = imp.getHeight();
 		final int d = imp.getStackSize();
 		IJ.showStatus("Cleaning up local thickness...");
 		// Create 32 bit floating point stack for output, sNew.
-		final ImageStack newStack = new ImageStack(w, h);
+		ImageStack newStack = new ImageStack(w, h);
 		sNew = new float[d][];
 		for (int k = 0; k < d; k++) {
-			final ImageProcessor ipk = new FloatProcessor(w, h);
+			ImageProcessor ipk = new FloatProcessor(w, h);
 			newStack.addSlice(null, ipk);
 			sNew[k] = (float[]) ipk.getPixels();
 		}
@@ -1063,9 +1007,9 @@ public class Thickness implements PlugIn {
 				final int wj = w * j;
 				for (int i = 0; i < w; i++) {
 					sNew[k][i + wj] = setFlag(s, i, j, k, w, h, d);
-				} // i
-			} // j
-		} // k
+				}// i
+			}// j
+		}// k
 		/*
 		 * Process the surface points. Initially set results to negative values
 		 * to be able to avoid including them in averages of for subsequent
@@ -1081,24 +1025,25 @@ public class Thickness implements PlugIn {
 				for (int i = 0; i < w; i++) {
 					final int ind = i + wj;
 					if (sNew[k][ind] == -1) {
-						sNew[k][ind] = -averageInteriorNeighbors(s, i, j, k, w, h, d);
+						sNew[k][ind] = -averageInteriorNeighbors(s, i, j, k, w,
+								h, d);
 					}
-				} // i
-			} // j
-		} // k
-			// Fix the negative values and double the results
+				}// i
+			}// j
+		}// k
+		// Fix the negative values and double the results
 		for (int k = 0; k < d; k++) {
 			for (int j = 0; j < h; j++) {
 				final int wj = w * j;
 				for (int i = 0; i < w; i++) {
 					final int ind = i + wj;
-					sNew[k][ind] = Math.abs(sNew[k][ind]);
-				} // i
-			} // j
-		} // k
+					sNew[k][ind] = (float) Math.abs(sNew[k][ind]);
+				}// i
+			}// j
+		}// k
 		IJ.showStatus("Clean Up Local Thickness complete");
-		final String title = stripExtension(imp.getTitle());
-		final ImagePlus impOut = new ImagePlus(title + "_CL", newStack);
+		String title = stripExtension(imp.getTitle());
+		ImagePlus impOut = new ImagePlus(title + "_CL", newStack);
 		final double vW = imp.getCalibration().pixelWidth;
 		// calibrate the pixel values to pixel width
 		// so that thicknesses represent real units (not pixels)
@@ -1109,7 +1054,7 @@ public class Thickness implements PlugIn {
 		return impOut;
 	}
 
-	float setFlag(final float[][] s, final int i, final int j, final int k, final int w, final int h, final int d) {
+	float setFlag(float[][] s, int i, int j, int k, int w, int h, int d) {
 		if (s[k][i + w * j] == 0)
 			return 0;
 		// change 1
@@ -1172,8 +1117,8 @@ public class Thickness implements PlugIn {
 		return s[k][i + w * j];
 	}
 
-	float averageInteriorNeighbors(final float[][] s, final int i, final int j, final int k, final int w, final int h,
-			final int d) {
+	float averageInteriorNeighbors(float[][] s, int i, int j, int k, int w,
+			int h, int d) {
 		int n = 0;
 		float sum = 0;
 		// change 1
@@ -1316,7 +1261,7 @@ public class Thickness implements PlugIn {
 		return s[k][i + w * j];
 	}
 
-	float look(final float[][] s, final int i, final int j, final int k, final int w, final int h, final int d) {
+	float look(float[][] s, int i, int j, int k, int w, int h, int d) {
 		if ((i < 0) || (i >= w))
 			return -1;
 		if ((j < 0) || (j >= h))
@@ -1327,7 +1272,7 @@ public class Thickness implements PlugIn {
 	}
 
 	// A positive result means this is an interior, non-background, point.
-	float lookNew(final int i, final int j, final int k, final int w, final int h, final int d) {
+	float lookNew(int i, int j, int k, int w, int h, int d) {
 		if ((i < 0) || (i >= w))
 			return -1;
 		if ((j < 0) || (j >= h))
@@ -1337,13 +1282,13 @@ public class Thickness implements PlugIn {
 		return sNew[k][i + w * j];
 	}
 
-	private void insertResults(final ImagePlus imp, final double[] stats, final boolean inverse) {
+	private void insertResults(ImagePlus imp, double[] stats, boolean inverse) {
 		final double meanThick = stats[0];
 		final double stDev = stats[1];
 		final double maxThick = stats[2];
 		final String units = imp.getCalibration().getUnits();
 
-		final ResultInserter ri = ResultInserter.getInstance();
+		ResultInserter ri = ResultInserter.getInstance();
 		if (!inverse) {
 			// trab thickness
 			ri.setResultInRow(imp, "Tb.Th Mean (" + units + ")", meanThick);
@@ -1356,12 +1301,13 @@ public class Thickness implements PlugIn {
 			ri.setResultInRow(imp, "Tb.Sp Max (" + units + ")", maxThick);
 		}
 		ri.updateTable();
+		return;
 	}
 
 	/**
 	 * Get a local thickness map from an ImagePlus with optional masking
 	 * correction
-	 *
+	 * 
 	 * @param imp
 	 *            Binary ImagePlus
 	 * @param inv
@@ -1373,11 +1319,12 @@ public class Thickness implements PlugIn {
 	 *            corresponding input pixel
 	 * @return 32-bit ImagePlus containing a local thickness map
 	 */
-	public ImagePlus getLocalThickness(final ImagePlus imp, final boolean inv, final boolean doMask) {
-		if (!ImageCheck.isVoxelIsotropic(imp, 1E-3)) {
+	public ImagePlus getLocalThickness(ImagePlus imp, boolean inv,
+			boolean doMask) {
+		if (!(new ImageCheck()).isVoxelIsotropic(imp, 1E-3)) {
 			IJ.log("Warning: voxels are anisotropic. Local thickness results will be inaccurate");
 		}
-		final float[][] s = geometryToDistanceMap(imp, inv);
+		float[][] s = geometryToDistanceMap(imp, inv);
 		distanceMaptoDistanceRidge(imp, s);
 		distanceRidgetoLocalThickness(imp, s);
 		ImagePlus impLTC = localThicknesstoCleanedUpLocalThickness(imp, s);
@@ -1388,8 +1335,9 @@ public class Thickness implements PlugIn {
 
 	/**
 	 * Get a local thickness map from an ImagePlus, without masking correction
-	 *
-	 * @see #getLocalThickness(ImagePlus imp, boolean inv, boolean doMask)
+	 * 
+	 * @see getLocalThickness(ImagePlus imp, boolean inv, boolean doMask) :
+	 *      ImagePlus
 	 * @param imp
 	 *            Binary ImagePlus
 	 * @param inv
@@ -1397,14 +1345,14 @@ public class Thickness implements PlugIn {
 	 *            you want the thickness of the background
 	 * @return 32-bit ImagePlus containing a local thickness map
 	 */
-	public ImagePlus getLocalThickness(final ImagePlus imp, final boolean inv) {
+	public ImagePlus getLocalThickness(ImagePlus imp, boolean inv) {
 		return getLocalThickness(imp, inv, false);
 	}
 
 	/**
-	 * Reduce error in thickness quantization by trimming the one pixel overhang
+	 * Reduce error in thickness quantitation by trimming the one pixel overhang
 	 * in the thickness map
-	 *
+	 * 
 	 * @param imp
 	 *            Binary input image
 	 * @param impLTC
@@ -1414,7 +1362,7 @@ public class Thickness implements PlugIn {
 	 *            foreground
 	 * @return Thickness map with pixels masked by input image
 	 */
-	private ImagePlus trimOverhang(final ImagePlus imp, final ImagePlus impLTC, final boolean inv) {
+	private ImagePlus trimOverhang(ImagePlus imp, ImagePlus impLTC, boolean inv) {
 		final int w = imp.getWidth();
 		final int h = imp.getHeight();
 		final int d = imp.getImageStackSize();
@@ -1423,8 +1371,8 @@ public class Thickness implements PlugIn {
 		final ImageStack mapStack = impLTC.getImageStack();
 
 		final int keepValue = inv ? 0 : 255;
-		ImageProcessor ip;
-		ImageProcessor map;
+		ImageProcessor ip = new ByteProcessor(w, h);
+		ImageProcessor map = new FloatProcessor(w, h);
 		for (int z = 1; z <= d; z++) {
 			IJ.showStatus("Masking thickness map...");
 			IJ.showProgress(z, d);
@@ -1438,28 +1386,5 @@ public class Thickness implements PlugIn {
 			}
 		}
 		return impLTC;
-	}
-
-	/**
-	 * Sets the value of the background pixels in the given image to Float.NaN.
-	 *
-	 * @param image
-	 *            A 32-bit floating point image
-	 * @param backgroundColor
-	 *            The color used to identify background pixel (usually 0x00)
-	 */
-	private static void backgroundToNaN(final ImagePlus image, final int backgroundColor) {
-		final int depth = image.getNSlices();
-		final int pixelsPerSlice = image.getWidth() * image.getHeight();
-		final ImageStack stack = image.getStack();
-
-		for (int z = 1; z <= depth; z++) {
-			final float pixels[] = (float[]) stack.getPixels(z);
-			for (int i = 0; i < pixelsPerSlice; i++) {
-				if (Float.compare(pixels[i], backgroundColor) == 0) {
-					pixels[i] = Float.NaN;
-				}
-			}
-		}
 	}
 }

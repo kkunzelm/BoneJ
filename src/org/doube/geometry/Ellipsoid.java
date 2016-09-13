@@ -9,7 +9,7 @@ import org.doube.jama.Matrix;
  * eigenvector matrix. Semiaxis lengths (radii) are calculated as the inverse
  * square root of the eigenvalues.
  * </p>
- *
+ * 
  * @author Michael Doube
  */
 public class Ellipsoid {
@@ -37,7 +37,7 @@ public class Ellipsoid {
 	 * Eigenvalue matrix. Size-based ordering is not performed. They are in the
 	 * same order as the eigenvectors.
 	 */
-	private final double[][] ed;
+	private double[][] ed;
 
 	/** 3x3 matrix describing shape of ellipsoid */
 	private double[][] eh;
@@ -47,16 +47,16 @@ public class Ellipsoid {
 
 	/**
 	 * Instantiate an ellipsoid from the result of FitEllipsoid
-	 *
+	 * 
 	 * @param ellipsoid
 	 */
-	public Ellipsoid(final Object[] ellipsoid) {
-		final double[] centre = (double[]) ellipsoid[0];
+	public Ellipsoid(Object[] ellipsoid) {
+		double[] centre = (double[]) ellipsoid[0];
 		this.cx = centre[0];
 		this.cy = centre[1];
 		this.cz = centre[2];
 
-		final double[] radii = (double[]) ellipsoid[1];
+		double[] radii = (double[]) ellipsoid[1];
 		this.ra = radii[0];
 		this.rb = radii[1];
 		this.rc = radii[2];
@@ -78,7 +78,7 @@ public class Ellipsoid {
 	/**
 	 * Construct an Ellipsoid from the radii (a,b,c), centroid (cx, cy, cz) and
 	 * Eigenvectors.
-	 *
+	 * 
 	 * @param a
 	 * @param b
 	 * @param c
@@ -87,8 +87,8 @@ public class Ellipsoid {
 	 * @param cz
 	 * @param eigenVectors
 	 */
-	public Ellipsoid(final double a, final double b, final double c, final double cx, final double cy, final double cz,
-			final double[][] eigenVectors) {
+	public Ellipsoid(double a, double b, double c, double cx, double cy,
+			double cz, double[][] eigenVectors) {
 
 		this.ra = a;
 		this.rb = b;
@@ -106,7 +106,7 @@ public class Ellipsoid {
 
 	/**
 	 * Gets the volume of this ellipsoid, calculated as PI * a * b * c * 4 / 3
-	 *
+	 * 
 	 * @return
 	 */
 	public double getVolume() {
@@ -124,35 +124,36 @@ public class Ellipsoid {
 	 *         of the rotation matrix respectively.
 	 */
 	public double[] getRadii() {
-		final double[] radii = { ra, rb, rc };
+		double[] radii = { ra, rb, rc };
 		return radii.clone();
 	}
 
 	/**
 	 * Method based on the inequality
-	 *
+	 * 
 	 * (X-X0)^T H (X-X0) <= 1
-	 *
+	 * 
 	 * Where X is the test point, X0 is the centroid, H is the ellipsoid's 3x3
 	 * matrix
-	 *
+	 * 
 	 * @param x
 	 * @param y
 	 * @param z
 	 * @return true if the point (x,y,z) lies inside or on the ellipsoid, false
 	 *         otherwise
 	 */
-	public boolean contains(final double x, final double y, final double z) {
+	public boolean contains(double x, double y, double z) {
 		// calculate vector between point and centroid
 		final double vx = x - cx;
 		final double vy = y - cy;
 		final double vz = z - cz;
 
-		final double[] radii = getSortedRadii();
+		double[] radii = getSortedRadii();
 		final double maxRadius = radii[2];
 
 		// if further than maximal sphere's bounding box, must be outside
-		if (Math.abs(vx) > maxRadius || Math.abs(vy) > maxRadius || Math.abs(vz) > maxRadius)
+		if (Math.abs(vx) > maxRadius || Math.abs(vy) > maxRadius
+				|| Math.abs(vz) > maxRadius)
 			return false;
 
 		// calculate distance from centroid
@@ -185,7 +186,7 @@ public class Ellipsoid {
 	/**
 	 * Get the radii sorted in ascending order. Note that there is no guarantee
 	 * that this ordering relates at all to the eigenvectors or eigenvalues.
-	 *
+	 * 
 	 * @return radii in ascending order
 	 */
 	public double[] getSortedRadii() {
@@ -211,20 +212,20 @@ public class Ellipsoid {
 			b = temp;
 		}
 
-		final double[] sortedRadii = { a, b, c };
+		double[] sortedRadii = { a, b, c };
 
 		return sortedRadii;
 	}
 
 	public double[] getCentre() {
-		final double[] centre = { cx, cy, cz };
+		double[] centre = { cx, cy, cz };
 		return centre.clone();
 	}
 
 	public double[][] getSurfacePoints(final int nPoints) {
 
 		// get regularly-spaced points on the unit sphere
-		final double[][] vectors = Vectors.regularVectors(nPoints);
+		double[][] vectors = Vectors.regularVectors(nPoints);
 		return getSurfacePoints(vectors);
 
 	}
@@ -242,55 +243,55 @@ public class Ellipsoid {
 			final double vx = x * ev[0][0] + y * ev[0][1] + z * ev[0][2] + cx;
 			final double vy = x * ev[1][0] + y * ev[1][1] + z * ev[1][2] + cy;
 			final double vz = x * ev[2][0] + y * ev[2][1] + z * ev[2][2] + cz;
-
-			vectors[p] = new double[] { vx, vy, vz };
+			
+			vectors[p] = new double[]{vx, vy, vz};
 		}
 		return vectors;
 	}
 
 	/**
 	 * Dilate all three axes by a fractional increment
-	 *
+	 * 
 	 * @param increment
 	 */
-	public void dilate(final double increment) {
+	public void dilate(double increment) {
 		dilate(this.ra * increment, this.rb * increment, this.rc * increment);
 	}
 
 	/**
 	 * Constrict all three axes by a fractional increment
-	 *
+	 * 
 	 * @param increment
 	 */
-	public void contract(final double increment) {
+	public void contract(double increment) {
 		dilate(-increment);
 	}
 
 	/**
 	 * Contract the semiaxes by independent absolute amounts
-	 *
+	 * 
 	 * @param ca
 	 * @param cb
 	 * @param cd
 	 */
-	public void contract(final double ca, final double cb, final double cd) {
+	public void contract(double ca, double cb, double cd) {
 		dilate(-ca, -cb, -cd);
 	}
 
 	/**
 	 * Dilate the ellipsoid semiaxes by independent absolute amounts
-	 *
+	 * 
 	 * @param da
 	 * @param db
 	 * @param dc
 	 */
-	public void dilate(final double da, final double db, final double dc) {
+	public void dilate(double da, double db, double dc) {
 		setRadii(this.ra + da, this.rb + db, this.rc + dc);
 	}
 
 	/**
 	 * Translate the ellipsoid
-	 *
+	 * 
 	 * @param dx
 	 *            shift in x
 	 * @param dy
@@ -298,7 +299,7 @@ public class Ellipsoid {
 	 * @param dz
 	 *            shift in z
 	 */
-	public void translate(final double dx, final double dy, final double dz) {
+	public void translate(double dx, double dy, double dz) {
 		this.cx += dx;
 		this.cy += dy;
 		this.cz += dz;
@@ -306,7 +307,7 @@ public class Ellipsoid {
 
 	/**
 	 * Translate the ellipsoid to a given new centroid
-	 *
+	 * 
 	 * @param x
 	 *            new centroid x-coordinate
 	 * @param y
@@ -314,7 +315,7 @@ public class Ellipsoid {
 	 * @param z
 	 *            new centroid z-coordinate
 	 */
-	public void setCentroid(final double x, final double y, final double z) {
+	public void setCentroid(double x, double y, double z) {
 		this.cx = x;
 		this.cy = y;
 		this.cz = z;
@@ -322,25 +323,25 @@ public class Ellipsoid {
 
 	/**
 	 * Rotate the ellipsoid by the given 3x3 Matrix
-	 *
+	 * 
 	 * @param R
 	 *            a 3x3 rotation matrix
 	 */
-	public void rotate(final double[][] rotation) {
+	public void rotate(double[][] rotation) {
 		setRotation(times(this.ev, rotation));
 	}
 
 	/**
 	 * Set rotation to the supplied rotation matrix. Does no error checking.
 	 */
-	public void setRotation(final double[][] rotation) {
+	public void setRotation(double[][] rotation) {
 		this.ev = rotation.clone();
 		update3x3Matrix();
 	}
 
 	/**
 	 * Return a copy of the ellipsoid's eigenvector matrix
-	 *
+	 * 
 	 * @return
 	 */
 	public double[][] getRotation() {
@@ -351,14 +352,15 @@ public class Ellipsoid {
 	 * Set the radii (semiaxes). No ordering is assumed, except with regard to
 	 * the columns of the eigenvector rotation matrix (i.e. a relates to the 0th
 	 * eigenvector column, b to the 1st and c to the 2nd)
-	 *
+	 * 
 	 * @param a
 	 * @param b
 	 * @param c
 	 */
-	public void setRadii(final double a, final double b, final double c) {
+	public void setRadii(double a, double b, double c) {
 		if (a <= 0 || b <= 0 || c <= 0) {
-			throw new IllegalArgumentException("Ellipsoid cannot have semiaxis <= 0");
+			throw new IllegalArgumentException(
+					"Ellipsoid cannot have semiaxis <= 0");
 		}
 		this.ra = a;
 		this.rb = b;
@@ -386,7 +388,7 @@ public class Ellipsoid {
 
 	/**
 	 * Calculate the minimal and maximal x values bounding this ellipsoid
-	 *
+	 * 
 	 * @return array containing minimal and maximal x values
 	 */
 	public double[] getXMinAndMax() {
@@ -394,13 +396,13 @@ public class Ellipsoid {
 		final double m12 = ev[0][1] * rb;
 		final double m13 = ev[0][2] * rc;
 		final double d = Math.sqrt(m11 * m11 + m12 * m12 + m13 * m13);
-		final double[] minMax = { cx - d, cx + d };
+		double[] minMax = { cx - d, cx + d };
 		return minMax;
 	}
 
 	/**
 	 * Calculate the minimal and maximal y values bounding this ellipsoid
-	 *
+	 * 
 	 * @return array containing minimal and maximal y values
 	 */
 	public double[] getYMinAndMax() {
@@ -408,13 +410,13 @@ public class Ellipsoid {
 		final double m22 = ev[1][1] * rb;
 		final double m23 = ev[1][2] * rc;
 		final double d = Math.sqrt(m21 * m21 + m22 * m22 + m23 * m23);
-		final double[] minMax = { cy - d, cy + d };
+		double[] minMax = { cy - d, cy + d };
 		return minMax;
 	}
 
 	/**
 	 * Calculate the minimal and maximal z values bounding this ellipsoid
-	 *
+	 * 
 	 * @return array containing minimal and maximal z values
 	 */
 	public double[] getZMinAndMax() {
@@ -422,17 +424,17 @@ public class Ellipsoid {
 		final double m32 = ev[2][1] * rb;
 		final double m33 = ev[2][2] * rc;
 		final double d = Math.sqrt(m31 * m31 + m32 * m32 + m33 * m33);
-		final double[] minMax = { cz - d, cz + d };
+		double[] minMax = { cz - d, cz + d };
 		return minMax;
 	}
 
 	/**
 	 * Calculate the minimal axis-aligned bounding box of this ellipsoid
-	 *
+	 * 
 	 * Thanks to Tavian Barnes for the simplification of the maths
 	 * http://tavianator.com/2014/06/exact-bounding-boxes-for-spheres-ellipsoids
-	 *
-	 *
+	 * 
+	 * 
 	 * @return 6-element array containing x min, x max, y min, y max, z min, z
 	 *         max
 	 */
@@ -447,20 +449,20 @@ public class Ellipsoid {
 	/**
 	 * Get the 9 variables a - k of the equation
 	 * <p>
-	 * <i>ax</i><sup>2</sup> + <i>by</i><sup>2</sup> + <i>cz</i><sup>2</sup> + 2
-	 * <i>dxy</i> + 2<i>fxz</i> + 2<i>gyz</i> + 2<i>hx</i> + 2<i>jy</i> + 2
-	 * <i>kz</i> = 1
+	 * <i>ax</i><sup>2</sup> + <i>by</i><sup>2</sup> + <i>cz</i><sup>2</sup> +
+	 * 2<i>dxy</i> + 2<i>fxz</i> + 2<i>gyz</i> + 2<i>hx</i> + 2<i>jy</i> +
+	 * 2<i>kz</i> = 1
 	 * </p>
-	 *
+	 * 
 	 * Thanks to Alessandro Felder for pointing out how this can be determined
 	 * trivially by multiplying out the elements of the matrix relation
-	 *
+	 * 
 	 * <p>
 	 * [X - X<sub>0</sub>]<sup><i>T</i></sup> <i>H</i> [X - X<sub>0</sub>]
 	 * </p>
-	 *
+	 * 
 	 * @return 9-element array containing the ellipsoid equation variables a-k
-	 *
+	 * 
 	 * @see http://en.wikipedia.org/wiki/Matrix_multiplication#Row_vector.2
 	 *      C_square_matrix.2C_and_column_vector
 	 */
@@ -471,8 +473,8 @@ public class Ellipsoid {
 		final double h11 = eh[0][0];
 		final double h22 = eh[1][1];
 		final double h33 = eh[2][2];
-		final double p = h11 * cx * cx + h22 * cy * cy + h33 * cz * cz + h2112 * cx * cy + h3113 * cx * cz
-				+ h3223 * cy * cz;
+		final double p = h11 * cx * cx + h22 * cy * cy + h33 * cz * cz + h2112
+				* cx * cy + h3113 * cx * cz + h3223 * cy * cz;
 		final double q = 1 - p;
 		final double twoQ = 2 * q;
 
@@ -486,21 +488,19 @@ public class Ellipsoid {
 		final double j = (-2 * cy * h22 - cx * h2112 - cz * h3223) / twoQ;
 		final double k = (-2 * cz * h33 - cx * h3113 - cy * h3223) / twoQ;
 
-		final double[] equation = { a, b, c, d, f, g, h, j, k };
+		double[] equation = { a, b, c, d, f, g, h, j, k };
 
 		return equation;
 	}
 
 	/**
 	 * High performance 3x3 matrix multiplier with no bounds or error checking
-	 *
-	 * @param a
-	 *            3x3 matrix
-	 * @param b
-	 *            3x3 matrix
+	 * 
+	 * @param a 3x3 matrix
+	 * @param b 3x3 matrix
 	 * @return result of matrix multiplication, c = ab
 	 */
-	private static double[][] times(final double[][] a, final double[][] b) {
+	private static double[][] times(double[][] a, double[][] b) {
 		final double a00 = a[0][0];
 		final double a01 = a[0][1];
 		final double a02 = a[0][2];
@@ -519,12 +519,15 @@ public class Ellipsoid {
 		final double b20 = b[2][0];
 		final double b21 = b[2][1];
 		final double b22 = b[2][2];
-		final double[][] c = {
-				{ a00 * b00 + a01 * b10 + a02 * b20, a00 * b01 + a01 * b11 + a02 * b21,
+		double[][] c = {
+				{ a00 * b00 + a01 * b10 + a02 * b20,
+						a00 * b01 + a01 * b11 + a02 * b21,
 						a00 * b02 + a01 * b12 + a02 * b22 },
-				{ a10 * b00 + a11 * b10 + a12 * b20, a10 * b01 + a11 * b11 + a12 * b21,
+				{ a10 * b00 + a11 * b10 + a12 * b20,
+						a10 * b01 + a11 * b11 + a12 * b21,
 						a10 * b02 + a11 * b12 + a12 * b22 },
-				{ a20 * b00 + a21 * b10 + a22 * b20, a20 * b01 + a21 * b11 + a22 * b21,
+				{ a20 * b00 + a21 * b10 + a22 * b20,
+						a20 * b01 + a21 * b11 + a22 * b21,
 						a20 * b02 + a21 * b12 + a22 * b22 }, };
 		return c;
 	}
@@ -532,8 +535,8 @@ public class Ellipsoid {
 	/**
 	 * Transpose a 3x3 matrix in double[][] format. Does no error checking.
 	 */
-	public static double[][] transpose(final double[][] a) {
-		final double[][] t = new double[3][3];
+	public static double[][] transpose(double[][] a) {
+		double[][] t = new double[3][3];
 		t[0][0] = a[0][0];
 		t[0][1] = a[1][0];
 		t[0][2] = a[2][0];
@@ -548,11 +551,11 @@ public class Ellipsoid {
 
 	/**
 	 * Calculate the matrix representation of the ellipsoid (centre,
-	 * eigenvalues, eigenvectors) from the equation variables <i>ax</i>
-	 * <sup>2</sup> + <i>by</i><sup>2</sup> + <i>cz</i><sup>2</sup> + 2
-	 * <i>dxy</i> + 2<i>exz</i> + 2<i>fyz</i> + 2<i>gx</i> + 2<i>hy</i> + 2
-	 * <i>iz</i> = 1 <br />
-	 *
+	 * eigenvalues, eigenvectors) from the equation variables
+	 * <i>ax</i><sup>2</sup> + <i>by</i><sup>2</sup> + <i>cz</i><sup>2</sup> +
+	 * 2<i>dxy</i> + 2<i>exz</i> + 2<i>fyz</i> + 2<i>gx</i> + 2<i>hy</i> +
+	 * 2<i>iz</i> = 1 <br />
+	 * 
 	 * @param a
 	 * @param b
 	 * @param c
@@ -566,43 +569,48 @@ public class Ellipsoid {
 	 *         (double[3][3]), eigenvectors (double[3][3]), and the
 	 *         EigenvalueDecomposition
 	 */
-	public static Object[] matrixFromEquation(final double a, final double b, final double c, final double d,
-			final double e, final double f, final double g, final double h, final double i) {
+	public static Object[] matrixFromEquation(double a, double b, double c,
+			double d, double e, double f, double g, double h, double i) {
 
 		// the fitted equation
-		final double[][] v = { { a }, { b }, { c }, { d }, { e }, { f }, { g }, { h }, { i } };
-		final Matrix V = new Matrix(v);
+		double[][] v = { { a }, { b }, { c }, { d }, { e }, { f }, { g },
+				{ h }, { i } };
+		Matrix V = new Matrix(v);
 
 		// 4x4 based on equation variables
-		final double[][] aa = { { a, d, e, g }, { d, b, f, h }, { e, f, c, i }, { g, h, i, -1 }, };
-		final Matrix A = new Matrix(aa);
+		double[][] aa = { { a, d, e, g }, { d, b, f, h }, { e, f, c, i },
+				{ g, h, i, -1 }, };
+		Matrix A = new Matrix(aa);
 
 		// find the centre
-		final Matrix C = (A.getMatrix(0, 2, 0, 2).times(-1).inverse()).times(V.getMatrix(6, 8, 0, 0));
+		Matrix C = (A.getMatrix(0, 2, 0, 2).times(-1).inverse()).times(V
+				.getMatrix(6, 8, 0, 0));
 
 		// using the centre and 4x4 calculate the
 		// eigendecomposition
-		final Matrix T = Matrix.eye(4);
+		Matrix T = Matrix.eye(4);
 		T.setMatrix(3, 3, 0, 2, C.transpose());
-		final Matrix R = T.times(A.times(T.transpose()));
-		final double r33 = R.get(3, 3);
-		final Matrix R02 = R.getMatrix(0, 2, 0, 2);
-		final EigenvalueDecomposition E = new EigenvalueDecomposition(R02.times(-1 / r33));
+		Matrix R = T.times(A.times(T.transpose()));
+		double r33 = R.get(3, 3);
+		Matrix R02 = R.getMatrix(0, 2, 0, 2);
+		EigenvalueDecomposition E = new EigenvalueDecomposition(R02.times(-1
+				/ r33));
 
-		final double[] centre = C.getColumnPackedCopy();
-		final double[][] eigenVectors = E.getV().getArrayCopy();
-		final double[][] eigenValues = E.getD().getArrayCopy();
-		final Object[] result = { centre, eigenValues, eigenVectors, E };
+		double[] centre = C.getColumnPackedCopy();
+		double[][] eigenVectors = E.getV().getArrayCopy();
+		double[][] eigenValues = E.getD().getArrayCopy();
+		Object[] result = { centre, eigenValues, eigenVectors, E };
 		return result;
 	}
 
 	/**
 	 * Perform a deep copy of this Ellipsoid
-	 *
+	 * 
 	 * @return
 	 */
 	public Ellipsoid copy() {
-		final Ellipsoid copy = new Ellipsoid(this.ra, this.rb, this.rc, this.cx, this.cy, this.cz, this.ev.clone());
+		Ellipsoid copy = new Ellipsoid(this.ra, this.rb, this.rc, this.cx,
+				this.cy, this.cz, this.ev.clone());
 		return copy;
 	}
 

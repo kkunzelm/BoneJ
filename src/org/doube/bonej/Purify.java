@@ -1,9 +1,9 @@
 package org.doube.bonej;
 
 /**
- *
+ *  
  * Purify plugin for ImageJ
- * Copyright 2009 2010 Michael Doube
+ * Copyright 2009 2010 Michael Doube 
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,56 +30,53 @@ import org.doube.util.ImageCheck;
 import org.doube.util.Multithreader;
 import org.doube.util.UsageReporter;
 
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
+import ij.*;
+import ij.plugin.PlugIn;
+import ij.measure.ResultsTable;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
-import ij.measure.ResultsTable;
-import ij.plugin.PlugIn;
 
 /**
  * <p>
  * Purify_ plugin for ImageJ
  * </p>
- *
+ * 
  * <p>
  * Prepare binary stack for connectivity analysis by reducing number of
  * reference phase (foreground) particles to 1, filling cavities within the
  * single reference phase particle and ensuring there is only 1 particle in the
  * background phase.
  * </p>
- *
+ * 
  * <p>
  * Foreground is 26-connected and background is 6-connected.
  * </p>
- *
- *
+ * 
+ * 
  * @author Michael Doube
  * @version 1.0
- * @see
- * 		<p>
+ * @see <p>
  *      Odgaard A, Gundersen HJG (1993) Quantification of connectivity in
  *      cancellous bone, with special emphasis on 3-D reconstructions. Bone 14:
- *      173-182.
- *      <a href="http://dx.doi.org/10.1016/8756-3282(93)90245-6">doi:10.1016
+ *      173-182. <a
+ *      href="http://dx.doi.org/10.1016/8756-3282(93)90245-6">doi:10.1016
  *      /8756-3282(93)90245-6</a>
  *      </p>
- *
+ * 
  */
 public class Purify implements PlugIn, DialogListener {
 
-	public void run(final String arg) {
+	public void run(String arg) {
 		if (!ImageCheck.checkEnvironment())
 			return;
-		final ImagePlus imp = IJ.getImage();
-		final ImageCheck ic = new ImageCheck();
-		if (!ImageCheck.isBinary(imp)) {
+		ImagePlus imp = IJ.getImage();
+		ImageCheck ic = new ImageCheck();
+		if (!ic.isBinary(imp)) {
 			IJ.error("Purify requires a binary image");
 			return;
 		}
-		final GenericDialog gd = new GenericDialog("Setup");
-		final String[] items = { "Multithreaded", "Linear", "Mapped" };
+		GenericDialog gd = new GenericDialog("Setup");
+		String[] items = { "Multithreaded", "Linear", "Mapped" };
 		gd.addChoice("Labelling algorithm", items, items[2]);
 		gd.addNumericField("Chunk Size", 4, 0, 4, "slices");
 		gd.addCheckbox("Performance Log", false);
@@ -97,11 +94,11 @@ public class Purify implements PlugIn, DialogListener {
 			labelMethod = ParticleCounter.LINEAR;
 		else
 			labelMethod = ParticleCounter.MAPPED;
-		final int slicesPerChunk = (int) Math.floor(gd.getNextNumber());
-		final boolean showPerformance = gd.getNextBoolean();
-		final boolean doCopy = gd.getNextBoolean();
-		final long startTime = System.currentTimeMillis();
-		final ImagePlus purified = purify(imp, slicesPerChunk, labelMethod);
+		int slicesPerChunk = (int) Math.floor(gd.getNextNumber());
+		boolean showPerformance = gd.getNextBoolean();
+		boolean doCopy = gd.getNextBoolean();
+		long startTime = System.currentTimeMillis();
+		ImagePlus purified = purify(imp, slicesPerChunk, labelMethod);
 		if (null != purified) {
 			if (doCopy) {
 				purified.show();
@@ -113,7 +110,8 @@ public class Purify implements PlugIn, DialogListener {
 					IJ.run("Invert LUT");
 			}
 		}
-		final double duration = ((double) System.currentTimeMillis() - (double) startTime) / 1000;
+		double duration = ((double) System.currentTimeMillis() - (double) startTime)
+				/ (double) 1000;
 
 		if (showPerformance)
 			showResults(duration, imp, slicesPerChunk, labelMethod);
@@ -124,41 +122,42 @@ public class Purify implements PlugIn, DialogListener {
 	/**
 	 * Find all foreground and particles in an image and remove all but the
 	 * largest. Foreground is 26-connected and background is 8-connected.
-	 *
+	 * 
 	 * @param imp
 	 *            input image
 	 * @param slicesPerChunk
 	 *            number of slices to send to each CPU core as a chunk
 	 * @return purified image
 	 */
-	public ImagePlus purify(final ImagePlus imp, final int slicesPerChunk, final int labelMethod) {
+	public ImagePlus purify(ImagePlus imp, int slicesPerChunk, int labelMethod) {
 
-		final ParticleCounter pc = new ParticleCounter();
+		ParticleCounter pc = new ParticleCounter();
 		pc.setLabelMethod(labelMethod);
 
 		final int fg = ParticleCounter.FORE;
-		final Object[] foregroundParticles = pc.getParticles(imp, slicesPerChunk, 0, Double.POSITIVE_INFINITY, fg);
-		final byte[][] workArray = (byte[][]) foregroundParticles[0];
+		Object[] foregroundParticles = pc.getParticles(imp, slicesPerChunk, 0,
+				Double.POSITIVE_INFINITY, fg);
+		byte[][] workArray = (byte[][]) foregroundParticles[0];
 		int[][] particleLabels = (int[][]) foregroundParticles[1];
 		// index 0 is background particle's size...
 		long[] particleSizes = pc.getParticleSizes(particleLabels);
 		removeSmallParticles(workArray, particleLabels, particleSizes, fg);
 
 		final int bg = ParticleCounter.BACK;
-		final Object[] backgroundParticles = pc.getParticles(imp, workArray, slicesPerChunk, 0,
-				Double.POSITIVE_INFINITY, bg);
+		Object[] backgroundParticles = pc.getParticles(imp, workArray,
+				slicesPerChunk, 0, Double.POSITIVE_INFINITY, bg);
 		particleLabels = (int[][]) backgroundParticles[1];
 		particleSizes = pc.getParticleSizes(particleLabels);
 		touchEdges(imp, workArray, particleLabels, particleSizes, bg);
 		particleSizes = pc.getParticleSizes(particleLabels);
 		removeSmallParticles(workArray, particleLabels, particleSizes, bg);
 
-		final ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
+		ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
 		final int nSlices = workArray.length;
 		for (int z = 0; z < nSlices; z++) {
 			stack.addSlice(imp.getStack().getSliceLabel(z + 1), workArray[z]);
 		}
-		final ImagePlus purified = new ImagePlus("Purified", stack);
+		ImagePlus purified = new ImagePlus("Purified", stack);
 		purified.setCalibration(imp.getCalibration());
 		IJ.showStatus("Image Purified");
 		IJ.showProgress(1.0);
@@ -173,16 +172,16 @@ public class Purify implements PlugIn, DialogListener {
 	 * isolated background particles touching the sides should be assigned to
 	 * the single background particle.
 	 * </p>
-	 *
+	 * 
 	 * @param workArray
 	 * @param particleLabels
 	 * @param particleSizes
 	 * @param phase
 	 * @return particleLabels
 	 */
-	private void touchEdges(final ImagePlus imp, final byte[][] workArray, final int[][] particleLabels,
-			final long[] particleSizes, final int phase) {
-		final String status = "Background particles touching ";
+	private void touchEdges(ImagePlus imp, final byte[][] workArray,
+			int[][] particleLabels, final long[] particleSizes, final int phase) {
+		String status = "Background particles touching ";
 		final int w = imp.getWidth();
 		final int h = imp.getHeight();
 		final int d = imp.getImageStackSize();
@@ -203,7 +202,7 @@ public class Purify implements PlugIn, DialogListener {
 		// the label of the biggest particle
 		int x, y, z;
 
-		final ParticleCounter pc = new ParticleCounter();
+		ParticleCounter pc = new ParticleCounter();
 		// up
 		z = 0;
 		for (y = 0; y < h; y++) {
@@ -212,8 +211,10 @@ public class Purify implements PlugIn, DialogListener {
 			final int rowOffset = y * w;
 			for (x = 0; x < w; x++) {
 				final int offset = rowOffset + x;
-				if (workArray[z][offset] == phase && particleLabels[z][offset] != biggestParticle) {
-					pc.replaceLabel(particleLabels, particleLabels[z][offset], biggestParticle, 0, d, true);
+				if (workArray[z][offset] == phase
+						&& particleLabels[z][offset] != biggestParticle) {
+					pc.replaceLabel(particleLabels, particleLabels[z][offset],
+							biggestParticle, 0, d, true);
 				}
 			}
 		}
@@ -226,8 +227,10 @@ public class Purify implements PlugIn, DialogListener {
 			final int rowOffset = y * w;
 			for (x = 0; x < w; x++) {
 				final int offset = rowOffset + x;
-				if (workArray[z][offset] == phase && particleLabels[z][offset] != biggestParticle) {
-					pc.replaceLabel(particleLabels, particleLabels[z][offset], biggestParticle, 0, d, true);
+				if (workArray[z][offset] == phase
+						&& particleLabels[z][offset] != biggestParticle) {
+					pc.replaceLabel(particleLabels, particleLabels[z][offset],
+							biggestParticle, 0, d, true);
 				}
 			}
 		}
@@ -239,8 +242,10 @@ public class Purify implements PlugIn, DialogListener {
 			IJ.showProgress(z, d);
 			for (y = 0; y < h; y++) {
 				final int offset = y * w;
-				if (workArray[z][offset] == phase && particleLabels[z][offset] != biggestParticle) {
-					pc.replaceLabel(particleLabels, particleLabels[z][offset], biggestParticle, 0, d, true);
+				if (workArray[z][offset] == phase
+						&& particleLabels[z][offset] != biggestParticle) {
+					pc.replaceLabel(particleLabels, particleLabels[z][offset],
+							biggestParticle, 0, d, true);
 				}
 			}
 		}
@@ -252,22 +257,26 @@ public class Purify implements PlugIn, DialogListener {
 			IJ.showProgress(z, d);
 			for (y = 0; y < h; y++) {
 				final int offset = y * w + x;
-				if (workArray[z][offset] == phase && particleLabels[z][offset] != biggestParticle) {
-					pc.replaceLabel(particleLabels, particleLabels[z][offset], biggestParticle, 0, d, true);
+				if (workArray[z][offset] == phase
+						&& particleLabels[z][offset] != biggestParticle) {
+					pc.replaceLabel(particleLabels, particleLabels[z][offset],
+							biggestParticle, 0, d, true);
 				}
 			}
 		}
 
 		// front
 		y = h - 1;
-		final int rowOffset = y * w;
+		int rowOffset = y * w;
 		for (z = 0; z < d; z++) {
 			IJ.showStatus(status + "front");
 			IJ.showProgress(z, d);
 			for (x = 0; x < w; x++) {
 				final int offset = rowOffset + x;
-				if (workArray[z][offset] == phase && particleLabels[z][offset] != biggestParticle) {
-					pc.replaceLabel(particleLabels, particleLabels[z][offset], biggestParticle, 0, d, true);
+				if (workArray[z][offset] == phase
+						&& particleLabels[z][offset] != biggestParticle) {
+					pc.replaceLabel(particleLabels, particleLabels[z][offset],
+							biggestParticle, 0, d, true);
 				}
 			}
 		}
@@ -279,8 +288,10 @@ public class Purify implements PlugIn, DialogListener {
 			IJ.showProgress(z, d);
 			for (x = 0; x < w; x++) {
 				final int offset = x;
-				if (workArray[z][offset] == phase && particleLabels[z][offset] != biggestParticle) {
-					pc.replaceLabel(particleLabels, particleLabels[z][offset], biggestParticle, 0, d, true);
+				if (workArray[z][offset] == phase
+						&& particleLabels[z][offset] != biggestParticle) {
+					pc.replaceLabel(particleLabels, particleLabels[z][offset],
+							biggestParticle, 0, d, true);
 				}
 			}
 		}
@@ -289,15 +300,16 @@ public class Purify implements PlugIn, DialogListener {
 
 	/**
 	 * Remove all but the largest phase particle from workArray
-	 *
+	 * 
 	 * @param workArray
 	 * @param particleLabels
 	 * @param particleSizes
 	 * @param phase
 	 * @return workArray
 	 */
-	private void removeSmallParticles(final byte[][] workArray, final int[][] particleLabels,
-			final long[] particleSizes, final int phase) {
+	private void removeSmallParticles(final byte[][] workArray,
+			final int[][] particleLabels, final long[] particleSizes,
+			final int phase) {
 		final int d = workArray.length;
 		final int wh = workArray[0].length;
 		final int fg = ParticleCounter.FORE;
@@ -311,14 +323,15 @@ public class Purify implements PlugIn, DialogListener {
 		}
 		final long maxVoxCount = maxVC;
 		final AtomicInteger ai = new AtomicInteger(0);
-		final Thread[] threads = Multithreader.newThreads();
+		Thread[] threads = Multithreader.newThreads();
 		for (int thread = 0; thread < threads.length; thread++) {
 			threads[thread] = new Thread(new Runnable() {
-					public void run() {
+				public void run() {
 					if (phase == fg) {
 						// go through work array and turn all
 						// smaller foreground particles into background (0)
-						for (int z = ai.getAndIncrement(); z < d; z = ai.getAndIncrement()) {
+						for (int z = ai.getAndIncrement(); z < d; z = ai
+								.getAndIncrement()) {
 							for (int i = 0; i < wh; i++) {
 								if (workArray[z][i] == fg) {
 									if (particleSizes[particleLabels[z][i]] < maxVoxCount) {
@@ -332,7 +345,8 @@ public class Purify implements PlugIn, DialogListener {
 					} else if (phase == bg) {
 						// go through work array and turn all
 						// smaller background particles into foreground
-						for (int z = ai.getAndIncrement(); z < d; z = ai.getAndIncrement()) {
+						for (int z = ai.getAndIncrement(); z < d; z = ai
+								.getAndIncrement()) {
 							for (int i = 0; i < wh; i++) {
 								if (workArray[z][i] == bg) {
 									if (particleSizes[particleLabels[z][i]] < maxVoxCount) {
@@ -353,17 +367,18 @@ public class Purify implements PlugIn, DialogListener {
 
 	/**
 	 * Show a Results table containing some performance information
-	 *
+	 * 
 	 * @param chunkRanges
 	 * @param duration
 	 */
-	private void showResults(final double duration, final ImagePlus imp, int slicesPerChunk, final int labelMethod) {
+	private void showResults(double duration, ImagePlus imp,
+			int slicesPerChunk, int labelMethod) {
 		if (labelMethod == ParticleCounter.LINEAR)
 			slicesPerChunk = imp.getImageStackSize();
-		final ParticleCounter pc = new ParticleCounter();
+		ParticleCounter pc = new ParticleCounter();
 		final int nChunks = pc.getNChunks(imp, slicesPerChunk);
-		final int[][] chunkRanges = pc.getChunkRanges(imp, nChunks, slicesPerChunk);
-		final ResultsTable rt = ResultsTable.getResultsTable();
+		int[][] chunkRanges = pc.getChunkRanges(imp, nChunks, slicesPerChunk);
+		ResultsTable rt = ResultsTable.getResultsTable();
 		rt.incrementCounter();
 		rt.addLabel(imp.getTitle());
 		rt.addValue("Algorithm", labelMethod);
@@ -371,19 +386,20 @@ public class Purify implements PlugIn, DialogListener {
 		rt.addValue("Slices", imp.getImageStackSize());
 		rt.addValue("Chunks", nChunks);
 		rt.addValue("Chunk size", slicesPerChunk);
-		rt.addValue("Last chunk size", chunkRanges[1][nChunks - 1] - chunkRanges[0][nChunks - 1]);
+		rt.addValue("Last chunk size", chunkRanges[1][nChunks - 1]
+				- chunkRanges[0][nChunks - 1]);
 		rt.addValue("Duration (s)", duration);
 		rt.show("Results");
 		return;
 	}
 
-	public boolean dialogItemChanged(final GenericDialog gd, final AWTEvent e) {
+	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
 		if (!DialogModifier.allNumbersValid(gd.getNumericFields()))
 			return false;
-		final Vector<?> choices = gd.getChoices();
-		final Vector<?> numbers = gd.getNumericFields();
-		final Choice choice = (Choice) choices.get(0);
-		final TextField num = (TextField) numbers.get(0);
+		Vector<?> choices = gd.getChoices();
+		Vector<?> numbers = gd.getNumericFields();
+		Choice choice = (Choice) choices.get(0);
+		TextField num = (TextField) numbers.get(0);
 		if (choice.getSelectedItem().contentEquals("Multithreaded")) {
 			num.setEnabled(true);
 		} else {

@@ -12,14 +12,14 @@ import ij.process.ImageProcessor;
 public class StackStats {
 	/**
 	 * Work out some summary stats
-	 *
+	 * 
 	 * @param imp
 	 *            32-bit thickness image
 	 * @return double[] containing mean, standard deviation and maximum as its
 	 *         0th and 1st and 2nd elements respectively
-	 *
+	 * 
 	 */
-	public static double[] meanStdDev(final ImagePlus imp) {
+	public static double[] meanStdDev(ImagePlus imp) {
 		final int w = imp.getWidth();
 		final int h = imp.getHeight();
 		final int d = imp.getStackSize();
@@ -54,21 +54,22 @@ public class StackStats {
 			}
 		}
 		final double stDev = Math.sqrt(sumSquares / pixCount);
-		final double[] stats = { meanThick, stDev, maxThick };
+		double[] stats = { meanThick, stDev, maxThick };
 		return stats;
 	}
 
 	/**
 	 * Get a histogram of stack's pixel values
-	 *
+	 * 
 	 * @param imp2
 	 * @return
 	 */
-	public static int[] getStackHistogram(final ImagePlus imp) {
+	public static int[] getStackHistogram(ImagePlus imp) {
 		final int d = imp.getStackSize();
 		final ImageStack stack = imp.getStack();
 		if (stack.getProcessor(1) instanceof FloatProcessor)
-			throw new IllegalArgumentException("32-bit images not supported by this histogram method");
+			throw new IllegalArgumentException(
+					"32-bit images not supported by this histogram method");
 		final int[][] sliceHistograms = new int[d + 1][];
 		final Roi roi = imp.getRoi();
 		if (stack.getSize() == 1) {
@@ -76,13 +77,14 @@ public class StackStats {
 		}
 
 		final AtomicInteger ai = new AtomicInteger(1);
-		final Thread[] threads = Multithreader.newThreads();
+		Thread[] threads = Multithreader.newThreads();
 		for (int thread = 0; thread < threads.length; thread++) {
 			threads[thread] = new Thread(new Runnable() {
 				public void run() {
-					for (int z = ai.getAndIncrement(); z <= d; z = ai.getAndIncrement()) {
+					for (int z = ai.getAndIncrement(); z <= d; z = ai
+							.getAndIncrement()) {
 						IJ.showStatus("Getting stack histogram...");
-						final ImageProcessor ip = stack.getProcessor(z);
+						ImageProcessor ip = stack.getProcessor(z);
 						ip.setRoi(roi);
 						sliceHistograms[z] = ip.getHistogram();
 					}
@@ -92,10 +94,10 @@ public class StackStats {
 		Multithreader.startAndJoin(threads);
 
 		final int l = sliceHistograms[1].length;
-		final int[] histogram = new int[l];
+		int[] histogram = new int[l];
 
 		for (int z = 1; z <= d; z++) {
-			final int[] slice = sliceHistograms[z];
+			int[] slice = sliceHistograms[z];
 			for (int i = 0; i < l; i++)
 				histogram[i] += slice[i];
 		}

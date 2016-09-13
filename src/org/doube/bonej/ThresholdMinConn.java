@@ -3,7 +3,7 @@ package org.doube.bonej;
 /**
  * ThresholdMinConn plugin for ImageJ
  * Copyright 2009 2010 Michael Doube
- *
+ * 
  *This program is free software: you can redistribute it and/or modify
  *it under the terms of the GNU General Public License as published by
  *the Free Software Foundation, either version 3 of the License, or
@@ -66,17 +66,17 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 	/** Number of cycles of dilation to apply */
 	private int nDilates = 0;
 
-	public void run(final String arg) {
+	public void run(String arg) {
 		if (!ImageCheck.checkEnvironment())
 			return;
-		final ImagePlus imp = IJ.getImage();
-		final ImageProcessor ip = imp.getProcessor();
-		final ImageCheck ic = new ImageCheck();
-		if (ImageCheck.isBinary(imp)) {
+		ImagePlus imp = IJ.getImage();
+		ImageProcessor ip = imp.getProcessor();
+		ImageCheck ic = new ImageCheck();
+		if (ic.isBinary(imp)) {
 			IJ.error("Can't threshold a binary image");
 			return;
 		}
-		if (imp.getBitDepth() == 32) {
+		if (imp.getBitDepth() == 32){
 			IJ.error("Currently unable to threshold 32-bit images");
 			return;
 		}
@@ -84,27 +84,26 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 			return;
 		}
 
-		if (!ImageCheck.isVoxelIsotropic(imp, 0.05)) {
+		if (!ic.isVoxelIsotropic(imp, 0.05)) {
 			if (!Interpreter.isBatchMode())
 				IJ.run("Properties...");
 		}
 
-		final int[] histogram = StackStats.getStackHistogram(imp);
-		double threshold = ip.getAutoThreshold(histogram);
+		int[] histogram = StackStats.getStackHistogram(imp);
+		double threshold = (double) ip.getAutoThreshold(histogram);
 
 		if (!thresholdOnly) {
-			final double[] testThreshold = getTestThreshold(imp, histogram);
-			final double[] conns = getConns(imp, testThreshold, subVolume);
-			final double minimum = getMinimum(testThreshold, conns);
+			double[] testThreshold = getTestThreshold(imp, histogram);
+			double[] conns = getConns(imp, testThreshold, subVolume);
+			double minimum = getMinimum(testThreshold, conns);
 			threshold = checkMinimum(imp, minimum, histogram);
 			if (doPlot)
 				showPlot(testThreshold, conns);
 		}
-		IJ.log(imp.getTitle() + " threshold  = " + IJ.d2s(imp.getCalibration().getCValue(threshold), 1) + " ("
-				+ IJ.d2s(threshold, 1) + ")");
+		IJ.log(imp.getTitle() + " threshold  = "+IJ.d2s(imp.getCalibration().getCValue(threshold),1)+" ("+ IJ.d2s(threshold, 1)+")");
 
 		if (applyThreshold) {
-			final ImageStack stack2 = thresholdStack(imp, threshold);
+			ImageStack stack2 = thresholdStack(imp, threshold);
 			imp.setStack(imp.getTitle(), stack2);
 			IJ.selectWindow(imp.getTitle());
 			if (!imp.isInvertedLut())
@@ -115,7 +114,7 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 		return;
 	}
 
-	private ImageStack thresholdStack(final ImagePlus imp, final double threshold) {
+	private ImageStack thresholdStack(ImagePlus imp, final double threshold) {
 		final int w = imp.getWidth();
 		final int h = imp.getHeight();
 		final int d = imp.getStackSize();
@@ -123,17 +122,18 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 		final ImageStack stack = imp.getImageStack();
 		final ImageStack stack2 = new ImageStack(w, h, d);
 		final AtomicInteger ai = new AtomicInteger(1);
-		final Thread[] threads = Multithreader.newThreads();
+		Thread[] threads = Multithreader.newThreads();
 		for (int thread = 0; thread < threads.length; thread++) {
 			threads[thread] = new Thread(new Runnable() {
 				public void run() {
-					for (int z = ai.getAndIncrement(); z <= d; z = ai.getAndIncrement()) {
+					for (int z = ai.getAndIncrement(); z <= d; z = ai
+							.getAndIncrement()) {
 						// byte[] slice = new byte[nPixels];
-						final ImageProcessor ip = stack.getProcessor(z);
-						final ByteProcessor bp = new ByteProcessor(w, h);
+						ImageProcessor ip = stack.getProcessor(z);
+						ByteProcessor bp = new ByteProcessor(w, h);
 						for (int y = 0; y < h; y++) {
 							for (int x = 0; x < w; x++) {
-								final double pixel = ip.get(x, y);
+								final double pixel = (double) ip.get(x, y);
 								if (pixel > threshold) {
 									bp.set(x, y, 255);
 								} else {
@@ -154,25 +154,25 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 	 * Check the calculated optimal (parabolic minimum) value for sanity. If the
 	 * test passes, the original minimum value is returned, otherwise the
 	 * autoThreshold of the histogram is returned.
-	 *
+	 * 
 	 * @param minimum
 	 * @param histogram
 	 * @return
 	 */
-	private double checkMinimum(final ImagePlus imp, final double minimum, final int[] histogram) {
+	private double checkMinimum(ImagePlus imp, double minimum, int[] histogram) {
 		double threshold = minimum;
-		final ImageProcessor ip = imp.getProcessor();
+		ImageProcessor ip = imp.getProcessor();
 
 		// threshold cannot be greater or less than min and max of histogram
 		int i = 0;
 		while (histogram[i] == 0)
 			i++;
-		final int histogramMin = i;
+		int histogramMin = i;
 
 		i = histogram.length - 1;
 		while (histogram[i] == 0)
 			i--;
-		final int histogramMax = i;
+		int histogramMax = i;
 
 		if (minimum < histogramMin || minimum > histogramMax) {
 			threshold = ip.getAutoThreshold(histogram);
@@ -184,19 +184,19 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 	}
 
 	/**
-	 *
+	 * 
 	 * @param imp2
 	 * @param histogram
 	 * @return
 	 */
-	private double[] getTestThreshold(final ImagePlus imp2, final int[] histogram) {
-		final ImageProcessor ip = imp2.getProcessor();
-		final int startThreshold = ip.getAutoThreshold(histogram);
+	private double[] getTestThreshold(ImagePlus imp2, int[] histogram) {
+		ImageProcessor ip = imp2.getProcessor();
+		int startThreshold = ip.getAutoThreshold(histogram);
 
 		// get a range of thresholds to test
 		final int nTests = testCount;
 		final double testStep = 2 * testRange * startThreshold / (nTests - 1);
-		final double[] testThreshold = new double[nTests];
+		double[] testThreshold = new double[nTests];
 		for (int i = 0; i < nTests; i++) {
 			testThreshold[i] = startThreshold * (1 - testRange) + i * testStep;
 		}
@@ -206,31 +206,31 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 	/**
 	 * Fit a parabola to the threshold and connectivity data and return its
 	 * minimum
-	 *
+	 * 
 	 * @param testThreshold
 	 * @param conns
 	 * @return
 	 */
-	private double getMinimum(final double[] testThreshold, final double[] conns) {
-		final CurveFitter cf = new CurveFitter(testThreshold, conns);
+	private double getMinimum(double[] testThreshold, double[] conns) {
+		CurveFitter cf = new CurveFitter(testThreshold, conns);
 		cf.doFit(CurveFitter.POLY2);
-		final double[] params = cf.getParams();
-		final double b = params[1], c = params[2];
-		final double xmin = -b / (2 * c);
+		double[] params = cf.getParams();
+		double b = params[1], c = params[2];
+		double xmin = -b / (2 * c);
 		return xmin;
 	}
 
 	/**
 	 * Display a graph showing connectivity vs. threshold
-	 *
+	 * 
 	 * @param testThreshold
 	 * @param conns
 	 */
-	private void showPlot(final double[] testThreshold, final double[] conns) {
+	private void showPlot(double[] testThreshold, double[] conns) {
 		// convert arrays to floats
-		final int nPoints = testThreshold.length;
-		final float[] xData = new float[nPoints];
-		final float[] yData = new float[nPoints];
+		int nPoints = testThreshold.length;
+		float[] xData = new float[nPoints];
+		float[] yData = new float[nPoints];
 		double xMin = Double.MAX_VALUE;
 		double xMax = Double.MIN_VALUE;
 		double yMax = Double.MIN_VALUE;
@@ -241,12 +241,13 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 			xMax = Math.max(xMax, xData[i]);
 			yMax = Math.max(yMax, yData[i]);
 		}
-		final Plot plot = new Plot("Connectivity vs. Threshold", "Threshold", "Connectivity", xData, yData);
+		Plot plot = new Plot("Connectivity vs. Threshold", "Threshold",
+				"Connectivity", xData, yData);
 		plot.addPoints(xData, yData, Plot.CIRCLE);
 		plot.setLimits(xMin, xMax, 0, yMax);
 		plot.draw();
-		final ImageProcessor plotIp = plot.getProcessor();
-		final ImagePlus plotImage = new ImagePlus();
+		ImageProcessor plotIp = plot.getProcessor();
+		ImagePlus plotImage = new ImagePlus();
 		plotImage.setProcessor("Connectivity vs. Threshold", plotIp);
 		plotImage.show();
 	}
@@ -254,28 +255,29 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 	/**
 	 * Calculate connectivity after threshold-purify-erode-purify-dilate for
 	 * several threshold values.
-	 *
+	 * 
 	 * @param imp2
 	 * @param testThreshold
 	 *            array of test threshold values (from getTestThreshold)
 	 * @return array containing connectivity resulting from each test threshold
 	 */
-	private double[] getConns(final ImagePlus imp2, final double[] testThreshold, final int subVolume) {
-		final int nTests = testThreshold.length;
-		final double[] conns = new double[nTests];
+	private double[] getConns(ImagePlus imp2, double[] testThreshold,
+			int subVolume) {
+		int nTests = testThreshold.length;
+		double[] conns = new double[nTests];
 
 		// make a stack out of imp2 that is no greater than
 		// subvolume pixels in any dimension
-		final ImageStack stack = imp2.getImageStack();
+		ImageStack stack = imp2.getImageStack();
 
-		final int width = Math.min(imp2.getWidth(), subVolume);
-		final int height = Math.min(imp2.getHeight(), subVolume);
-		final int depth = Math.min(imp2.getStackSize(), subVolume);
+		final int width = (int) Math.min(imp2.getWidth(), subVolume);
+		final int height = (int) Math.min(imp2.getHeight(), subVolume);
+		final int depth = (int) Math.min(imp2.getStackSize(), subVolume);
 
-		final ImageStack stack2 = new ImageStack(width, height);
+		ImageStack stack2 = new ImageStack(width, height);
 		for (int z = 1; z <= depth; z++) {
-			final ImageProcessor ip = stack.getProcessor(z);
-			final ImageProcessor ip2 = ip.createProcessor(width, height);
+			ImageProcessor ip = stack.getProcessor(z);
+			ImageProcessor ip2 = ip.createProcessor(width, height);
 			for (int y = 0; y < height; y++) {
 				for (int x = 0; x < width; x++) {
 					ip2.set(x, y, ip.get(x, y));
@@ -284,17 +286,17 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 			stack2.addSlice(stack.getSliceLabel(z), ip2);
 		}
 
-		final ImagePlus imp3 = new ImagePlus();
+		ImagePlus imp3 = new ImagePlus();
 		for (int i = 0; i < nTests; i++) {
 			// apply threshold
 			final double thresh = testThreshold[i];
-			final ImageStack stack3 = new ImageStack(width, height);
+			ImageStack stack3 = new ImageStack(width, height);
 			for (int z = 1; z <= depth; z++) {
-				final ImageProcessor ip2 = stack2.getProcessor(z);
-				final ByteProcessor bp = new ByteProcessor(width, height);
+				ImageProcessor ip2 = stack2.getProcessor(z);
+				ByteProcessor bp = new ByteProcessor(width, height);
 				for (int y = 0; y < height; y++) {
 					for (int x = 0; x < width; x++) {
-						if (ip2.get(x, y) > thresh) {
+						if ((double) ip2.get(x, y) > thresh) {
 							bp.set(x, y, 255);
 						} else {
 							bp.set(x, y, 0);
@@ -312,10 +314,10 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 			imp3.show();
 			if (!imp3.isInvertedLut())
 				IJ.run("Invert LUT");
-			final Purify p = new Purify();
-			final Erode e = new Erode();
-			final Dilate d = new Dilate();
-			final int labelMethod = ParticleCounter.MULTI;
+			Purify p = new Purify();
+			Erode e = new Erode();
+			Dilate d = new Dilate();
+			int labelMethod = ParticleCounter.MULTI;
 			replaceImage(imp3, p.purify(imp3, 4, labelMethod));
 			for (int j = 0; j < nErodes; j++)
 				replaceImage(imp3, e.erode(imp3, 255));
@@ -325,10 +327,10 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 				replaceImage(imp3, d.dilate(imp3, 255));
 
 			// get the connectivity
-			final Connectivity con = new Connectivity();
-			final double sumEuler = con.getSumEuler(imp3);
-			final double deltaChi = con.getDeltaChi(imp3, sumEuler);
-			final double connectivity = con.getConnectivity(deltaChi);
+			Connectivity con = new Connectivity();
+			double sumEuler = con.getSumEuler(imp3);
+			double deltaChi = con.getDeltaChi(imp3, sumEuler);
+			double connectivity = con.getConnectivity(deltaChi);
 			// add connectivity to the array
 			conns[i] = connectivity;
 		}
@@ -338,12 +340,12 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 
 	/**
 	 * Replace the image in imp with imp2
-	 *
+	 * 
 	 * @param imp
 	 * @param imp2
 	 */
-	private void replaceImage(final ImagePlus imp, final ImagePlus imp2) {
-		final ImageStack stack2 = imp2.getStack();
+	private void replaceImage(ImagePlus imp, ImagePlus imp2) {
+		ImageStack stack2 = imp2.getStack();
 		imp.setStack(null, stack2);
 		imp.show();
 		if (!imp.isInvertedLut())
@@ -351,7 +353,7 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 	}
 
 	private boolean showDialog() {
-		final GenericDialog gd = new GenericDialog("Options");
+		GenericDialog gd = new GenericDialog("Options");
 		gd.addCheckbox("Threshold Only", false);
 		gd.addCheckbox("Apply Threshold", false);
 		gd.addCheckbox("Show Plot", true);
@@ -364,56 +366,55 @@ public class ThresholdMinConn implements PlugIn, DialogListener {
 		gd.addHelp("http://bonej.org/threshold");
 		gd.addDialogListener(this);
 		gd.showDialog();
-		
-		if (gd.wasCanceled())
+		if (gd.wasCanceled()) {
 			return false;
-
-		thresholdOnly = gd.getNextBoolean();
-		applyThreshold = gd.getNextBoolean();
-		doPlot = gd.getNextBoolean();
-		testCount = (int) Math.floor(gd.getNextNumber());
-		if (testCount <= 1)
-			thresholdOnly = true;
-		testRange = gd.getNextNumber();
-		if (testRange < 0)
-			testRange = 0;
-		if (testRange > 0.5)
-			testRange = 0.5;
-		subVolume = (int) Math.floor(gd.getNextNumber());
-		nErodes = (int) Math.floor(gd.getNextNumber());
-		nDilates = (int) Math.floor(gd.getNextNumber());
-		return true;
-
+		} else {
+			thresholdOnly = gd.getNextBoolean();
+			applyThreshold = gd.getNextBoolean();
+			doPlot = gd.getNextBoolean();
+			testCount = (int) Math.floor(gd.getNextNumber());
+			if (testCount <= 1)
+				thresholdOnly = true;
+			testRange = gd.getNextNumber();
+			if (testRange < 0)
+				testRange = 0;
+			if (testRange > 0.5)
+				testRange = 0.5;
+			subVolume = (int) Math.floor(gd.getNextNumber());
+			nErodes = (int) Math.floor(gd.getNextNumber());
+			nDilates = (int) Math.floor(gd.getNextNumber());
+			return true;
+		}
 	}
 
-	public boolean dialogItemChanged(final GenericDialog gd, final AWTEvent e) {
+	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
 		if (!DialogModifier.allNumbersValid(gd.getNumericFields()))
 			return false;
-		final Vector<?> checkboxes = gd.getCheckboxes();
-		final Checkbox to = (Checkbox) checkboxes.get(0);
+		Vector<?> checkboxes = gd.getCheckboxes();
+		Checkbox to = (Checkbox) checkboxes.get(0);
 		thresholdOnly = to.getState();
 		if (thresholdOnly) {
 			// uncheck show plot
-			final Checkbox t = (Checkbox) checkboxes.get(2);
+			Checkbox t = (Checkbox) checkboxes.get(2);
 			t.setState(false);
 			t.setEnabled(false);
 			doPlot = false;
 			// grey out fields
-			final Vector<?> numbers = gd.getNumericFields();
+			Vector<?> numbers = gd.getNumericFields();
 			for (int i = 0; i < numbers.size(); i++) {
-				final TextField n = (TextField) numbers.get(i);
+				TextField n = (TextField) numbers.get(i);
 				n.setEnabled(false);
 			}
 		}
 		if (!thresholdOnly) {
 			// un-grey out fields
-			final Vector<?> numbers = gd.getNumericFields();
+			Vector<?> numbers = gd.getNumericFields();
 			for (int i = 0; i < numbers.size(); i++) {
-				final TextField n = (TextField) numbers.get(i);
+				TextField n = (TextField) numbers.get(i);
 				n.setEnabled(true);
 			}
 			// enable show plot
-			final Checkbox t = (Checkbox) checkboxes.get(2);
+			Checkbox t = (Checkbox) checkboxes.get(2);
 			t.setEnabled(true);
 		}
 		DialogModifier.registerMacroValues(gd, gd.getComponents());

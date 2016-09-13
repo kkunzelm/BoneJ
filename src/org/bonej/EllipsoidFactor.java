@@ -3,7 +3,7 @@ package org.bonej;
 /**
  * EllipsoidFactor plugin for ImageJ
  * Copyright 2013 2014 2015 Michael Doube
- *
+ * 
  *This program is free software: you can redistribute it and/or modify
  *it under the terms of the GNU General Public License as published by
  *the Free Software Foundation, either version 3 of the License, or
@@ -29,9 +29,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
 
-import org.doube.geometry.Ellipsoid;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.plugin.PlugIn;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.gui.GenericDialog;
+import ij.gui.Plot;
+import ij.measure.Calibration;
+//import ij.measure.ResultsTable;
+import ij3d.Image3DUniverse;
+
 import org.doube.geometry.Trig;
 import org.doube.geometry.Vectors;
+import org.doube.geometry.Ellipsoid;
 import org.doube.skeleton.Skeletonize3D;
 import org.doube.util.ArrayHelper;
 import org.doube.util.ImageCheck;
@@ -41,17 +53,6 @@ import org.doube.util.UsageReporter;
 
 import customnode.CustomLineMesh;
 import customnode.CustomPointMesh;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.ImageStack;
-import ij.gui.GenericDialog;
-import ij.gui.Plot;
-import ij.measure.Calibration;
-import ij.plugin.PlugIn;
-import ij.process.FloatProcessor;
-import ij.process.ImageProcessor;
-//import ij.measure.ResultsTable;
-import ij3d.Image3DUniverse;
 
 /**
  * <p>
@@ -69,12 +70,12 @@ import ij3d.Image3DUniverse;
  * to +1 for strongly prolate (javelin-shaped) ellipsoids. For an ellipsoid with
  * axes a ≤ b ≤ c, EF = a/b − b/c.
  * </p>
- *
- * @see <a href="http://dx.doi.org/10.3389/fendo.2015.00015">
+ * 
+ * @see http://dx.doi.org/10.3389/fendo.2015.00015
  *      "The ellipsoid factor for quantification of rods, plates, and intermediate forms in 3D geometries"
- *      Frontiers in Endocrinology (2015)</a>
+ *      Frontiers in Endocrinology (2015)
  * @author Michael Doube
- *
+ * 
  */
 public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	private int nVectors = 100;
@@ -106,27 +107,30 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 
 	private double[][] regularVectors;
 
-	public void run(final String arg) {
+	public void run(String arg) {
 		if (!ImageCheck.checkEnvironment())
 			return;
-		final ImagePlus imp = IJ.getImage();
+		ImagePlus imp = IJ.getImage();
 		if (imp == null) {
 			IJ.noImage();
 			return;
 		}
-		if (!ImageCheck.isBinary(imp) || !ImageCheck.isMultiSlice(imp) || !ImageCheck.isVoxelIsotropic(imp, 0.001)) {
+		ImageCheck ic = new ImageCheck();
+		if (!ic.isBinary(imp) || !ic.isMultiSlice(imp)
+				|| !ic.isVoxelIsotropic(imp, 0.001)) {
 			IJ.error("8-bit binary stack with isotropic pixel spacing required.");
 			return;
 		}
-		final Calibration cal = imp.getCalibration();
-		final String units = cal.getUnits();
+		Calibration cal = imp.getCalibration();
+		String units = cal.getUnits();
 		final double pW = cal.pixelWidth;
 		final double pH = cal.pixelHeight;
 		final double pD = cal.pixelDepth;
 		vectorIncrement *= Math.min(pD, Math.min(pH, pW));
 		maxDrift = Math.sqrt(pW * pW + pH * pH + pD * pD);
-		stackVolume = pW * pH * pD * imp.getWidth() * imp.getHeight() * imp.getStackSize();
-		final GenericDialog gd = new GenericDialog("Setup");
+		stackVolume = pW * pH * pD * imp.getWidth() * imp.getHeight()
+				* imp.getStackSize();
+		GenericDialog gd = new GenericDialog("Setup");
 		gd.addMessage("Sampling options");
 		gd.addNumericField("Sampling_increment", vectorIncrement, 3, 8, units);
 		gd.addNumericField("Vectors", nVectors, 0, 8, "");
@@ -144,7 +148,8 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		gd.addNumericField("Gaussian_sigma", 2, 0, 4, "px");
 		gd.addCheckbox("Flinn_plot", false);
 
-		gd.addMessage("Ellipsoid Factor is beta software.\n" + "Please report your experiences to the user group:\n"
+		gd.addMessage("Ellipsoid Factor is beta software.\n"
+				+ "Please report your experiences to the user group:\n"
 				+ "http://bit.ly/bonej-group");
 		gd.addHelp("http://bonej.org/ef");
 		gd.showDialog();
@@ -160,20 +165,20 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		maxIterations = (int) Math.round(gd.getNextNumber());
 		maxDrift = gd.getNextNumber();
 
-		final boolean doEFImage = gd.getNextBoolean();
-		final boolean doEllipsoidIDImage = gd.getNextBoolean();
-		final boolean doVolumeImage = gd.getNextBoolean();
-		final boolean doAxisRatioImages = gd.getNextBoolean();
-		final boolean doFlinnPeakPlot = gd.getNextBoolean();
-		final double gaussianSigma = gd.getNextNumber();
-		final boolean doFlinnPlot = gd.getNextBoolean();
+		boolean doEFImage = gd.getNextBoolean();
+		boolean doEllipsoidIDImage = gd.getNextBoolean();
+		boolean doVolumeImage = gd.getNextBoolean();
+		boolean doAxisRatioImages = gd.getNextBoolean();
+		boolean doFlinnPeakPlot = gd.getNextBoolean();
+		double gaussianSigma = gd.getNextNumber();
+		boolean doFlinnPlot = gd.getNextBoolean();
 
 		// }
 
 		final double[][] unitVectors = Vectors.regularVectors(nVectors);
 		regularVectors = unitVectors.clone();
 
-		final int[][] skeletonPoints = skeletonPoints(imp);
+		int[][] skeletonPoints = skeletonPoints(imp);
 
 		IJ.log("Found " + skeletonPoints.length + " skeleton points");
 
@@ -183,59 +188,67 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		}
 
 		long start = System.currentTimeMillis();
-		final Ellipsoid[] ellipsoids = findEllipsoids(imp, skeletonPoints, unitVectors);
+		Ellipsoid[] ellipsoids = findEllipsoids(imp, skeletonPoints,
+				unitVectors);
 		long stop = System.currentTimeMillis();
 
-		IJ.log("Found " + ellipsoids.length + " ellipsoids in " + (stop - start) + " ms");
+		IJ.log("Found " + ellipsoids.length + " ellipsoids in "
+				+ (stop - start) + " ms");
 
 		start = System.currentTimeMillis();
-		final int[][] maxIDs = findMaxID(imp, ellipsoids);
+		int[][] maxIDs = findMaxID(imp, ellipsoids);
 		stop = System.currentTimeMillis();
 
 		IJ.log("Found maximal ellipsoids in " + (stop - start) + " ms");
 
-		final double fractionFilled = calculateFillingEfficiency(maxIDs);
-		IJ.log(IJ.d2s((fractionFilled * 100), 3) + "% of foreground volume filled with ellipsoids");
+		double fractionFilled = calculateFillingEfficiency(maxIDs);
+		IJ.log(IJ.d2s((fractionFilled * 100), 3)
+				+ "% of foreground volume filled with ellipsoids");
 
 		if (doVolumeImage) {
-			final ImagePlus volumes = displayVolumes(imp, maxIDs, ellipsoids);
+			ImagePlus volumes = displayVolumes(imp, maxIDs, ellipsoids);
 			volumes.show();
-			volumes.setDisplayRange(0, ellipsoids[(int) (0.05 * ellipsoids.length)].getVolume());
+			volumes.setDisplayRange(0,
+					ellipsoids[(int) (0.05 * ellipsoids.length)].getVolume());
 			IJ.run("Fire");
 		}
 
 		if (doAxisRatioImages) {
-			final ImagePlus middleOverLong = displayMiddleOverLong(imp, maxIDs, ellipsoids);
+			ImagePlus middleOverLong = displayMiddleOverLong(imp, maxIDs,
+					ellipsoids);
 			middleOverLong.show();
 			middleOverLong.setDisplayRange(0, 1);
 			IJ.run("Fire");
 
-			final ImagePlus shortOverMiddle = displayShortOverMiddle(imp, maxIDs, ellipsoids);
+			ImagePlus shortOverMiddle = displayShortOverMiddle(imp, maxIDs,
+					ellipsoids);
 			shortOverMiddle.show();
 			shortOverMiddle.setDisplayRange(0, 1);
 			IJ.run("Fire");
 		}
 
 		if (doEFImage) {
-			final ImagePlus eF = displayEllipsoidFactor(imp, maxIDs, ellipsoids);
+			ImagePlus eF = displayEllipsoidFactor(imp, maxIDs, ellipsoids);
 			eF.show();
 			eF.setDisplayRange(-1, 1);
 			IJ.run("Fire");
 		}
 
 		if (doEllipsoidIDImage) {
-			final ImagePlus maxID = displayMaximumIDs(maxIDs, ellipsoids, imp);
+			ImagePlus maxID = displayMaximumIDs(maxIDs, ellipsoids, imp);
 			maxID.show();
 			maxID.setDisplayRange(-ellipsoids.length / 2, ellipsoids.length);
 		}
 
 		if (doFlinnPlot) {
-			final ImagePlus flinnPlot = drawFlinnPlot("Weighted-flinn-plot-" + imp.getTitle(), ellipsoids);
+			ImagePlus flinnPlot = drawFlinnPlot(
+					"Weighted-flinn-plot-" + imp.getTitle(), ellipsoids);
 			flinnPlot.show();
 		}
 
 		if (doFlinnPeakPlot) {
-			final ImagePlus flinnPeaks = drawFlinnPeakPlot("FlinnPeaks_" + imp.getTitle(), imp, maxIDs, ellipsoids,
+			ImagePlus flinnPeaks = drawFlinnPeakPlot(
+					"FlinnPeaks_" + imp.getTitle(), imp, maxIDs, ellipsoids,
 					gaussianSigma, 512);
 			flinnPeaks.show();
 		}
@@ -254,15 +267,16 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		final long[] filledCount = new long[l];
 
 		final AtomicInteger ai = new AtomicInteger(0);
-		final Thread[] threads = Multithreader.newThreads();
+		Thread[] threads = Multithreader.newThreads();
 		for (int thread = 0; thread < threads.length; thread++) {
 			threads[thread] = new Thread(new Runnable() {
 				public void run() {
 
-					for (int i = ai.getAndIncrement(); i < l; i = ai.getAndIncrement()) {
+					for (int i = ai.getAndIncrement(); i < l; i = ai
+							.getAndIncrement()) {
 						IJ.showStatus("Calculating filling effiency...");
 						IJ.showProgress(i, l);
-						final int[] idSlice = maxIDs[i];
+						int[] idSlice = maxIDs[i];
 						final int len = idSlice.length;
 						for (int j = 0; j < len; j++) {
 							final int val = idSlice[j];
@@ -285,55 +299,57 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 			sumFilledCount += filledCount[i];
 		}
 
-		final long unfilled = sumForegroundCount - sumFilledCount;
-		IJ.log(unfilled + " pixels unfilled with ellipsoids out of " + sumForegroundCount + " total foreground pixels");
+		long unfilled = sumForegroundCount - sumFilledCount;
+		IJ.log(unfilled + " pixels unfilled with ellipsoids out of "
+				+ sumForegroundCount + " total foreground pixels");
 
 		return (double) sumFilledCount / (double) sumForegroundCount;
 	}
 
 	/**
 	 * Display each ellipsoid's axis ratios in a scatter plot
-	 *
+	 * 
 	 * @param title
 	 * @param ellipsoids
 	 * @return
 	 */
-	private ImagePlus drawFlinnPlot(final String title, final Ellipsoid[] ellipsoids) {
+	private ImagePlus drawFlinnPlot(String title, Ellipsoid[] ellipsoids) {
 
 		final int l = ellipsoids.length;
-		final double[] aOverB = new double[l];
-		final double[] bOverC = new double[l];
+		double[] aOverB = new double[l];
+		double[] bOverC = new double[l];
 
 		for (int i = 0; i < l; i++) {
-			final double[] radii = ellipsoids[i].getSortedRadii();
+			double[] radii = ellipsoids[i].getSortedRadii();
 			aOverB[i] = radii[0] / radii[1];
 			bOverC[i] = radii[1] / radii[2];
 		}
 
-		final Plot plot = new Plot("Flinn Diagram of " + title, "b/c", "a/b");
+		Plot plot = new Plot("Flinn Diagram of " + title, "b/c", "a/b");
 		plot.setLimits(0, 1, 0, 1);
 		plot.setSize(1024, 1024);
 		plot.addPoints(bOverC, aOverB, Plot.CIRCLE);
-		final ImageProcessor plotIp = plot.getProcessor();
-		final ImagePlus plotImage = new ImagePlus("Flinn Diagram of " + title, plotIp);
+		ImageProcessor plotIp = plot.getProcessor();
+		ImagePlus plotImage = new ImagePlus("Flinn Diagram of " + title, plotIp);
 		return plotImage;
 	}
 
 	/**
 	 * Draw a Flinn diagram with each point given an intensity proportional to
 	 * the volume of the structure with that axis ratio
-	 *
+	 * 
 	 * @param title
 	 * @param imp
 	 * @param maxIDs
 	 * @param ellipsoids
 	 * @param sigma
 	 * @param size
-	 *
+	 * 
 	 * @return
 	 */
-	private ImagePlus drawFlinnPeakPlot(final String title, final ImagePlus imp, final int[][] maxIDs,
-			final Ellipsoid[] ellipsoids, final double sigma, final int size) {
+	private ImagePlus drawFlinnPeakPlot(String title, ImagePlus imp,
+			final int[][] maxIDs, final Ellipsoid[] ellipsoids, double sigma,
+			int size) {
 
 		final ImageStack stack = imp.getImageStack();
 		final int w = stack.getWidth();
@@ -344,15 +360,16 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		final float[][] bc = new float[d][];
 
 		final AtomicInteger ai = new AtomicInteger(1);
-		final Thread[] threads = Multithreader.newThreads();
+		Thread[] threads = Multithreader.newThreads();
 		for (int thread = 0; thread < threads.length; thread++) {
 			threads[thread] = new Thread(new Runnable() {
 				public void run() {
 
-					for (int z = ai.getAndIncrement(); z <= d; z = ai.getAndIncrement()) {
+					for (int z = ai.getAndIncrement(); z <= d; z = ai
+							.getAndIncrement()) {
 						IJ.showStatus("Generating Flinn Diagram");
 						IJ.showProgress(z, d);
-						final int[] idSlice = maxIDs[z];
+						int[] idSlice = maxIDs[z];
 						int l = 0;
 						for (int y = 0; y < h; y++) {
 							final int offset = y * w;
@@ -360,8 +377,8 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 								if (idSlice[offset + x] >= 0)
 									l++;
 						}
-						final float[] abl = new float[l];
-						final float[] bcl = new float[l];
+						float[] abl = new float[l];
+						float[] bcl = new float[l];
 						int j = 0;
 						for (int y = 0; y < h; y++) {
 							final int offset = y * w;
@@ -386,28 +403,28 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		Multithreader.startAndJoin(threads);
 
 		int l = 0;
-		for (final float[] f : ab)
+		for (float[] f : ab)
 			l += f.length;
 
-		final float[] aOverB = new float[l];
-		final float[] bOverC = new float[l];
+		float[] aOverB = new float[l];
+		float[] bOverC = new float[l];
 
 		int i = 0;
-		for (final float[] fl : ab) {
-			for (final float f : fl) {
+		for (float[] fl : ab) {
+			for (float f : fl) {
 				aOverB[i] = f;
 				i++;
 			}
 		}
 		i = 0;
-		for (final float[] fl : bc) {
-			for (final float f : fl) {
+		for (float[] fl : bc) {
+			for (float f : fl) {
 				bOverC[i] = f;
 				i++;
 			}
 		}
 
-		final float[][] pixels = new float[size][size];
+		float[][] pixels = new float[size][size];
 
 		for (int j = 0; j < l; j++) {
 			final int x = (int) Math.floor((size - 1) * bOverC[j]);
@@ -415,41 +432,44 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 			pixels[x][y] += 1;
 		}
 
-		final FloatProcessor fp = new FloatProcessor(pixels);
+		FloatProcessor fp = new FloatProcessor(pixels);
 		if (sigma > 0)
 			fp.blurGaussian(sigma);
 
-		final Calibration cal = new Calibration();
+		Calibration cal = new Calibration();
 		cal.setXUnit("b/c");
 		cal.setYUnit("a/b");
-		cal.pixelWidth = 1.0 / size;
-		cal.pixelHeight = 1.0 / size;
+		cal.pixelWidth = 1.0 / (double) size;
+		cal.pixelHeight = 1.0 / (double) size;
 		cal.setInvertY(true);
-		final ImagePlus plot = new ImagePlus(title, fp);
+		ImagePlus plot = new ImagePlus(title, fp);
 		plot.setCalibration(cal);
 		return plot;
 	}
 
-	private ImagePlus displayEllipsoidFactor(final ImagePlus imp, final int[][] maxIDs, final Ellipsoid[] ellipsoids) {
+	private ImagePlus displayEllipsoidFactor(ImagePlus imp,
+			final int[][] maxIDs, final Ellipsoid[] ellipsoids) {
 		final ImageStack stack = imp.getImageStack();
 		final int w = stack.getWidth();
 		final int h = stack.getHeight();
 		final int d = stack.getSize();
 
-		final ImageStack efStack = new ImageStack(imp.getWidth(), imp.getHeight());
+		final ImageStack efStack = new ImageStack(imp.getWidth(),
+				imp.getHeight());
 
 		final float[][] stackPixels = new float[d + 1][w * h];
 
 		final AtomicInteger ai = new AtomicInteger(1);
-		final Thread[] threads = Multithreader.newThreads();
+		Thread[] threads = Multithreader.newThreads();
 		for (int thread = 0; thread < threads.length; thread++) {
 			threads[thread] = new Thread(new Runnable() {
 				public void run() {
-					for (int z = ai.getAndIncrement(); z <= d; z = ai.getAndIncrement()) {
+					for (int z = ai.getAndIncrement(); z <= d; z = ai
+							.getAndIncrement()) {
 						IJ.showStatus("Generating EF image");
 						IJ.showProgress(z, d);
-						final int[] idSlice = maxIDs[z];
-						final float[] pixels = stackPixels[z];
+						int[] idSlice = maxIDs[z];
+						float[] pixels = stackPixels[z];
 
 						for (int y = 0; y < h; y++) {
 							final int offset = y * w;
@@ -471,31 +491,34 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		for (int z = 1; z <= d; z++)
 			efStack.addSlice("" + z, stackPixels[z]);
 
-		final ImagePlus ef = new ImagePlus("EF-" + imp.getTitle(), efStack);
+		ImagePlus ef = new ImagePlus("EF-" + imp.getTitle(), efStack);
 		ef.setCalibration(imp.getCalibration());
 		return ef;
 	}
 
-	private ImagePlus displayShortOverMiddle(final ImagePlus imp, final int[][] maxIDs, final Ellipsoid[] ellipsoids) {
+	private ImagePlus displayShortOverMiddle(ImagePlus imp,
+			final int[][] maxIDs, final Ellipsoid[] ellipsoids) {
 		final ImageStack stack = imp.getImageStack();
 		final int w = stack.getWidth();
 		final int h = stack.getHeight();
 		final int d = stack.getSize();
 
-		final ImageStack smStack = new ImageStack(imp.getWidth(), imp.getHeight());
+		final ImageStack smStack = new ImageStack(imp.getWidth(),
+				imp.getHeight());
 
 		final float[][] stackPixels = new float[d + 1][w * h];
 
 		final AtomicInteger ai = new AtomicInteger(1);
-		final Thread[] threads = Multithreader.newThreads();
+		Thread[] threads = Multithreader.newThreads();
 		for (int thread = 0; thread < threads.length; thread++) {
 			threads[thread] = new Thread(new Runnable() {
 				public void run() {
-					for (int z = ai.getAndIncrement(); z <= d; z = ai.getAndIncrement()) {
+					for (int z = ai.getAndIncrement(); z <= d; z = ai
+							.getAndIncrement()) {
 						IJ.showStatus("Generating short/middle axis image");
 						IJ.showProgress(z, d);
-						final int[] idSlice = maxIDs[z];
-						final float[] pixels = stackPixels[z];
+						int[] idSlice = maxIDs[z];
+						float[] pixels = stackPixels[z];
 						double[] radii = new double[3];
 						for (int y = 0; y < h; y++) {
 							final int offset = y * w;
@@ -518,31 +541,35 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		for (int z = 1; z <= d; z++)
 			smStack.addSlice("" + z, stackPixels[z]);
 
-		final ImagePlus shortmid = new ImagePlus("Short_Mid-" + imp.getTitle(), smStack);
+		ImagePlus shortmid = new ImagePlus("Short_Mid-" + imp.getTitle(),
+				smStack);
 		shortmid.setCalibration(imp.getCalibration());
 		return shortmid;
 	}
 
-	private ImagePlus displayMiddleOverLong(final ImagePlus imp, final int[][] maxIDs, final Ellipsoid[] ellipsoids) {
+	private ImagePlus displayMiddleOverLong(ImagePlus imp,
+			final int[][] maxIDs, final Ellipsoid[] ellipsoids) {
 		final ImageStack stack = imp.getImageStack();
 		final int w = stack.getWidth();
 		final int h = stack.getHeight();
 		final int d = stack.getSize();
 
-		final ImageStack mlStack = new ImageStack(imp.getWidth(), imp.getHeight());
+		final ImageStack mlStack = new ImageStack(imp.getWidth(),
+				imp.getHeight());
 
 		final float[][] stackPixels = new float[d + 1][w * h];
 
 		final AtomicInteger ai = new AtomicInteger(1);
-		final Thread[] threads = Multithreader.newThreads();
+		Thread[] threads = Multithreader.newThreads();
 		for (int thread = 0; thread < threads.length; thread++) {
 			threads[thread] = new Thread(new Runnable() {
 				public void run() {
-					for (int z = ai.getAndIncrement(); z <= d; z = ai.getAndIncrement()) {
+					for (int z = ai.getAndIncrement(); z <= d; z = ai
+							.getAndIncrement()) {
 						IJ.showStatus("Generating volume image");
 						IJ.showProgress(z, d);
-						final int[] idSlice = maxIDs[z];
-						final float[] pixels = stackPixels[z];
+						int[] idSlice = maxIDs[z];
+						float[] pixels = stackPixels[z];
 						double[] radii = new double[3];
 						for (int y = 0; y < h; y++) {
 							final int offset = y * w;
@@ -565,38 +592,42 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		for (int z = 1; z <= d; z++)
 			mlStack.addSlice("" + z, stackPixels[z]);
 
-		final ImagePlus midLong = new ImagePlus("Mid_Long-" + imp.getTitle(), mlStack);
+		ImagePlus midLong = new ImagePlus("Mid_Long-" + imp.getTitle(), mlStack);
 		midLong.setCalibration(imp.getCalibration());
 		return midLong;
 	}
 
-	private ImagePlus displayVolumes(final ImagePlus imp, final int[][] maxIDs, final Ellipsoid[] ellipsoids) {
+	private ImagePlus displayVolumes(ImagePlus imp, final int[][] maxIDs,
+			final Ellipsoid[] ellipsoids) {
 		final ImageStack stack = imp.getImageStack();
 		final int w = stack.getWidth();
 		final int h = stack.getHeight();
 		final int d = stack.getSize();
 
-		final ImageStack volStack = new ImageStack(imp.getWidth(), imp.getHeight());
+		final ImageStack volStack = new ImageStack(imp.getWidth(),
+				imp.getHeight());
 
 		final float[][] stackPixels = new float[d + 1][w * h];
 
 		final AtomicInteger ai = new AtomicInteger(1);
-		final Thread[] threads = Multithreader.newThreads();
+		Thread[] threads = Multithreader.newThreads();
 		for (int thread = 0; thread < threads.length; thread++) {
 			threads[thread] = new Thread(new Runnable() {
 				public void run() {
-					for (int z = ai.getAndIncrement(); z <= d; z = ai.getAndIncrement()) {
+					for (int z = ai.getAndIncrement(); z <= d; z = ai
+							.getAndIncrement()) {
 						IJ.showStatus("Generating volume image");
 						IJ.showProgress(z, d);
-						final int[] idSlice = maxIDs[z];
-						final float[] pixels = stackPixels[z];
+						int[] idSlice = maxIDs[z];
+						float[] pixels = stackPixels[z];
 						for (int y = 0; y < h; y++) {
 							final int offset = y * w;
 							for (int x = 0; x < w; x++) {
 								final int i = offset + x;
 								final int id = idSlice[i];
 								if (id >= 0) {
-									pixels[i] = (float) ellipsoids[id].getVolume();
+									pixels[i] = (float) ellipsoids[id]
+											.getVolume();
 								} else
 									pixels[i] = Float.NaN;
 							}
@@ -610,25 +641,25 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		for (int z = 1; z <= d; z++)
 			volStack.addSlice("" + z, stackPixels[z]);
 
-		final ImagePlus volImp = new ImagePlus("Volume-" + imp.getTitle(), volStack);
+		ImagePlus volImp = new ImagePlus("Volume-" + imp.getTitle(), volStack);
 		volImp.setCalibration(imp.getCalibration());
 		return volImp;
 	}
 
-	private ImagePlus displayMaximumIDs(final int[][] biggestEllipsoid, final Ellipsoid[] ellipsoids,
-			final ImagePlus imp) {
+	private ImagePlus displayMaximumIDs(int[][] biggestEllipsoid,
+			Ellipsoid[] ellipsoids, ImagePlus imp) {
 
-		final ImageStack bigStack = new ImageStack(imp.getWidth(), imp.getHeight());
+		ImageStack bigStack = new ImageStack(imp.getWidth(), imp.getHeight());
 		for (int i = 1; i < biggestEllipsoid.length; i++) {
-			final int[] maxIDs = biggestEllipsoid[i];
+			int[] maxIDs = biggestEllipsoid[i];
 			final int l = maxIDs.length;
-			final float[] pixels = new float[l];
+			float[] pixels = new float[l];
 			for (int j = 0; j < l; j++) {
-				pixels[j] = maxIDs[j];
+				pixels[j] = (float) maxIDs[j];
 			}
 			bigStack.addSlice("" + i, pixels);
 		}
-		final ImagePlus bigImp = new ImagePlus("Max-ID-" + imp.getTitle(), bigStack);
+		ImagePlus bigImp = new ImagePlus("Max-ID-" + imp.getTitle(), bigStack);
 		bigImp.setCalibration(imp.getCalibration());
 		return bigImp;
 	}
@@ -636,20 +667,20 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	/**
 	 * For each foreground pixel of the input image, find the ellipsoid of
 	 * greatest volume
-	 *
+	 * 
 	 * @param imp
 	 * @param ellipsoids
 	 * @return array containing the indexes of the biggest ellipsoids which
 	 *         contain each point
 	 */
-	private int[][] findMaxID(final ImagePlus imp, final Ellipsoid[] ellipsoids) {
+	private int[][] findMaxID(ImagePlus imp, final Ellipsoid[] ellipsoids) {
 
 		final ImageStack stack = imp.getImageStack();
 		final int w = stack.getWidth();
 		final int h = stack.getHeight();
 		final int d = stack.getSize();
 
-		final Calibration cal = imp.getCalibration();
+		Calibration cal = imp.getCalibration();
 		final double vW = cal.pixelWidth;
 		final double vH = cal.pixelHeight;
 		final double vD = cal.pixelDepth;
@@ -657,33 +688,34 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		final int[][] biggest = new int[d + 1][w * h];
 
 		final AtomicInteger ai = new AtomicInteger(1);
-		final Thread[] threads = Multithreader.newThreads();
+		Thread[] threads = Multithreader.newThreads();
 		for (int thread = 0; thread < threads.length; thread++) {
 			threads[thread] = new Thread(new Runnable() {
 				public void run() {
-					for (int z = ai.getAndIncrement(); z <= d; z = ai.getAndIncrement()) {
+					for (int z = ai.getAndIncrement(); z <= d; z = ai
+							.getAndIncrement()) {
 						IJ.showStatus("Finding biggest ellipsoid");
 						IJ.showProgress(z, d);
-						final byte[] slicePixels = (byte[]) stack.getPixels(z);
-						final int[] bigSlice = biggest[z];
+						byte[] slicePixels = (byte[]) stack.getPixels(z);
+						int[] bigSlice = biggest[z];
 						Arrays.fill(bigSlice, -ellipsoids.length);
 						final double zvD = z * vD;
 
 						// find the subset of ellipsoids whose bounding box
 						// intersects with z
-						final ArrayList<Ellipsoid> nearEllipsoids = new ArrayList<Ellipsoid>();
+						ArrayList<Ellipsoid> nearEllipsoids = new ArrayList<Ellipsoid>();
 						final int n = ellipsoids.length;
 						for (int i = 0; i < n; i++) {
-							final Ellipsoid e = ellipsoids[i];
-							final double[] zMinMax = e.getZMinAndMax();
+							Ellipsoid e = ellipsoids[i];
+							double[] zMinMax = e.getZMinAndMax();
 							if (zvD >= zMinMax[0] && zvD <= zMinMax[1]) {
-								final Ellipsoid f = e.copy();
+								Ellipsoid f = e.copy();
 								f.id = i;
 								nearEllipsoids.add(f);
 							}
 						}
 						final int o = nearEllipsoids.size();
-						final Ellipsoid[] ellipsoidSubSet = new Ellipsoid[o];
+						Ellipsoid[] ellipsoidSubSet = new Ellipsoid[o];
 						for (int i = 0; i < o; i++) {
 							ellipsoidSubSet[i] = nearEllipsoids.get(i);
 						}
@@ -693,17 +725,17 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 							final double yvH = y * vH;
 							// find the subset of ellipsoids whose bounding box
 							// intersects with y
-							final ArrayList<Ellipsoid> yEllipsoids = new ArrayList<Ellipsoid>();
+							ArrayList<Ellipsoid> yEllipsoids = new ArrayList<Ellipsoid>();
 							for (int i = 0; i < q; i++) {
-								final Ellipsoid e = ellipsoidSubSet[i];
-								final double[] yMinMax = e.getYMinAndMax();
+								Ellipsoid e = ellipsoidSubSet[i];
+								double[] yMinMax = e.getYMinAndMax();
 								if (yvH >= yMinMax[0] && yvH <= yMinMax[1]) {
 									yEllipsoids.add(e);
 								}
 							}
 
 							final int r = yEllipsoids.size();
-							final Ellipsoid[] ellipsoidSubSubSet = new Ellipsoid[r];
+							Ellipsoid[] ellipsoidSubSubSet = new Ellipsoid[r];
 							for (int i = 0; i < r; i++) {
 								ellipsoidSubSubSet[i] = yEllipsoids.get(i);
 							}
@@ -711,7 +743,9 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 							final int offset = y * w;
 							for (int x = 0; x < w; x++) {
 								if (slicePixels[offset + x] == -1) {
-									bigSlice[offset + x] = biggestEllipsoid(ellipsoidSubSubSet, x * vW, yvH, zvD);
+									bigSlice[offset + x] = biggestEllipsoid(
+											ellipsoidSubSubSet, x * vW, yvH,
+											zvD);
 								}
 							}
 						}
@@ -727,7 +761,7 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	/**
 	 * Search the list of ellipsoids and return the index of the largest
 	 * ellipsoid which contains the point x, y, z
-	 *
+	 * 
 	 * @param ellipsoids
 	 *            sorted in order of descending size and with id set to the sort
 	 *            position of the whole set. This means that subsets may be
@@ -741,7 +775,8 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	 * @return the index of the largest ellipsoid which contains this point, -1
 	 *         if none of the ellipsoids contain the point
 	 */
-	private int biggestEllipsoid(final Ellipsoid[] ellipsoids, final double x, final double y, final double z) {
+	private int biggestEllipsoid(Ellipsoid[] ellipsoids, double x, double y,
+			double z) {
 		final int l = ellipsoids.length;
 		for (int i = 0; i < l; i++) {
 			if (ellipsoids[i].contains(x, y, z))
@@ -754,14 +789,14 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	 * Using skeleton points as seeds, propagate along each vector until a
 	 * boundary is hit. Use the resulting cloud of boundary points as input into
 	 * an ellipsoid fit.
-	 *
+	 * 
 	 * @param imp
 	 * @param skeletonPoints
 	 * @param unitVectors
 	 * @return
 	 */
-	private Ellipsoid[] findEllipsoids(final ImagePlus imp, final int[][] skeletonPoints,
-			final double[][] unitVectors) {
+	private Ellipsoid[] findEllipsoids(final ImagePlus imp,
+			final int[][] skeletonPoints, final double[][] unitVectors) {
 		final int nPoints = skeletonPoints.length;
 		final Ellipsoid[] ellipsoids = new Ellipsoid[nPoints];
 
@@ -770,12 +805,14 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 
 		final AtomicInteger ai = new AtomicInteger(0);
 		final AtomicInteger counter = new AtomicInteger(0);
-		final Thread[] threads = Multithreader.newThreads();
+		Thread[] threads = Multithreader.newThreads();
 		for (int thread = 0; thread < threads.length; thread++) {
 			threads[thread] = new Thread(new Runnable() {
 				public void run() {
-					for (int i = ai.getAndAdd(skipRatio); i < nPoints; i = ai.getAndAdd(skipRatio)) {
-						ellipsoids[i] = optimiseEllipsoid(imp, skeletonPoints[i], unitVectors, i);
+					for (int i = ai.getAndAdd(skipRatio); i < nPoints; i = ai
+							.getAndAdd(skipRatio)) {
+						ellipsoids[i] = optimiseEllipsoid(imp,
+								skeletonPoints[i], unitVectors, i);
 						IJ.showProgress(counter.getAndAdd(skipRatio), nPoints);
 						IJ.showStatus("Optimising ellipsoids...");
 					}
@@ -784,7 +821,7 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		}
 		Multithreader.startAndJoin(threads);
 
-		final Ellipsoid[] sortedEllipsoids = ArrayHelper.removeNulls(ellipsoids);
+		Ellipsoid[] sortedEllipsoids = ArrayHelper.removeNulls(ellipsoids);
 
 		// Sort using this class' compare method
 		Arrays.sort(sortedEllipsoids, this);
@@ -795,7 +832,7 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	/**
 	 * given a seed point, find the ellipsoid which best fits the binarised
 	 * structure
-	 *
+	 * 
 	 * @param imp
 	 * @param is
 	 * @param unitVectors
@@ -803,17 +840,17 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	 *         of vectors surrounding the seed point. If ellipsoid fitting
 	 *         fails, returns null
 	 */
-	private Ellipsoid optimiseEllipsoid(final ImagePlus imp, final int[] skeletonPoint, final double[][] unitVectors,
-			final int index) {
+	private Ellipsoid optimiseEllipsoid(final ImagePlus imp,
+			int[] skeletonPoint, double[][] unitVectors, final int index) {
 
-		final long start = System.currentTimeMillis();
+		long start = System.currentTimeMillis();
 
-		final Calibration cal = imp.getCalibration();
+		Calibration cal = imp.getCalibration();
 		final double pW = cal.pixelWidth;
 		final double pH = cal.pixelHeight;
 		final double pD = cal.pixelDepth;
 
-		final ImageStack stack = imp.getImageStack();
+		ImageStack stack = imp.getImageStack();
 		// final int stackSize = stack.getSize();
 		final int w = stack.getWidth();
 		final int h = stack.getHeight();
@@ -821,7 +858,7 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 
 		// cache slices into an array
 		// ByteProcessor[] ips = new ByteProcessor[stackSize + 1];
-		final byte[][] pixels = new byte[d][w * h];
+		byte[][] pixels = new byte[d][w * h];
 		for (int i = 0; i < d; i++) {
 			// ips[i] = (ByteProcessor) stack.getProcessor(i);
 			pixels[i] = (byte[]) stack.getProcessor(i + 1).getPixels();
@@ -835,12 +872,13 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		final double pz = skeletonPoint[2] * pD;
 
 		// Instantiate a small spherical ellipsoid
-		final double[][] orthogonalVectors = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
+		final double[][] orthogonalVectors = { { 1, 0, 0 }, { 0, 1, 0 },
+				{ 0, 0, 1 } };
 
-		Ellipsoid ellipsoid = new Ellipsoid(vectorIncrement, vectorIncrement, vectorIncrement, px, py, pz,
-				orthogonalVectors);
+		Ellipsoid ellipsoid = new Ellipsoid(vectorIncrement, vectorIncrement,
+				vectorIncrement, px, py, pz, orthogonalVectors);
 
-		final Vector<Double> volumeHistory = new Vector<Double>();
+		Vector<Double> volumeHistory = new Vector<Double>();
 		volumeHistory.add(ellipsoid.getVolume());
 
 		// dilate the sphere until it hits the background
@@ -854,11 +892,12 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		ArrayList<double[]> contactPoints = new ArrayList<double[]>();
 
 		// get the points of contact
-		contactPoints = findContactPoints(ellipsoid, contactPoints, pixels, pW, pH, pD, w, h, d);
+		contactPoints = findContactPoints(ellipsoid, contactPoints, pixels, pW,
+				pH, pD, w, h, d);
 
 		// find the mean unit vector pointing to the points of contact from the
 		// centre
-		final double[] shortAxis = contactPointUnitVector(ellipsoid, contactPoints);
+		double[] shortAxis = contactPointUnitVector(ellipsoid, contactPoints);
 
 		// find an orthogonal axis
 		final double[] xAxis = { 1, 0, 0 };
@@ -885,9 +924,11 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		// int maxContacts = contactPoints.size() + contactSensitivity;
 		while (contactPoints.size() < contactSensitivity) {
 			ellipsoid.dilate(0, vectorIncrement, vectorIncrement);
-			contactPoints = findContactPoints(ellipsoid, contactPoints, pixels, pW, pH, pD, w, h, d);
+			contactPoints = findContactPoints(ellipsoid, contactPoints, pixels,
+					pW, pH, pD, w, h, d);
 			if (isInvalid(ellipsoid, pW, pH, pD, w, h, d, px, py, pz)) {
-				IJ.log("Ellipsoid at (" + px + ", " + py + ", " + pz + ") is invalid, nullifying at initial oblation");
+				IJ.log("Ellipsoid at (" + px + ", " + py + ", " + pz
+						+ ") is invalid, nullifying at initial oblation");
 				return null;
 			}
 		}
@@ -905,22 +946,25 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		int totalIterations = 0;
 		int noImprovementCount = 0;
 		final int absoluteMaxIterations = maxIterations * 10;
-		while (totalIterations < absoluteMaxIterations && noImprovementCount < maxIterations) {
+		while (totalIterations < absoluteMaxIterations
+				&& noImprovementCount < maxIterations) {
 
 			// rotate a little bit
 			ellipsoid = wiggle(ellipsoid);
 
 			// contract until no contact
-			ellipsoid = shrinkToFit(ellipsoid, contactPoints, pixels, pW, pH, pD, w, h, d);
+			ellipsoid = shrinkToFit(ellipsoid, contactPoints, pixels, pW, pH,
+					pD, w, h, d);
 
 			// dilate an axis
 			double[] abc = threeWayShuffle();
-			ellipsoid = inflateToFit(ellipsoid, contactPoints, abc[0], abc[1], abc[2], pixels, pW, pH, pD, w, h, d, px,
-					py, pz);
+			ellipsoid = inflateToFit(ellipsoid, contactPoints, abc[0], abc[1],
+					abc[2], pixels, pW, pH, pD, w, h, d, px, py, pz);
 
 			if (isInvalid(ellipsoid, pW, pH, pD, w, h, d, px, py, pz)) {
-				IJ.log("Ellipsoid at (" + px + ", " + py + ", " + pz + ") is invalid, nullifying after "
-						+ totalIterations + " iterations");
+				IJ.log("Ellipsoid at (" + px + ", " + py + ", " + pz
+						+ ") is invalid, nullifying after " + totalIterations
+						+ " iterations");
 				return null;
 			}
 
@@ -928,7 +972,8 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 				maximal = ellipsoid.copy();
 
 			// bump a little away from the sides
-			contactPoints = findContactPoints(ellipsoid, contactPoints, pixels, pW, pH, pD, w, h, d);
+			contactPoints = findContactPoints(ellipsoid, contactPoints, pixels,
+					pW, pH, pD, w, h, d);
 			if (contactPoints.size() > 0)
 				ellipsoid = bump(ellipsoid, contactPoints, px, py, pz);
 			// if can't bump then do a wiggle
@@ -936,16 +981,18 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 				ellipsoid = wiggle(ellipsoid);
 
 			// contract
-			ellipsoid = shrinkToFit(ellipsoid, contactPoints, pixels, pW, pH, pD, w, h, d);
+			ellipsoid = shrinkToFit(ellipsoid, contactPoints, pixels, pW, pH,
+					pD, w, h, d);
 
 			// dilate an axis
 			abc = threeWayShuffle();
-			ellipsoid = inflateToFit(ellipsoid, contactPoints, abc[0], abc[1], abc[2], pixels, pW, pH, pD, w, h, d, px,
-					py, pz);
+			ellipsoid = inflateToFit(ellipsoid, contactPoints, abc[0], abc[1],
+					abc[2], pixels, pW, pH, pD, w, h, d, px, py, pz);
 
 			if (isInvalid(ellipsoid, pW, pH, pD, w, h, d, px, py, pz)) {
-				IJ.log("Ellipsoid at (" + px + ", " + py + ", " + pz + ") is invalid, nullifying after "
-						+ totalIterations + " iterations");
+				IJ.log("Ellipsoid at (" + px + ", " + py + ", " + pz
+						+ ") is invalid, nullifying after " + totalIterations
+						+ " iterations");
 				return null;
 			}
 
@@ -953,19 +1000,22 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 				maximal = ellipsoid.copy();
 
 			// rotate a little bit
-			ellipsoid = turn(ellipsoid, contactPoints, 0.1, pixels, pW, pH, pD, w, h, d);
+			ellipsoid = turn(ellipsoid, contactPoints, 0.1, pixels, pW, pH, pD,
+					w, h, d);
 
 			// contract until no contact
-			ellipsoid = shrinkToFit(ellipsoid, contactPoints, pixels, pW, pH, pD, w, h, d);
+			ellipsoid = shrinkToFit(ellipsoid, contactPoints, pixels, pW, pH,
+					pD, w, h, d);
 
 			// dilate an axis
 			abc = threeWayShuffle();
-			ellipsoid = inflateToFit(ellipsoid, contactPoints, abc[0], abc[1], abc[2], pixels, pW, pH, pD, w, h, d, px,
-					py, pz);
+			ellipsoid = inflateToFit(ellipsoid, contactPoints, abc[0], abc[1],
+					abc[2], pixels, pW, pH, pD, w, h, d, px, py, pz);
 
 			if (isInvalid(ellipsoid, pW, pH, pD, w, h, d, px, py, pz)) {
-				IJ.log("Ellipsoid at (" + px + ", " + py + ", " + pz + ") is invalid, nullifying after "
-						+ totalIterations + " iterations");
+				IJ.log("Ellipsoid at (" + px + ", " + py + ", " + pz
+						+ ") is invalid, nullifying after " + totalIterations
+						+ " iterations");
 				return null;
 			}
 
@@ -994,14 +1044,16 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		// this usually indicates that the ellipsoid
 		// grew out of control for some reason
 		if (totalIterations == absoluteMaxIterations) {
-			IJ.log("Ellipsoid at (" + px + ", " + py + ", " + pz + ") seems to be out of control, nullifying after "
+			IJ.log("Ellipsoid at (" + px + ", " + py + ", " + pz
+					+ ") seems to be out of control, nullifying after "
 					+ totalIterations + " iterations");
 			return null;
 		}
 		// debug output for this ellipsoid
 		if (IJ.debugMode) {
 			// show in the 3D viewer
-			display3D(ellipsoid, contactPoints, pixels, pW, pH, pD, w, h, d, px, py, pz, px + " " + py + " " + pz);
+			display3D(ellipsoid, contactPoints, pixels, pW, pH, pD, w, h, d,
+					px, py, pz, px + " " + py + " " + pz);
 
 			// add history to the ResultsTable
 			// for (int i = 0; i < volumeHistory.size(); i++) {
@@ -1009,18 +1061,20 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 			// }
 		}
 
-		final long stop = System.currentTimeMillis();
+		long stop = System.currentTimeMillis();
 
 		if (IJ.debugMode)
-			IJ.log("Optimised ellipsoid in " + (stop - start) + " ms after " + totalIterations + " iterations ("
-					+ IJ.d2s((double) (stop - start) / totalIterations, 3) + " ms/iteration)");
+			IJ.log("Optimised ellipsoid in " + (stop - start) + " ms after "
+					+ totalIterations + " iterations ("
+					+ IJ.d2s((double) (stop - start) / totalIterations, 3)
+					+ " ms/iteration)");
 
 		return ellipsoid;
 	}
 
 	private double[] threeWayShuffle() {
-		final double[] a = { 0, 0, 0 };
-		final double rand = Math.random();
+		double[] a = { 0, 0, 0 };
+		double rand = Math.random();
 		if (rand < 1.0 / 3.0)
 			a[0] = 1;
 		else if (rand >= 2.0 / 3.0)
@@ -1032,8 +1086,9 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 
 	/**
 	 * Check whether this ellipsoid is sensible
-	 *
+	 * 
 	 * @param ellipsoid
+	 * @param ips
 	 * @param pW
 	 * @param pH
 	 * @param pD
@@ -1047,20 +1102,21 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	 *         stack, or if the volume of the ellipsoid exceeds that of the
 	 *         image stack
 	 */
-	private boolean isInvalid(final Ellipsoid ellipsoid, final double pW, final double pH, final double pD, final int w,
-			final int h, final int d, final double px, final double py, final double pz) {
+	private boolean isInvalid(Ellipsoid ellipsoid, double pW, double pH,
+			double pD, int w, int h, int d, double px, double py, double pz) {
 
-		final double[][] surfacePoints = ellipsoid.getSurfacePoints(nVectors);
+		double[][] surfacePoints = ellipsoid.getSurfacePoints(nVectors);
 		int outOfBoundsCount = 0;
 		final int half = nVectors / 2;
-		for (final double[] p : surfacePoints) {
-			if (isOutOfBounds((int) (p[0] / pW), (int) (p[1] / pD), (int) (p[2] / pH), w, h, d))
+		for (double[] p : surfacePoints) {
+			if (isOutOfBounds((int) (p[0] / pW), (int) (p[1] / pD),
+					(int) (p[2] / pH), w, h, d))
 				outOfBoundsCount++;
 			if (outOfBoundsCount > half)
 				return true;
 		}
 
-		final double volume = ellipsoid.getVolume();
+		double volume = ellipsoid.getVolume();
 		if (volume > stackVolume)
 			return true;
 
@@ -1069,7 +1125,7 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 
 	/**
 	 * Display an ellipsoid in the 3D viewer
-	 *
+	 * 
 	 * @param ellipsoid
 	 * @param ips
 	 * @param pW
@@ -1082,52 +1138,59 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	 * @param py
 	 * @param pz
 	 */
-	private void display3D(final Ellipsoid ellipsoid, ArrayList<double[]> contactPoints, final byte[][] pixels,
-			final double pW, final double pH, final double pD, final int w, final int h, final int d, final double px,
-			final double py, final double pz, final String name) {
-		contactPoints = findContactPoints(ellipsoid, contactPoints, pixels, pW, pH, pD, w, h, d);
-		final ArrayList<Point3f> contactPointsf = new ArrayList<Point3f>(contactPoints.size());
-		for (final double[] p : contactPoints) {
-			final Point3f point = new Point3f((float) p[0], (float) p[1], (float) p[2]);
+	private void display3D(Ellipsoid ellipsoid,
+			ArrayList<double[]> contactPoints, byte[][] pixels, double pW,
+			double pH, double pD, int w, int h, int d, double px, double py,
+			double pz, String name) {
+		contactPoints = findContactPoints(ellipsoid, contactPoints, pixels, pW,
+				pH, pD, w, h, d);
+		ArrayList<Point3f> contactPointsf = new ArrayList<Point3f>(
+				contactPoints.size());
+		for (double[] p : contactPoints) {
+			Point3f point = new Point3f((float) p[0], (float) p[1],
+					(float) p[2]);
 			contactPointsf.add(point);
 		}
-		final double[][] pointCloud = ellipsoid.getSurfacePoints(100);
+		double[][] pointCloud = ellipsoid.getSurfacePoints(100);
 
-		final List<Point3f> pointList = new ArrayList<Point3f>();
+		List<Point3f> pointList = new ArrayList<Point3f>();
 		for (int p = 0; p < pointCloud.length; p++) {
 			if (pointCloud[p] == null)
 				continue;
-			final Point3f e = new Point3f();
+			Point3f e = new Point3f();
 			e.x = (float) pointCloud[p][0];
 			e.y = (float) pointCloud[p][1];
 			e.z = (float) pointCloud[p][2];
 			pointList.add(e);
 		}
-		final CustomPointMesh mesh = new CustomPointMesh(pointList);
+		CustomPointMesh mesh = new CustomPointMesh(pointList);
 		mesh.setPointSize(2.0f);
-		final Color3f cColour = new Color3f((float) (px / pW) / w, (float) (py / pH) / h, (float) (pz / pD) / d);
+		Color3f cColour = new Color3f((float) (px / pW) / w, (float) (py / pH)
+				/ h, (float) (pz / pD) / d);
 		mesh.setColor(cColour);
 
-		final CustomPointMesh contactPointMesh = new CustomPointMesh(contactPointsf);
+		CustomPointMesh contactPointMesh = new CustomPointMesh(contactPointsf);
 		contactPointMesh.setPointSize(2.5f);
-		final Color3f invColour = new Color3f(1 - cColour.x, 1 - cColour.y, 1 - cColour.z);
+		Color3f invColour = new Color3f(1 - cColour.x, 1 - cColour.y,
+				1 - cColour.z);
 		contactPointMesh.setColor(invColour);
 
 		final double[] torque = calculateTorque(ellipsoid, contactPoints);
 		final double[] c = ellipsoid.getCentre();
 
-		final List<Point3f> torqueList = new ArrayList<Point3f>();
+		List<Point3f> torqueList = new ArrayList<Point3f>();
 		torqueList.add(new Point3f((float) c[0], (float) c[1], (float) c[2]));
-		torqueList.add(new Point3f((float) (torque[0] + c[0]), (float) (torque[1] + c[1]), (float) (torque[2] + c[2])));
-		final CustomLineMesh torqueLine = new CustomLineMesh(torqueList);
-		final Color3f blue = new Color3f((float) 0.0, (float) 0.0, (float) 1.0);
+		torqueList.add(new Point3f((float) (torque[0] + c[0]),
+				(float) (torque[1] + c[1]), (float) (torque[2] + c[2])));
+		CustomLineMesh torqueLine = new CustomLineMesh(torqueList);
+		Color3f blue = new Color3f((float) 0.0, (float) 0.0, (float) 1.0);
 		torqueLine.setColor(blue);
 
 		// Axis-aligned bounding box
-		final double[] box = ellipsoid.getAxisAlignedBoundingBox();
-		final float[] b = { (float) box[0], (float) box[1], (float) box[2], (float) box[3], (float) box[4],
-				(float) box[5] };
-		final List<Point3f> aabb = new ArrayList<Point3f>();
+		double[] box = ellipsoid.getAxisAlignedBoundingBox();
+		float[] b = { (float) box[0], (float) box[1], (float) box[2],
+				(float) box[3], (float) box[4], (float) box[5] };
+		List<Point3f> aabb = new ArrayList<Point3f>();
 		aabb.add(new Point3f(b[0], b[2], b[4]));
 		aabb.add(new Point3f(b[1], b[2], b[4]));
 
@@ -1166,12 +1229,16 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 
 		try {
 			universe.addCustomMesh(mesh, "Point cloud " + name).setLocked(true);
-			universe.addCustomMesh(contactPointMesh, "Contact points of " + name).setLocked(true);
-			universe.addCustomMesh(torqueLine, "Torque of " + name).setLocked(true);
-			universe.addLineMesh(aabb, new Color3f(1.0f, 0.0f, 0.0f), "AABB of " + name, false).setLocked(true);
+			universe.addCustomMesh(contactPointMesh,
+					"Contact points of " + name).setLocked(true);
+			universe.addCustomMesh(torqueLine, "Torque of " + name).setLocked(
+					true);
+			universe.addLineMesh(aabb, new Color3f(1.0f, 0.0f, 0.0f),
+					"AABB of " + name, false).setLocked(true);
 
-		} catch (final Exception e) {
-			IJ.log("Something went wrong adding meshes to 3D viewer:\n" + e.getMessage());
+		} catch (Exception e) {
+			IJ.log("Something went wrong adding meshes to 3D viewer:\n"
+					+ e.getMessage());
 		}
 	}
 
@@ -1179,9 +1246,10 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	 * Rotate the ellipsoid theta radians around the unit vector formed by the
 	 * sum of torques effected by unit normals acting on the surface of the
 	 * ellipsoid
-	 *
+	 * 
 	 * @param ellipsoid
 	 * @param theta
+	 * @param ips
 	 * @param pW
 	 * @param pH
 	 * @param pD
@@ -1190,13 +1258,14 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	 * @param d
 	 * @return
 	 */
-	private Ellipsoid turn(Ellipsoid ellipsoid, ArrayList<double[]> contactPoints, final double theta,
-			final byte[][] pixels, final double pW, final double pH, final double pD, final int w, final int h,
-			final int d) {
+	private Ellipsoid turn(Ellipsoid ellipsoid,
+			ArrayList<double[]> contactPoints, double theta, byte[][] pixels,
+			double pW, double pH, double pD, int w, int h, int d) {
 
-		contactPoints = findContactPoints(ellipsoid, contactPoints, pixels, pW, pH, pD, w, h, d);
+		contactPoints = findContactPoints(ellipsoid, contactPoints, pixels, pW,
+				pH, pD, w, h, d);
 		if (contactPoints.size() > 0) {
-			final double[] torque = calculateTorque(ellipsoid, contactPoints);
+			double[] torque = calculateTorque(ellipsoid, contactPoints);
 			ellipsoid = rotateAboutAxis(ellipsoid, Vectors.norm(torque), theta);
 		}
 		return ellipsoid;
@@ -1205,17 +1274,19 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	/**
 	 * Calculate the mean unit vector between the ellipsoid's centroid and
 	 * contact points
-	 *
+	 * 
 	 * @param ellipsoid
 	 * @param contactPoints
 	 * @return
 	 */
-	private double[] contactPointUnitVector(final Ellipsoid ellipsoid, final ArrayList<double[]> contactPoints) {
+	private double[] contactPointUnitVector(Ellipsoid ellipsoid,
+			ArrayList<double[]> contactPoints) {
 
 		final int nPoints = contactPoints.size();
 
 		if (nPoints < 1)
-			throw new IllegalArgumentException("Need at least one contact point");
+			throw new IllegalArgumentException(
+					"Need at least one contact point");
 
 		final double[] c = ellipsoid.getCentre();
 		final double cx = c[0];
@@ -1246,12 +1317,13 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 
 	/**
 	 * Calculate the torque of unit normals acting at the contact points
-	 *
+	 * 
 	 * @param ellipsoid
 	 * @param contactPoints
 	 * @return
 	 */
-	private double[] calculateTorque(final Ellipsoid ellipsoid, final ArrayList<double[]> contactPoints) {
+	private double[] calculateTorque(Ellipsoid ellipsoid,
+			ArrayList<double[]> contactPoints) {
 
 		final double[] pc = ellipsoid.getCentre();
 		final double cx = pc[0];
@@ -1277,7 +1349,7 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		final int n = contactPoints.size();
 
 		for (int i = 0; i < n; i++) {
-			final double[] p = contactPoints.get(i);
+			double[] p = contactPoints.get(i);
 
 			// translate point to centre on origin
 			final double px = p[0] - cx;
@@ -1299,24 +1371,28 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 			final double unz = nz / length;
 
 			// rotate the normal back to the original ellipsoid
-			final double ex = rot[0][0] * unx + rot[0][1] * uny + rot[0][2] * unz;
-			final double ey = rot[1][0] * unx + rot[1][1] * uny + rot[1][2] * unz;
-			final double ez = rot[2][0] * unx + rot[2][1] * uny + rot[2][2] * unz;
+			final double ex = rot[0][0] * unx + rot[0][1] * uny + rot[0][2]
+					* unz;
+			final double ey = rot[1][0] * unx + rot[1][1] * uny + rot[1][2]
+					* unz;
+			final double ez = rot[2][0] * unx + rot[2][1] * uny + rot[2][2]
+					* unz;
 
-			final double[] torqueVector = Vectors.crossProduct(px, py, pz, ex, ey, ez);
+			final double[] torqueVector = Vectors.crossProduct(px, py, pz, ex,
+					ey, ez);
 
 			t0 += torqueVector[0];
 			t1 += torqueVector[1];
 			t2 += torqueVector[2];
 
 		}
-		final double[] torque = { -t0, -t1, -t2 };
+		double[] torque = { -t0, -t1, -t2 };
 		return torque;
 	}
 
 	/**
 	 * Rotate the ellipsoid theta radians around an arbitrary unit vector
-	 *
+	 * 
 	 * @param ellipsoid
 	 * @param axis
 	 * @param theta
@@ -1324,7 +1400,8 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	 *      Rotation_matrix_from_axis_and_angle
 	 * @return
 	 */
-	private Ellipsoid rotateAboutAxis(final Ellipsoid ellipsoid, final double[] axis, final double theta) {
+	private Ellipsoid rotateAboutAxis(Ellipsoid ellipsoid, double[] axis,
+			final double theta) {
 
 		final double sin = Math.sin(theta);
 		final double cos = Math.cos(theta);
@@ -1341,7 +1418,8 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		final double xycos1 = xy * cos1;
 		final double xzcos1 = xz * cos1;
 		final double yzcos1 = yz * cos1;
-		final double[][] rotation = { { cos + x * x * cos1, xycos1 - zsin, xzcos1 + ysin },
+		double[][] rotation = {
+				{ cos + x * x * cos1, xycos1 - zsin, xzcos1 + ysin },
 				{ xycos1 + zsin, cos + y * y * cos1, yzcos1 - xsin },
 				{ xzcos1 - ysin, yzcos1 + xsin, cos + z * z * cos1 }, };
 
@@ -1351,8 +1429,9 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	}
 
 	/**
-	 *
+	 * 
 	 * @param ellipsoid
+	 * @param ips
 	 * @param pW
 	 * @param pH
 	 * @param pD
@@ -1361,20 +1440,24 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	 * @param d
 	 * @return
 	 */
-	private Ellipsoid shrinkToFit(final Ellipsoid ellipsoid, ArrayList<double[]> contactPoints, final byte[][] pixels,
-			final double pW, final double pH, final double pD, final int w, final int h, final int d) {
+	private Ellipsoid shrinkToFit(Ellipsoid ellipsoid,
+			ArrayList<double[]> contactPoints, byte[][] pixels, double pW,
+			double pH, double pD, int w, int h, int d) {
 
 		// get the contact points
-		contactPoints = findContactPoints(ellipsoid, contactPoints, pixels, pW, pH, pD, w, h, d);
+		contactPoints = findContactPoints(ellipsoid, contactPoints, pixels, pW,
+				pH, pD, w, h, d);
 
 		// get the unit vectors to the contact points
-		final double[][] unitVectors = findContactUnitVectors(ellipsoid, contactPoints);
+		double[][] unitVectors = findContactUnitVectors(ellipsoid,
+				contactPoints);
 
 		// contract until no contact
 		int safety = 0;
 		while (contactPoints.size() > 0 && safety < maxIterations) {
 			ellipsoid.contract(0.01);
-			contactPoints = findContactPoints(ellipsoid, contactPoints, unitVectors, pixels, pW, pH, pD, w, h, d);
+			contactPoints = findContactPoints(ellipsoid, contactPoints,
+					unitVectors, pixels, pW, pH, pD, w, h, d);
 			safety++;
 		}
 
@@ -1383,15 +1466,16 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		return ellipsoid;
 	}
 
-	private double[][] findContactUnitVectors(final Ellipsoid ellipsoid, final ArrayList<double[]> contactPoints) {
-		final double[][] unitVectors = new double[contactPoints.size()][3];
+	private double[][] findContactUnitVectors(Ellipsoid ellipsoid,
+			ArrayList<double[]> contactPoints) {
+		double[][] unitVectors = new double[contactPoints.size()][3];
 		final double[] c = ellipsoid.getCentre();
 		final double cx = c[0];
 		final double cy = c[1];
 		final double cz = c[2];
 
 		for (int i = 0; i < contactPoints.size(); i++) {
-			final double[] p = contactPoints.get(i);
+			double[] p = contactPoints.get(i);
 			final double px = p[0];
 			final double py = p[1];
 			final double pz = p[2];
@@ -1400,14 +1484,14 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 			final double x = (px - cx) / l;
 			final double y = (py - cy) / l;
 			final double z = (pz - cz) / l;
-			final double[] u = { x, y, z };
+			double[] u = { x, y, z };
 			unitVectors[i] = u;
 		}
 		return unitVectors;
 	}
 
 	/**
-	 *
+	 * 
 	 * @param ellipsoid
 	 * @param a
 	 * @param b
@@ -1424,20 +1508,24 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	 * @param px
 	 * @return
 	 */
-	private Ellipsoid inflateToFit(final Ellipsoid ellipsoid, ArrayList<double[]> contactPoints, final double a,
-			final double b, final double c, final byte[][] pixels, final double pW, final double pH, final double pD,
-			final int w, final int h, final int d, final double px, final double py, final double pz) {
+	private Ellipsoid inflateToFit(Ellipsoid ellipsoid,
+			ArrayList<double[]> contactPoints, double a, double b, double c,
+			byte[][] pixels, double pW, double pH, double pD, int w, int h,
+			int d, double px, double py, double pz) {
 
-		contactPoints = findContactPoints(ellipsoid, contactPoints, pixels, pW, pH, pD, w, h, d);
+		contactPoints = findContactPoints(ellipsoid, contactPoints, pixels, pW,
+				pH, pD, w, h, d);
 
 		final double av = a * vectorIncrement;
 		final double bv = b * vectorIncrement;
 		final double cv = c * vectorIncrement;
 
 		int safety = 0;
-		while (contactPoints.size() < contactSensitivity && safety < maxIterations) {
+		while (contactPoints.size() < contactSensitivity
+				&& safety < maxIterations) {
 			ellipsoid.dilate(av, bv, cv);
-			contactPoints = findContactPoints(ellipsoid, contactPoints, pixels, pW, pH, pD, w, h, d);
+			contactPoints = findContactPoints(ellipsoid, contactPoints, pixels,
+					pW, pH, pD, w, h, d);
 			safety++;
 		}
 
@@ -1445,7 +1533,7 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	}
 
 	/**
-	 *
+	 * 
 	 * @param ellipsoid
 	 * @param contactPoints
 	 * @param px
@@ -1453,8 +1541,8 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	 * @param pz
 	 * @return
 	 */
-	private Ellipsoid bump(final Ellipsoid ellipsoid, final ArrayList<double[]> contactPoints, final double px,
-			final double py, final double pz) {
+	private Ellipsoid bump(Ellipsoid ellipsoid,
+			ArrayList<double[]> contactPoints, double px, double py, double pz) {
 
 		final double displacement = vectorIncrement / 2;
 
@@ -1472,26 +1560,28 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 
 	/**
 	 * Rotate the ellipsoid by a small random amount
-	 *
+	 * 
 	 * @param ellipsoid
 	 */
-	private Ellipsoid wiggle(final Ellipsoid ellipsoid) {
+	private Ellipsoid wiggle(Ellipsoid ellipsoid) {
 
-		final double b = nudge(0.1);
-		final double c = nudge(0.1);
-		final double a = Math.sqrt(1 - b * b - c * c);
+		double b = nudge(0.1);
+		double c = nudge(0.1);
+		double a = Math.sqrt(1 - b * b - c * c);
 
 		// zeroth column, should be very close to [1, 0, 0]^T (mostly x)
-		final double[] zerothColumn = { a, b, c };
+		double[] zerothColumn = { a, b, c };
 
 		// form triangle in random plane
-		final double[] vector = Vectors.randomVector();
+		double[] vector = Vectors.randomVector();
 
 		// first column, should be very close to [0, 1, 0]^T
-		final double[] firstColumn = Vectors.norm(Vectors.crossProduct(zerothColumn, vector));
+		double[] firstColumn = Vectors.norm(Vectors.crossProduct(zerothColumn,
+				vector));
 
 		// second column, should be very close to [0, 0, 1]^T
-		final double[] secondColumn = Vectors.norm(Vectors.crossProduct(zerothColumn, firstColumn));
+		double[] secondColumn = Vectors.norm(Vectors.crossProduct(zerothColumn,
+				firstColumn));
 
 		double[][] rotation = { zerothColumn, firstColumn, secondColumn };
 
@@ -1505,27 +1595,30 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 
 	/**
 	 * generate a random number between -a and +a
-	 *
+	 * 
 	 * @param a
 	 * @return
 	 */
-	private double nudge(final double a) {
+	private double nudge(double a) {
 		return Math.random() * (a + a) - a;
 	}
 
-	private ArrayList<double[]> findContactPoints(final Ellipsoid ellipsoid, final ArrayList<double[]> contactPoints,
-			final byte[][] pixels, final double pW, final double pH, final double pD, final int w, final int h,
-			final int d) {
+	private ArrayList<double[]> findContactPoints(Ellipsoid ellipsoid,
+			ArrayList<double[]> contactPoints, byte[][] pixels,
+			final double pW, final double pH, final double pD, final int w,
+			final int h, final int d) {
 		// final double[][] unitVectors = Vectors.regularVectors(nVectors);
 		// final double[][] unitVectors = regularVectors;
-		return findContactPoints(ellipsoid, contactPoints, regularVectors.clone(), pixels, pW, pH, pD, w, h, d);
+		return findContactPoints(ellipsoid, contactPoints,
+				regularVectors.clone(), pixels, pW, pH, pD, w, h, d);
 	}
 
-	private ArrayList<double[]> findContactPoints(final Ellipsoid ellipsoid, final ArrayList<double[]> contactPoints,
-			final double[][] unitVectors, final byte[][] pixels, final double pW, final double pH, final double pD,
-			final int w, final int h, final int d) {
+	private ArrayList<double[]> findContactPoints(Ellipsoid ellipsoid,
+			ArrayList<double[]> contactPoints, double[][] unitVectors,
+			byte[][] pixels, double pW, double pH, double pD, int w, int h,
+			int d) {
 		contactPoints.clear();
-		final double[][] points = ellipsoid.getSurfacePoints(unitVectors);
+		double[][] points = ellipsoid.getSurfacePoints(unitVectors);
 		final int nPoints = points.length;
 		for (int i = 0; i < nPoints; i++) {
 			final double[] p = points[i];
@@ -1540,10 +1633,11 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		return contactPoints;
 	}
 
-	private boolean isContained(final Ellipsoid ellipsoid, final byte[][] pixels, final double pW, final double pH,
-			final double pD, final int w, final int h, final int d) {
-		final double[][] points = ellipsoid.getSurfacePoints(nVectors);
-		for (final double[] p : points) {
+	private boolean isContained(Ellipsoid ellipsoid, byte[][] pixels,
+			final double pW, final double pH, final double pD, final int w,
+			final int h, final int d) {
+		double[][] points = ellipsoid.getSurfacePoints(nVectors);
+		for (double[] p : points) {
 			final int x = (int) Math.floor(p[0] / pW);
 			final int y = (int) Math.floor(p[1] / pH);
 			final int z = (int) Math.floor(p[2] / pD);
@@ -1557,7 +1651,7 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 
 	/**
 	 * return true if pixel coordinate is out of image bounds
-	 *
+	 * 
 	 * @param x
 	 * @param y
 	 * @param z
@@ -1566,16 +1660,16 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	 * @param d
 	 * @return
 	 */
-	private boolean isOutOfBounds(final int x, final int y, final int z, final int w, final int h, final int d) {
+	private boolean isOutOfBounds(int x, int y, int z, int w, int h, int d) {
 		if (x < 0 || x >= w || y < 0 || y >= h || z < 0 || z >= d)
 			return true;
-
-		return false;
+		else
+			return false;
 	}
 
-	private int[][] skeletonPoints(final ImagePlus imp) {
-		final Skeletonize3D sk = new Skeletonize3D();
-		final ImagePlus skeleton = sk.getSkeleton(imp);
+	private int[][] skeletonPoints(ImagePlus imp) {
+		Skeletonize3D sk = new Skeletonize3D();
+		ImagePlus skeleton = sk.getSkeleton(imp);
 		final ImageStack skeletonStack = skeleton.getStack();
 
 		final int d = imp.getStackSize();
@@ -1583,15 +1677,18 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		final int w = imp.getWidth();
 
 		// Bare ArrayList is not thread safe for concurrent add() operations.
-		final List<int[]> list = Collections.synchronizedList(new ArrayList<int[]>());
+		final List<int[]> list = Collections
+				.synchronizedList(new ArrayList<int[]>());
 
 		final AtomicInteger ai = new AtomicInteger(1);
-		final Thread[] threads = Multithreader.newThreads();
+		Thread[] threads = Multithreader.newThreads();
 		for (int thread = 0; thread < threads.length; thread++) {
 			threads[thread] = new Thread(new Runnable() {
 				public void run() {
-					for (int z = ai.getAndIncrement(); z <= d; z = ai.getAndIncrement()) {
-						final byte[] slicePixels = (byte[]) skeletonStack.getPixels(z);
+					for (int z = ai.getAndIncrement(); z <= d; z = ai
+							.getAndIncrement()) {
+						byte[] slicePixels = (byte[]) skeletonStack
+								.getPixels(z);
 						for (int y = 0; y < h; y++) {
 							final int offset = y * w;
 							for (int x = 0; x < w; x++) {
@@ -1608,9 +1705,10 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 		Multithreader.startAndJoin(threads);
 
 		if (IJ.debugMode)
-			IJ.log("Skeleton point ArrayList contains " + list.size() + " points");
+			IJ.log("Skeleton point ArrayList contains " + list.size()
+					+ " points");
 
-		final int[][] skeletonPoints = list.toArray(new int[list.size()][]);
+		int[][] skeletonPoints = list.toArray(new int[list.size()][]);
 
 		return skeletonPoints;
 	}
@@ -1622,27 +1720,27 @@ public class EllipsoidFactor implements PlugIn, Comparator<Ellipsoid> {
 	 * ellipsoids towards -1. Ellipsoids of EF = 0 have equal a:b and b:c ratios
 	 * so are midway between plate and rod. Spheres are a special case of EF =
 	 * 0.
-	 *
+	 * 
 	 * @param ellipsoid
 	 * @return the ellipsoid factor
 	 */
-	private double ellipsoidFactor(final Ellipsoid ellipsoid) {
-		final double[] radii = ellipsoid.getSortedRadii();
+	private double ellipsoidFactor(Ellipsoid ellipsoid) {
+		double[] radii = ellipsoid.getSortedRadii();
 		final double a = radii[0];
 		final double b = radii[1];
 		final double c = radii[2];
-		final double ef = a / b - b / c;
+		double ef = a / b - b / c;
 		return ef;
 	}
 
 	/**
 	 * Compare Ellipsoids by volume.
-	 *
+	 * 
 	 * Sorting based on this method will result in Ellipsoids sorted in order of
 	 * <b>descending</b> volume.
-	 *
+	 * 
 	 */
-	public int compare(final Ellipsoid o1, final Ellipsoid o2) {
+	public int compare(Ellipsoid o1, Ellipsoid o2) {
 		return Double.compare(o2.getVolume(), o1.getVolume());
 	}
 
